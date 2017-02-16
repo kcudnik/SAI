@@ -47,7 +47,7 @@ XMLDEPS = $(wildcard xml/*.xml)
 %.o: %.c $(DEPS)
 	gcc -c -o $@ $< $(CFLAGS) $(WARNINGS)
 
-all: saisanitycheck saimetadatatest saidepgraph.svg
+all: saisanitycheck saimetadatatest saidepgraph.svg saiserialize.o
 	./saimetadatatest > /dev/null
 	./saisanitycheck
 
@@ -64,8 +64,8 @@ HEADERS = saimetadata.h $(CONSTHEADERS)
 
 COMMONSRC = saimetadata.c saimetadatautils.c
 
-saisanitycheck: saisanitycheck.c $(HEADERS)
-	gcc -o $@ saisanitycheck.c $(COMMONSRC) $(CFLAGS) $(WARNINGS)
+saisanitycheck: saisanitycheck.c $(HEADERS) saiserialize.c
+	gcc -o $@ saiserialize.c saisanitycheck.c $(COMMONSRC) $(CFLAGS) $(WARNINGS)
 
 saimetadatatest: saimetadatatest.c $(COMMONSRC) $(HEADERS)
 	gcc -o $@ saimetadatatest.c $(COMMONSRC) $(CFLAGS) $(WARNINGS)
@@ -78,6 +78,9 @@ saidepgraph.gv: saidepgraphgen
 
 saidepgraph.svg: saidepgraph.gv
 	dot -Tsvg saidepgraph.gv > $@
+
+saiserialize.o: saiserialize.c $(HEADERS)
+	gcc -c saiserialize.c $(CFLAGS) $(WARNINGS)
 
 .PHONY: clean
 

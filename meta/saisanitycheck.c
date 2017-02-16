@@ -3359,6 +3359,12 @@ void check_single_object_info(
     check_quad_api_pointers(oi);
 }
 
+
+int sai_serialize_object_list(
+        _Out_ char *buffer,
+        _In_ const sai_object_list_t *list,
+        _In_ bool count_only);
+
 int main(int argc, char **argv)
 {
     debug = (argc > 1);
@@ -3405,6 +3411,23 @@ int main(int argc, char **argv)
     printf("\n [ %s ]\n\n", sai_metadata_get_status_name(SAI_STATUS_SUCCESS));
 
     SAI_META_LOG_EXIT();
+
+    char buffer[2000];
+
+    sai_object_list_t list;
+
+    sai_object_id_t ids[5];
+    ids[0] = 0x123;
+    ids[1] = 0x123;
+    ids[2] = 0x123b;
+    ids[3] = 0x123c;
+    ids[4] = 0x123d;
+
+    list.count = 5;
+    list.list =  ids;
+
+    sai_serialize_object_list(buffer, &list, false);
+        printf("%s\n", buffer);
 
     return 0;
 }
