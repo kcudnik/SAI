@@ -25,6 +25,8 @@
 #ifndef __SAI_METADATA_LOGGER_H__
 #define __SAI_METADATA_LOGGER_H__
 
+#include <stdio.h>
+
 /**
  * @defgroup SAIMETADATALOGGER SAI Metadata Types Definitions
  *
@@ -80,14 +82,73 @@ extern volatile sai_log_level_t sai_meta_log_level;
  * Helper macros.
  */
 
-#define SAI_META_LOG_ENTER()                SAI_META_LOG(SAI_LOG_LEVEL_DEBUG, ":> enter");
-#define SAI_META_LOG_DEBUG(format,...)      SAI_META_LOG(SAI_LOG_LEVEL_DEBUG, ":- " format, ##__VA_ARGS__)
-#define SAI_META_LOG_INFO(format,...)       SAI_META_LOG(SAI_LOG_LEVEL_INFO, ":- " format, ##__VA_ARGS__)
-#define SAI_META_LOG_NOTICE(format,...)     SAI_META_LOG(SAI_LOG_LEVEL_NOTICE, ":- " format, ##__VA_ARGS__)
-#define SAI_META_LOG_WARN(format,...)       SAI_META_LOG(SAI_LOG_LEVEL_WARN, ":- " format, ##__VA_ARGS__)
-#define SAI_META_LOG_ERROR(format,...)      SAI_META_LOG(SAI_LOG_LEVEL_ERROR, ":- " format, ##__VA_ARGS__)
-#define SAI_META_LOG_CRITICAL(format,...)   SAI_META_LOG(SAI_LOG_LEVEL_CRITICAL, ":- " format, ##__VA_ARGS__)
-#define SAI_META_LOG_EXIT()                 SAI_META_LOG(SAI_LOG_LEVEL_DEBUG, ":< exit");
+#define SAI_META_LOG_DEBUG(format,...)      SAI_META_LOG(SAI_LOG_LEVEL_DEBUG,    ":- %s: " format, __func__, ##__VA_ARGS__)
+#define SAI_META_LOG_INFO(format,...)       SAI_META_LOG(SAI_LOG_LEVEL_INFO,     ":- %s: " format, __func__, ##__VA_ARGS__)
+#define SAI_META_LOG_NOTICE(format,...)     SAI_META_LOG(SAI_LOG_LEVEL_NOTICE,   ":- %s: " format, __func__, ##__VA_ARGS__)
+#define SAI_META_LOG_WARN(format,...)       SAI_META_LOG(SAI_LOG_LEVEL_WARN,     ":- %s: " format, __func__, ##__VA_ARGS__)
+#define SAI_META_LOG_ERROR(format,...)      SAI_META_LOG(SAI_LOG_LEVEL_ERROR,    ":- %s: " format, __func__, ##__VA_ARGS__)
+#define SAI_META_LOG_CRITICAL(format,...)   SAI_META_LOG(SAI_LOG_LEVEL_CRITICAL, ":- %s: " format, __func__, ##__VA_ARGS__)
+
+#define SAI_META_LOG_ENTER()                SAI_META_LOG(SAI_LOG_LEVEL_DEBUG, ":> %s: enter", __func__);
+#define SAI_META_LOG_EXIT()                 SAI_META_LOG(SAI_LOG_LEVEL_DEBUG, ":< %s: exit", __func__);
+
+#ifdef __cplusplus
+
+#undef  SAI_META_LOG_ENTER
+#undef  SAI_META_LOG_EXIT
+
+namespace sai {
+namespace meta {
+
+class ScopeLogger
+{
+    public:
+
+        ScopeLogger(char *file, int line, const char *func, const char *pretty)
+            : m_file(file), m_line(line), m_func(func), m_pretty(pretty)
+        {
+            if (SAI_LOG_LEVEL_DEBUG >= sai_meta_log_level)
+            {
+                if (sai_meta_log == NULL)
+                {
+                    fprintf(stderr, "%s:%d %s: :> %s: enter\n", m_file, m_line, m_func, m_func);
+                }
+                else
+                {
+                    sai_meta_log(SAI_LOG_LEVEL_DEBUG, m_file, m_line, m_func, ":> %s: enter", m_func);
+                }
+            } 
+        }
+
+        ~ScopeLogger()
+        {
+            if (SAI_LOG_LEVEL_DEBUG >= sai_meta_log_level)
+            {
+                if (sai_meta_log == NULL)
+                {
+                    fprintf(stderr, "%s:%d %s: :< %s: exit\n", m_file, m_line, m_func, m_func);
+                }
+                else
+                {
+                    sai_meta_log(SAI_LOG_LEVEL_DEBUG, m_file, m_line, m_func, ":< %s: exit", m_func);
+                }
+            } 
+        }
+
+    private:
+        const char *m_file;
+        const int   m_line;
+        const char *m_func;
+        const char *m_pretty;
+};
+
+} /* sai namespace */
+} /* meta namespace */
+
+#define SAI_META_LOG_ENTER() sai::meta::ScopeLogger logger ## __LINE__ (__FILE__, __LINE__, __func__, __PRETTY_FUNCTION__);
+#define SAI_META_LOG_EXIT()
+
+#endif
 
 /**
  * @}

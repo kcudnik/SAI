@@ -1917,6 +1917,27 @@ void check_attr_acl_field_or_action(
     }
 }
 
+void check_attr_allow_null(
+        _In_ const sai_attr_metadata_t* md)
+{
+    META_LOG_ENTER();
+
+    /*
+     * Purpose of this check is to find out if attribute which is mandatory on
+     * create allows null object id if so, then attribute should NOT be
+     * mandatory on create and should supporte default value which will be null
+     * object id.
+     */
+
+    if (HAS_FLAG_MANDATORY_ON_CREATE(md->flags))
+    {
+        if (md->allownullobjectid)
+        {
+            META_ASSERT_FAIL(md, "attribute allows null object id, but is mandatory on create, add default value instead");
+        }
+    }
+}
+
 void check_single_attribute(
         _In_ const sai_attr_metadata_t* md)
 {
@@ -1949,6 +1970,7 @@ void check_single_attribute(
     check_attr_reverse_graph(md);
     check_attr_acl_conditions(md);
     check_attr_acl_field_or_action(md);
+    check_attr_allow_null(md);
 
     define_attr(md);
 }
