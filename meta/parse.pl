@@ -2928,11 +2928,13 @@ sub CheckHeadersStyle
     # - wrong spacing idient
     #
 
+    # Acronyms and Abbreviations
+
     my @magicWords = qw/SAI IP MAC L2 ACL L3 GRE ECMP EEE FDB FD FEC ICMP I2C
         HW IEEE IP2ME L2MC LAG ARP ASIC BGP CAM CBS CB CIR CIDR CRC DLL CPU TTL
         TOS ECN DSCP TC MACST MTU NPU PFC PBS PCI PIR QOS RFC RFP SDK RSPAN
         ERSPAN SPAN SNMP SSH STP TCAM TCP UDP TPID UDF UOID VNI VR VRRP WCMP
-        WWW API CCITT RARP CFI MPLS IPMC RPF WRED XON XOFF NHLFE SG/;
+        WWW API CCITT RARP CFI MPLS IPMC RPF WRED XON XOFF NHLFE SG TLV/;
 
     # we could put that to local dictionary file
 
@@ -2946,7 +2948,7 @@ sub CheckHeadersStyle
         Samplepacket pkts Loopback linklocal lossless Mbps vlan ucast
         ingressing MCAST netdev AUTONEG decapsulation egressing functionalities
         rv subnet subnets Uninitialize versa VRFs Netdevice netdevs PGs CRC32
-        HQOS Wildcard VLANs VLAN2 SerDes FC Wakeup warmboot Inservice PVID PHY
+        HQOS Wildcard VLANs VLAN2 SerDes FC Wakeup warmboot Inservice PVID PHY TLVs
         metadata Metadata TODO Facebook OID OIDs deserialize
         fprintf struct stderr
         /;
