@@ -116,7 +116,8 @@ typedef enum _sai_mirror_session_attr_t
      * @flags CREATE_AND_SET
      * @isvlan false
      * @default 0x8100
-     * @validonly SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
+     * @validonly SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or
+     *            SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
      */
     SAI_MIRROR_SESSION_ATTR_VLAN_TPID,
 
@@ -126,7 +127,8 @@ typedef enum _sai_mirror_session_attr_t
      * @type sai_uint16_t
      * @flags MANDATORY_ON_CREATE | CREATE_AND_SET
      * @isvlan true
-     * @condition SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
+     * @condition SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or
+     *            SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
      */
     SAI_MIRROR_SESSION_ATTR_VLAN_ID,
 
@@ -136,7 +138,8 @@ typedef enum _sai_mirror_session_attr_t
      * @type sai_uint8_t
      * @flags CREATE_AND_SET
      * @default 0
-     * @validonly SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
+     * @validonly SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or
+     *            SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
      */
     SAI_MIRROR_SESSION_ATTR_VLAN_PRI,
 
@@ -146,7 +149,8 @@ typedef enum _sai_mirror_session_attr_t
      * @type sai_uint8_t
      * @flags CREATE_AND_SET
      * @default 0
-     * @validonly SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
+     * @validonly SAI_MIRROR_SESSION_ATTR_VLAN_HEADER_VALID == true or
+     *            SAI_MIRROR_SESSION_ATTR_TYPE == SAI_MIRROR_SESSION_TYPE_REMOTE
      */
     SAI_MIRROR_SESSION_ATTR_VLAN_CFI,
 

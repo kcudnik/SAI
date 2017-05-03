@@ -2608,46 +2608,6 @@ sub CreateListOfAllAttributes
     WriteHeader "extern const size_t sai_metadata_attr_sorted_by_id_name_count;";
 }
 
-sub CheckWhiteSpaceInHeaders
-{
-    my @headers = GetHeaderFiles();
-
-    for my $header (@headers)
-    {
-        my $data = ReadHeaderFile($header);
-
-        my @lines = split/\n/,$data;
-
-        my $n = 0;
-
-        for my $line (@lines)
-        {
-            $n++;
-            chomp $line;
-
-            if ($line =~/\s+$/)
-            {
-                LogError "line ends in whitespace $header $n: $line";
-            }
-
-            if ($line =~ /[^\x20-\x7e]/)
-            {
-                LogError "line contains non ascii characters $header $n: $line";
-            }
-
-            if ($line =~ /typedef .+?\(\s*\*\s*(\w+)\s*\)/)
-            {
-                my $fname = $1;
-
-                if (not $fname =~ /^sai_\w+_fn$/)
-                {
-                    LogError "all function declarations should be in format sai_\\w+_fn $header $n: $line";
-                }
-            }
-        }
-    }
-}
-
 sub CheckApiStructNames
 {
     #
@@ -2891,6 +2851,8 @@ sub CheckDoxygenCommentFormating
     {
         LogWarning "empty line between doxygen comment and definition: $file: $2";
     }
+
+    # TODO check if each line in doxygen comment starts with *
 }
 
 sub CheckFunctionNaming
@@ -3018,7 +2980,7 @@ sub CheckHeadersStyle
             }
             else { $emptydoxy = 0 }
 
-            if ($line =~ /^\s+\* / and not $line =~ /\*( {4}| {8}| )[^ ]/)
+            if ($line =~ /^\s+\* / and not $line =~ /\*( {4}| {8}| {12}| )[^ ]/)
             {
                 LogWarning "not expected number of spaces after * (1,4,8) $header $n:$line";
             }
@@ -3103,6 +3065,41 @@ sub CheckHeadersStyle
             if ($line =~ /sai_\w+_statistics_fn/)
             {
                 LogWarning "statistics should use 'stats' to follow convention $header:$n:$line";
+            }
+
+            if ($line =~/\s+$/)
+            {
+                LogWarning "line ends in whitespace $header $n: $line";
+            }
+
+            if ($line =~ /[^\x20-\x7e]/)
+            {
+                LogWarning "line contains non ascii characters $header $n: $line";
+            }
+
+            if ($line =~ /typedef .+?\(\s*\*\s*(\w+)\s*\)/)
+            {
+                my $fname = $1;
+
+                if (not $fname =~ /^sai_\w+_fn$/)
+                {
+                    LogWarning "all function declarations should be in format sai_\\w+_fn $header $n: $line";
+                }
+            }
+
+            my $condPattern = 'SAI_\w+\s+==\s+\S+';
+
+            if ($line =~ /$condPattern\s*or\s*$condPattern/)
+            {
+                LogWarning "conditions should be one per line $header $n: $line";
+            }
+
+            if ($line =~ /\*(\s+)$condPattern/)
+            {
+                if (length($1) != 12)
+                {
+                    LogWarning "condition should be aligned to 12 spaces $header $n: $line";
+                }
             }
 
             my $pattern = join"|",@magicWords;
@@ -3595,8 +3592,6 @@ CreateApisQuery();
 CreateObjectInfo();
 
 CreateListOfAllAttributes();
-
-CheckWhiteSpaceInHeaders();
 
 CheckApiStructNames();
 

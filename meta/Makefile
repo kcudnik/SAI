@@ -44,9 +44,6 @@ CFLAGS += -I../inc
 DEPS = $(wildcard ../inc/*.h)
 XMLDEPS = $(wildcard xml/*.xml)
 
-%.o: %.c $(DEPS)
-	gcc -c -o $@ $< $(CFLAGS) $(WARNINGS)
-
 all: saisanitycheck saimetadatatest saidepgraph.svg
 	./saimetadatatest > /dev/null
 	./saisanitycheck
@@ -82,7 +79,7 @@ saidepgraph.svg: saidepgraph.gv
 .PHONY: clean
 
 clean:
-	rm -f *.o *~ .*~ *.tmp .*.swp .*.swo *.bak sai*.gv sai*.svg
-	rm -f saimetadata.h saimetadata.c saimetadatatest.c
+	rm -f *.o *~ .*~ *.tmp .*.swp .*.swo *.bak
+	rm -f saimetadata.h saimetadata.c saimetadatatest.c saidepgraph.gv saidepgraph.svg
 	rm -f saisanitycheck saimetadatatest saidepgraphgen
 	rm -rf xml html dist
