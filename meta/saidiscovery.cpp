@@ -59,7 +59,7 @@ void discover(
 
     // TODO this is new object ! worth saving somewhere
 
-    const sai_object_type_info_t *info = 
+    const sai_object_type_info_t *info =
         sai_metadata_get_object_type_info(ot);
 
     /*
@@ -83,7 +83,7 @@ void discover(
         }
 
         /*
-         * Note that we don't care about ACL object id's since 
+         * Note that we don't care about ACL object id's since
          * we assume that there are no ACLs on switch after init.
          */
 
@@ -96,7 +96,7 @@ void discover(
             if (md->defaultvaluetype == SAI_DEFAULT_VALUE_TYPE_CONST)
             {
                 /*
-                 * This means that default value for this object is 
+                 * This means that default value for this object is
                  * SAI_NULL_OBJECT_ID, since this is discovery after
                  * create, we don't need to query this attribute.
                  */
@@ -112,12 +112,23 @@ void discover(
                  * We failed to get value, maybe it's not supported ?
                  */
 
-                SAI_META_LOG_WARN("failed to get atribute %s: %d", 
+                SAI_META_LOG_WARN("failed to get atribute %s: %d",
                         md->attridname,
                         status);
 
                 if (!md->isconditional)
                 {
+                    if (md->objecttype == SAI_OBJECT_TYPE_SWITCH &&
+                            md->attrid == SAI_SWITCH_ATTR_CPU_PORT)
+                    {
+                        /*
+                         * Since cpu port differs from other ports, just skip
+                         * not worth query, let other port define those.
+                         */
+
+                        continue;
+                    }
+
                     notWorthQuery[ot].insert(md->attrid);
                 }
 
@@ -131,8 +142,8 @@ void discover(
             if (md->defaultvaluetype == SAI_DEFAULT_VALUE_TYPE_EMPTY_LIST)
             {
                 /*
-                 * This means that default value for this object is 
-                 * SAI_NULL_OBJECT_ID, since this is discovery after
+                 * This means that default value for this object is
+                 * empty list, since this is discovery after
                  * create, we don't need to query this attribute.
                  */
 
@@ -150,7 +161,7 @@ void discover(
                  * We failed to get value, maybe it's not supported ?
                  */
 
-                SAI_META_LOG_WARN("failed to get %s: %d", 
+                SAI_META_LOG_WARN("failed to get %s: %d",
                         md->attridname,
                         status);
 
