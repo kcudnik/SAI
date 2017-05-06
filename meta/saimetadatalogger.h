@@ -50,7 +50,11 @@ typedef void (*sai_metadata_log_fn)(
         _In_ int line,
         _In_ const char *function,
         _In_ const char *format,
+#ifdef __GNUC__
+        _In_ ...) __attribute__ ((format (printf, 5, 6)));
+#else
         _In_ ...);
+#endif
 
 /**
  * @brief User specified log function.

@@ -2787,7 +2787,7 @@ sub CheckFunctionsParams
         next if $fname eq "sai_remove_all_neighbor_entries_fn"; # exception
 
         my @paramsFlags = lc($comment) =~ /\@param\[(\w+)]/gis;
-        my @fnparamsFlags = lc($fn) =~ /_(\w+)_.+?(?:\.\.\.|\w+)\s*[,\)]/gis;
+        my @fnparamsFlags = lc($fn) =~ /_(in|out|inout)_.+?(?:\.\.\.|\w+)\s*[,\)]/gis;
 
         if (not "@paramsFlags" eq "@fnparamsFlags")
         {
