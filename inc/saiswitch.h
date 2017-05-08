@@ -44,6 +44,115 @@
 #define SAI_MAX_FIRMWARE_PATH_NAME_LEN          PATH_MAX
 
 /**
+ * @def SAI_SWITCH_ATTR_MAX_KEY_STRING_LEN
+ * Maximum length of switch attribute key string that can be set using key=value
+ */
+#define SAI_SWITCH_ATTR_MAX_KEY_STRING_LEN    64
+
+/**
+ * @def SAI_SWITCH_ATTR_MAX_KEY_COUNT
+ * Maximum count of switch attribute keys
+ *
+ * @note This value needs to be incremented whenever a new switch attribute key
+ * is added.
+ */
+#define SAI_SWITCH_ATTR_MAX_KEY_COUNT         16
+
+/*
+ * List of switch attributes keys that can be set using key=value
+ */
+
+/**
+ * @def SAI_KEY_FDB_TABLE_SIZE
+ */
+#define SAI_KEY_FDB_TABLE_SIZE                    "SAI_FDB_TABLE_SIZE"
+
+/**
+ * @def SAI_KEY_L3_ROUTE_TABLE_SIZE
+ */
+#define SAI_KEY_L3_ROUTE_TABLE_SIZE               "SAI_L3_ROUTE_TABLE_SIZE"
+
+/**
+ * @def SAI_KEY_L3_NEIGHBOR_TABLE_SIZE
+ */
+#define SAI_KEY_L3_NEIGHBOR_TABLE_SIZE            "SAI_L3_NEIGHBOR_TABLE_SIZE"
+
+/**
+ * @def SAI_KEY_NUM_LAG_MEMBERS
+ */
+#define SAI_KEY_NUM_LAG_MEMBERS                   "SAI_NUM_LAG_MEMBERS"
+
+/**
+ * @def SAI_KEY_NUM_LAGS
+ */
+#define SAI_KEY_NUM_LAGS                          "SAI_NUM_LAGS"
+
+/**
+ * @def SAI_KEY_NUM_ECMP_MEMBERS
+ */
+#define SAI_KEY_NUM_ECMP_MEMBERS                  "SAI_NUM_ECMP_MEMBERS"
+
+/**
+ * @def SAI_KEY_NUM_ECMP_GROUPS
+ */
+#define SAI_KEY_NUM_ECMP_GROUPS                   "SAI_NUM_ECMP_GROUPS"
+
+/**
+ * @def SAI_KEY_NUM_UNICAST_QUEUES
+ */
+#define SAI_KEY_NUM_UNICAST_QUEUES                "SAI_NUM_UNICAST_QUEUES"
+
+/**
+ * @def SAI_KEY_NUM_MULTICAST_QUEUES
+ */
+#define SAI_KEY_NUM_MULTICAST_QUEUES              "SAI_NUM_MULTICAST_QUEUES"
+
+/**
+ * @def SAI_KEY_NUM_QUEUES
+ */
+#define SAI_KEY_NUM_QUEUES                        "SAI_NUM_QUEUES"
+
+/**
+ * @def SAI_KEY_NUM_CPU_QUEUES
+ */
+#define SAI_KEY_NUM_CPU_QUEUES                    "SAI_NUM_CPU_QUEUES"
+
+/**
+ * @def SAI_KEY_INIT_CONFIG_FILE
+ */
+#define SAI_KEY_INIT_CONFIG_FILE                  "SAI_INIT_CONFIG_FILE"
+
+/**
+ * @def SAI_KEY_BOOT_TYPE
+ *
+ * 0: cold boot. Initialize NPU and external phys.
+ * 1: warm boot. Do not re-initialize NPU or external phys, reconstruct SAI/SDK state from stored state.
+ * 2: fast boot. Only initialize NPU. SAI/SDK state should not be persisted except for those related
+ *    to physical port attributes such as SPEED, AUTONEG mode, admin state, operational status.
+ */
+#define SAI_KEY_BOOT_TYPE                         "SAI_BOOT_TYPE"
+
+/**
+ * @def SAI_KEY_WARM_BOOT_READ_FILE
+ * The file to recover SAI/NPU state from
+ */
+#define SAI_KEY_WARM_BOOT_READ_FILE               "SAI_WARM_BOOT_READ_FILE"
+
+/**
+ * @def SAI_KEY_WARM_BOOT_WRITE_FILE
+ * The file to write SAI/NPU state to
+ */
+#define SAI_KEY_WARM_BOOT_WRITE_FILE              "SAI_WARM_BOOT_WRITE_FILE"
+
+/**
+ * @def SAI_KEY_HW_PORT_PROFILE_ID_CONFIG_FILE
+ * Vendor specific Configuration file for Hardware Port Profile ID parameters.
+ * HW port profile ID can be used to set vendor specific port attributes based on
+ * the transceiver type plugged in to the port
+ */
+#define SAI_KEY_HW_PORT_PROFILE_ID_CONFIG_FILE    "SAI_HW_PORT_PROFILE_ID_CONFIG_FILE"
+
+/**
  * @brief Attribute data for #SAI_SWITCH_ATTR_OPER_STATUS
  */
 typedef enum _sai_switch_oper_status_t
@@ -1282,136 +1391,6 @@ typedef enum _sai_switch_attr_t
 } sai_switch_attr_t;
 
 /**
- * @def SAI_SWITCH_ATTR_MAX_KEY_STRING_LEN
- * Maximum length of switch attribute key string that can be set using key=value
- */
-#define SAI_SWITCH_ATTR_MAX_KEY_STRING_LEN    64
-
-/**
- * @def SAI_SWITCH_ATTR_MAX_KEY_COUNT
- * Maximum count of switch attribute keys
- *
- * @note This value needs to be incremented whenever a new switch attribute key
- * is added.
- */
-#define SAI_SWITCH_ATTR_MAX_KEY_COUNT         16
-
-/*
- * List of switch attributes keys that can be set using key=value
- */
-
-/**
- * @def SAI_KEY_FDB_TABLE_SIZE
- */
-#define SAI_KEY_FDB_TABLE_SIZE                    "SAI_FDB_TABLE_SIZE"
-
-/**
- * @def SAI_KEY_L3_ROUTE_TABLE_SIZE
- */
-#define SAI_KEY_L3_ROUTE_TABLE_SIZE               "SAI_L3_ROUTE_TABLE_SIZE"
-
-/**
- * @def SAI_KEY_L3_NEIGHBOR_TABLE_SIZE
- */
-#define SAI_KEY_L3_NEIGHBOR_TABLE_SIZE            "SAI_L3_NEIGHBOR_TABLE_SIZE"
-
-/**
- * @def SAI_KEY_NUM_LAG_MEMBERS
- */
-#define SAI_KEY_NUM_LAG_MEMBERS                   "SAI_NUM_LAG_MEMBERS"
-
-/**
- * @def SAI_KEY_NUM_LAGS
- */
-#define SAI_KEY_NUM_LAGS                          "SAI_NUM_LAGS"
-
-/**
- * @def SAI_KEY_NUM_ECMP_MEMBERS
- */
-#define SAI_KEY_NUM_ECMP_MEMBERS                  "SAI_NUM_ECMP_MEMBERS"
-
-/**
- * @def SAI_KEY_NUM_ECMP_GROUPS
- */
-#define SAI_KEY_NUM_ECMP_GROUPS                   "SAI_NUM_ECMP_GROUPS"
-
-/**
- * @def SAI_KEY_NUM_UNICAST_QUEUES
- */
-#define SAI_KEY_NUM_UNICAST_QUEUES                "SAI_NUM_UNICAST_QUEUES"
-
-/**
- * @def SAI_KEY_NUM_MULTICAST_QUEUES
- */
-#define SAI_KEY_NUM_MULTICAST_QUEUES              "SAI_NUM_MULTICAST_QUEUES"
-
-/**
- * @def SAI_KEY_NUM_QUEUES
- */
-#define SAI_KEY_NUM_QUEUES                        "SAI_NUM_QUEUES"
-
-/**
- * @def SAI_KEY_NUM_CPU_QUEUES
- */
-#define SAI_KEY_NUM_CPU_QUEUES                    "SAI_NUM_CPU_QUEUES"
-
-/**
- * @def SAI_KEY_INIT_CONFIG_FILE
- */
-#define SAI_KEY_INIT_CONFIG_FILE                  "SAI_INIT_CONFIG_FILE"
-
-/**
- * @def SAI_KEY_BOOT_TYPE
- *
- * 0: cold boot. Initialize NPU and external phys.
- * 1: warm boot. Do not re-initialize NPU or external phys, reconstruct SAI/SDK state from stored state.
- * 2: fast boot. Only initialize NPU. SAI/SDK state should not be persisted except for those related
- *    to physical port attributes such as SPEED, AUTONEG mode, admin state, operational status.
- */
-#define SAI_KEY_BOOT_TYPE                         "SAI_BOOT_TYPE"
-
-/**
- * @def SAI_KEY_WARM_BOOT_READ_FILE
- * The file to recover SAI/NPU state from
- */
-#define SAI_KEY_WARM_BOOT_READ_FILE               "SAI_WARM_BOOT_READ_FILE"
-
-/**
- * @def SAI_KEY_WARM_BOOT_WRITE_FILE
- * The file to write SAI/NPU state to
- */
-#define SAI_KEY_WARM_BOOT_WRITE_FILE              "SAI_WARM_BOOT_WRITE_FILE"
-
-/**
- * @def SAI_KEY_HW_PORT_PROFILE_ID_CONFIG_FILE
- * Vendor specific Configuration file for Hardware Port Profile ID parameters.
- * HW port profile ID can be used to set vendor specific port attributes based on
- * the transceiver type plugged in to the port
- */
-#define SAI_KEY_HW_PORT_PROFILE_ID_CONFIG_FILE    "SAI_HW_PORT_PROFILE_ID_CONFIG_FILE"
-
-/**
- * @brief Switch shutdown request callback.
- *
- * Adapter DLL may request a shutdown due to an unrecoverable failure
- * or a maintenance operation
- *
- * @param[in] switch_id Switch Id
- */
-typedef void (*sai_switch_shutdown_request_notification_fn)(
-        _In_ sai_object_id_t switch_id);
-
-/**
- * @brief Switch operational state change notification
- *
- * @param[in] switch_id Switch Id
- * @param[in] switch_oper_status New switch operational state
- */
-typedef void (*sai_switch_state_change_notification_fn)(
-        _In_ sai_object_id_t switch_id,
-        _In_ sai_switch_oper_status_t switch_oper_status);
-
-/**
  * @brief Create switch
  *
  * SDK initialization/connect to SDK. After the call the capability attributes should be
@@ -1466,6 +1445,27 @@ typedef sai_status_t (*sai_get_switch_attribute_fn)(
         _In_ sai_object_id_t switch_id,
         _In_ uint32_t attr_count,
         _Inout_ sai_attribute_t *attr_list);
+
+/**
+ * @brief Switch shutdown request callback.
+ *
+ * Adapter DLL may request a shutdown due to an unrecoverable failure
+ * or a maintenance operation
+ *
+ * @param[in] switch_id Switch Id
+ */
+typedef void (*sai_switch_shutdown_request_notification_fn)(
+        _In_ sai_object_id_t switch_id);
+
+/**
+ * @brief Switch operational state change notification
+ *
+ * @param[in] switch_id Switch Id
+ * @param[in] switch_oper_status New switch operational state
+ */
+typedef void (*sai_switch_state_change_notification_fn)(
+        _In_ sai_object_id_t switch_id,
+        _In_ sai_switch_oper_status_t switch_oper_status);
 
 /**
  * @brief Switch method table retrieved with sai_api_query()

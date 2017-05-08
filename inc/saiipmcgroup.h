@@ -73,44 +73,6 @@ typedef enum _sai_ipmc_group_attr_t
 
 } sai_ipmc_group_attr_t;
 
-typedef enum _sai_ipmc_group_member_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_IPMC_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief IPMC group id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_IPMC_GROUP
-     */
-    SAI_IPMC_GROUP_MEMBER_ATTR_IPMC_GROUP_ID = SAI_IPMC_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief IPMC output id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_ROUTER_INTERFACE, SAI_OBJECT_TYPE_TUNNEL
-     */
-    SAI_IPMC_GROUP_MEMBER_ATTR_IPMC_OUTPUT_ID,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_IPMC_GROUP_MEMBER_ATTR_END,
-
-    /** Custom range base value */
-    SAI_IPMC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START  = 0x10000000,
-
-    /** End of custom range base */
-    SAI_IPMC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
-
-} sai_ipmc_group_member_attr_t;
-
 /**
  * @brief Create IPMC group
  *
@@ -162,6 +124,44 @@ typedef sai_status_t (*sai_get_ipmc_group_attribute_fn)(
         _In_ sai_object_id_t ipmc_group_id,
         _In_ uint32_t attr_count,
         _Inout_ sai_attribute_t *attr_list);
+
+typedef enum _sai_ipmc_group_member_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_IPMC_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief IPMC group id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_IPMC_GROUP
+     */
+    SAI_IPMC_GROUP_MEMBER_ATTR_IPMC_GROUP_ID = SAI_IPMC_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief IPMC output id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_ROUTER_INTERFACE, SAI_OBJECT_TYPE_TUNNEL
+     */
+    SAI_IPMC_GROUP_MEMBER_ATTR_IPMC_OUTPUT_ID,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_IPMC_GROUP_MEMBER_ATTR_END,
+
+    /** Custom range base value */
+    SAI_IPMC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START  = 0x10000000,
+
+    /** End of custom range base */
+    SAI_IPMC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
+
+} sai_ipmc_group_member_attr_t;
 
 /**
  * @brief Create IPMC group member

@@ -34,6 +34,32 @@
  */
 
 /**
+ * @brief Unicast route entry
+ */
+typedef struct _sai_route_entry_t
+{
+    /**
+     * @brief Switch ID
+     *
+     * @objects SAI_OBJECT_TYPE_SWITCH
+     */
+    sai_object_id_t switch_id;
+
+    /**
+     * @brief Virtual Router ID
+     *
+     * @objects SAI_OBJECT_TYPE_VIRTUAL_ROUTER
+     */
+    sai_object_id_t vr_id;
+
+    /**
+     * @brief IP Prefix Destination
+     */
+    sai_ip_prefix_t destination;
+
+} sai_route_entry_t;
+
+/**
  * @brief Attribute Id for SAI route object
  */
 typedef enum _sai_route_entry_attr_t
@@ -110,32 +136,6 @@ typedef enum _sai_route_entry_attr_t
     SAI_ROUTE_ENTRY_ATTR_CUSTOM_RANGE_END
 
 } sai_route_entry_attr_t;
-
-/**
- * @brief Unicast route entry
- */
-typedef struct _sai_route_entry_t
-{
-    /**
-     * @brief Switch ID
-     *
-     * @objects SAI_OBJECT_TYPE_SWITCH
-     */
-    sai_object_id_t switch_id;
-
-    /**
-     * @brief Virtual Router ID
-     *
-     * @objects SAI_OBJECT_TYPE_VIRTUAL_ROUTER
-     */
-    sai_object_id_t vr_id;
-
-    /**
-     * @brief IP Prefix Destination
-     */
-    sai_ip_prefix_t destination;
-
-} sai_route_entry_t;
 
 /**
  * @brief Create Route

@@ -101,55 +101,6 @@ typedef enum _sai_stp_attr_t
 } sai_stp_attr_t;
 
 /**
- * @brief SAI attributes for STP
- */
-typedef enum _sai_stp_port_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_STP_PORT_ATTR_START,
-
-    /**
-     * @brief STP id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_STP
-     */
-    SAI_STP_PORT_ATTR_STP = SAI_STP_PORT_ATTR_START,
-
-    /**
-     * @brief Bridge Port id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_BRIDGE_PORT
-     */
-    SAI_STP_PORT_ATTR_BRIDGE_PORT,
-
-    /**
-     * @brief STP port state
-     *
-     * @type sai_stp_port_state_t
-     * @flags MANDATORY_ON_CREATE | CREATE_AND_SET
-     */
-    SAI_STP_PORT_ATTR_STATE,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_STP_PORT_ATTR_END,
-
-    /** Custom range base value */
-    SAI_STP_PORT_ATTR_CUSTOM_RANGE_START = 0x10000000,
-
-    /** End of custom range base */
-    SAI_STP_PORT_ATTR_CUSTOM_RANGE_END
-
-} sai_stp_port_attr_t;
-
-/**
  * @brief Create STP instance with default port state as blocking.
  *
  * @param[out] stp_id STP instance id
@@ -203,6 +154,55 @@ typedef sai_status_t (*sai_get_stp_attribute_fn)(
         _In_ sai_object_id_t stp_id,
         _In_ uint32_t attr_count,
         _Inout_ sai_attribute_t *attr_list);
+
+/**
+ * @brief SAI attributes for STP
+ */
+typedef enum _sai_stp_port_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_STP_PORT_ATTR_START,
+
+    /**
+     * @brief STP id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_STP
+     */
+    SAI_STP_PORT_ATTR_STP = SAI_STP_PORT_ATTR_START,
+
+    /**
+     * @brief Bridge Port id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_BRIDGE_PORT
+     */
+    SAI_STP_PORT_ATTR_BRIDGE_PORT,
+
+    /**
+     * @brief STP port state
+     *
+     * @type sai_stp_port_state_t
+     * @flags MANDATORY_ON_CREATE | CREATE_AND_SET
+     */
+    SAI_STP_PORT_ATTR_STATE,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_STP_PORT_ATTR_END,
+
+    /** Custom range base value */
+    SAI_STP_PORT_ATTR_CUSTOM_RANGE_START = 0x10000000,
+
+    /** End of custom range base */
+    SAI_STP_PORT_ATTR_CUSTOM_RANGE_END
+
+} sai_stp_port_attr_t;
 
 /**
  * @brief Create STP port object

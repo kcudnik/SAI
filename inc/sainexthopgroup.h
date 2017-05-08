@@ -93,53 +93,6 @@ typedef enum _sai_next_hop_group_attr_t
 
 } sai_next_hop_group_attr_t;
 
-typedef enum _sai_next_hop_group_member_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief Next hop group id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_NEXT_HOP_GROUP
-     */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_NEXT_HOP_GROUP_ID = SAI_NEXT_HOP_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief Next hop id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_NEXT_HOP
-     */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_NEXT_HOP_ID,
-
-    /**
-     * @brief Member weights
-     *
-     * @type sai_uint32_t
-     * @flags CREATE_AND_SET
-     * @default 1
-     */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_WEIGHT,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_END,
-
-    /** Custom range base value */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START  = 0x10000000,
-
-    /** End of custom range base */
-    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
-
-} sai_next_hop_group_member_attr_t;
-
 /**
  * @brief Create next hop group
  *
@@ -191,6 +144,53 @@ typedef sai_status_t (*sai_get_next_hop_group_attribute_fn)(
         _In_ sai_object_id_t next_hop_group_id,
         _In_ uint32_t attr_count,
         _Inout_ sai_attribute_t *attr_list);
+
+typedef enum _sai_next_hop_group_member_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief Next hop group id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_NEXT_HOP_GROUP
+     */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_NEXT_HOP_GROUP_ID = SAI_NEXT_HOP_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief Next hop id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_NEXT_HOP
+     */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_NEXT_HOP_ID,
+
+    /**
+     * @brief Member weights
+     *
+     * @type sai_uint32_t
+     * @flags CREATE_AND_SET
+     * @default 1
+     */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_WEIGHT,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_END,
+
+    /** Custom range base value */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START  = 0x10000000,
+
+    /** End of custom range base */
+    SAI_NEXT_HOP_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
+
+} sai_next_hop_group_member_attr_t;
 
 /**
  * @brief Create next hop group member

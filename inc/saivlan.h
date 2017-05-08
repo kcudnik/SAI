@@ -67,6 +67,28 @@ typedef enum _sai_vlan_mcast_lookup_key_type_t
 } sai_vlan_mcast_lookup_key_type_t;
 
 /**
+ * @brief VLAN counter IDs in sai_get_vlan_stats() call
+ */
+typedef enum _sai_vlan_stat_t
+{
+    SAI_VLAN_STAT_IN_OCTETS,
+    SAI_VLAN_STAT_IN_PACKETS,
+    SAI_VLAN_STAT_IN_UCAST_PKTS,
+    SAI_VLAN_STAT_IN_NON_UCAST_PKTS,
+    SAI_VLAN_STAT_IN_DISCARDS,
+    SAI_VLAN_STAT_IN_ERRORS,
+    SAI_VLAN_STAT_IN_UNKNOWN_PROTOS,
+    SAI_VLAN_STAT_OUT_OCTETS,
+    SAI_VLAN_STAT_OUT_PACKETS,
+    SAI_VLAN_STAT_OUT_UCAST_PKTS,
+    SAI_VLAN_STAT_OUT_NON_UCAST_PKTS,
+    SAI_VLAN_STAT_OUT_DISCARDS,
+    SAI_VLAN_STAT_OUT_ERRORS,
+    SAI_VLAN_STAT_OUT_QLEN
+
+} sai_vlan_stat_t;
+
+/**
  * @brief Attribute Id in sai_set_vlan_attribute() and
  * sai_get_vlan_attribute() calls
  */
@@ -277,80 +299,6 @@ typedef enum _sai_vlan_attr_t
 } sai_vlan_attr_t;
 
 /**
- * @brief List of VLAN Member Attributes
- */
-typedef enum _sai_vlan_member_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_VLAN_MEMBER_ATTR_START,
-
-    /**
-     * @brief VLAN ID
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_VLAN
-     */
-    SAI_VLAN_MEMBER_ATTR_VLAN_ID = SAI_VLAN_MEMBER_ATTR_START,
-
-    /**
-     * @brief Bridge port ID.
-     *
-     * Valid only for .1Q bridge ports.
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_BRIDGE_PORT
-     */
-    SAI_VLAN_MEMBER_ATTR_BRIDGE_PORT_ID,
-
-    /**
-     * @brief VLAN tagging mode
-     *
-     * @type sai_vlan_tagging_mode_t
-     * @flags CREATE_AND_SET
-     * @default SAI_VLAN_TAGGING_MODE_UNTAGGED
-     */
-    SAI_VLAN_MEMBER_ATTR_VLAN_TAGGING_MODE,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_VLAN_MEMBER_ATTR_END,
-
-    /** Custom range base value */
-    SAI_VLAN_MEMBER_ATTR_CUSTOM_RANGE_START = 0x10000000,
-
-    /** End of custom range base */
-    SAI_VLAN_MEMBER_ATTR_CUSTOM_RANGE_END
-
-} sai_vlan_member_attr_t;
-
-/**
- * @brief VLAN counter IDs in sai_get_vlan_stats() call
- */
-typedef enum _sai_vlan_stat_t
-{
-    SAI_VLAN_STAT_IN_OCTETS,
-    SAI_VLAN_STAT_IN_PACKETS,
-    SAI_VLAN_STAT_IN_UCAST_PKTS,
-    SAI_VLAN_STAT_IN_NON_UCAST_PKTS,
-    SAI_VLAN_STAT_IN_DISCARDS,
-    SAI_VLAN_STAT_IN_ERRORS,
-    SAI_VLAN_STAT_IN_UNKNOWN_PROTOS,
-    SAI_VLAN_STAT_OUT_OCTETS,
-    SAI_VLAN_STAT_OUT_PACKETS,
-    SAI_VLAN_STAT_OUT_UCAST_PKTS,
-    SAI_VLAN_STAT_OUT_NON_UCAST_PKTS,
-    SAI_VLAN_STAT_OUT_DISCARDS,
-    SAI_VLAN_STAT_OUT_ERRORS,
-    SAI_VLAN_STAT_OUT_QLEN
-
-} sai_vlan_stat_t;
-
-/**
  * @brief Create a VLAN
  *
  * @param[out] vlan_id VLAN ID
@@ -401,6 +349,58 @@ typedef sai_status_t (*sai_get_vlan_attribute_fn)(
         _In_ sai_object_id_t vlan_id,
         _In_ uint32_t attr_count,
         _Inout_ sai_attribute_t *attr_list);
+
+/**
+ * @brief List of VLAN Member Attributes
+ */
+typedef enum _sai_vlan_member_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_VLAN_MEMBER_ATTR_START,
+
+    /**
+     * @brief VLAN ID
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_VLAN
+     */
+    SAI_VLAN_MEMBER_ATTR_VLAN_ID = SAI_VLAN_MEMBER_ATTR_START,
+
+    /**
+     * @brief Bridge port ID.
+     *
+     * Valid only for .1Q bridge ports.
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_BRIDGE_PORT
+     */
+    SAI_VLAN_MEMBER_ATTR_BRIDGE_PORT_ID,
+
+    /**
+     * @brief VLAN tagging mode
+     *
+     * @type sai_vlan_tagging_mode_t
+     * @flags CREATE_AND_SET
+     * @default SAI_VLAN_TAGGING_MODE_UNTAGGED
+     */
+    SAI_VLAN_MEMBER_ATTR_VLAN_TAGGING_MODE,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_VLAN_MEMBER_ATTR_END,
+
+    /** Custom range base value */
+    SAI_VLAN_MEMBER_ATTR_CUSTOM_RANGE_START = 0x10000000,
+
+    /** End of custom range base */
+    SAI_VLAN_MEMBER_ATTR_CUSTOM_RANGE_END
+
+} sai_vlan_member_attr_t;
 
 /**
  * @brief Create VLAN Member

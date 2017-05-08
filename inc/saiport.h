@@ -82,19 +82,6 @@ typedef enum _sai_port_oper_status_t
 } sai_port_oper_status_t;
 
 /**
- * @brief Defines the operational status of the port
- */
-typedef struct _sai_port_oper_status_notification_t
-{
-    /** Port id */
-    sai_object_id_t port_id;
-
-    /** Port operational status */
-    sai_port_oper_status_t port_state;
-
-} sai_port_oper_status_notification_t;
-
-/**
  * @brief Attribute data for #SAI_PORT_ATTR_GLOBAL_FLOW_CONTROL_MODE
  */
 typedef enum _sai_port_flow_control_mode_t
@@ -180,6 +167,420 @@ typedef enum _sai_port_fec_mode_t
     /** Enable FC-FEC - 10G, 25G, 40G, 50G ports */
     SAI_PORT_FEC_MODE_FC,
 } sai_port_fec_mode_t;
+
+/**
+ * @brief Port counter IDs in sai_get_port_stats() call
+ */
+typedef enum _sai_port_stat_t
+{
+    /** SAI port stat if in octets */
+    SAI_PORT_STAT_IF_IN_OCTETS,
+
+    /** SAI port stat if in ucast pkts */
+    SAI_PORT_STAT_IF_IN_UCAST_PKTS,
+
+    /** SAI port stat if in non ucast pkts */
+    SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS,
+
+    /** SAI port stat if in discards */
+    SAI_PORT_STAT_IF_IN_DISCARDS,
+
+    /** SAI port stat if in errors */
+    SAI_PORT_STAT_IF_IN_ERRORS,
+
+    /** SAI port stat if in unknown protocols */
+    SAI_PORT_STAT_IF_IN_UNKNOWN_PROTOS,
+
+    /** SAI port stat if in broadcast pkts */
+    SAI_PORT_STAT_IF_IN_BROADCAST_PKTS,
+
+    /** SAI port stat if in multicast pkts */
+    SAI_PORT_STAT_IF_IN_MULTICAST_PKTS,
+
+    /** SAI port stat if in vlan discards */
+    SAI_PORT_STAT_IF_IN_VLAN_DISCARDS,
+
+    /** SAI port stat if out octets */
+    SAI_PORT_STAT_IF_OUT_OCTETS,
+
+    /** SAI port stat if out ucast pkts */
+    SAI_PORT_STAT_IF_OUT_UCAST_PKTS,
+
+    /** SAI port stat if out non ucast pkts */
+    SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS,
+
+    /** SAI port stat if out discards */
+    SAI_PORT_STAT_IF_OUT_DISCARDS,
+
+    /** SAI port stat if out errors */
+    SAI_PORT_STAT_IF_OUT_ERRORS,
+
+    /** SAI port stat if out queue length */
+    SAI_PORT_STAT_IF_OUT_QLEN,
+
+    /** SAI port stat if out broadcast pkts */
+    SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS,
+
+    /** SAI port stat if out multicast pkts */
+    SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS,
+
+    /** SAI port stat ether stats drop events */
+    SAI_PORT_STAT_ETHER_STATS_DROP_EVENTS,
+
+    /** SAI port stat ether stats multicast pkts */
+    SAI_PORT_STAT_ETHER_STATS_MULTICAST_PKTS,
+
+    /** SAI port stat ether stats broadcast pkts */
+    SAI_PORT_STAT_ETHER_STATS_BROADCAST_PKTS,
+
+    /** SAI port stat ether stats undersized pkts */
+    SAI_PORT_STAT_ETHER_STATS_UNDERSIZE_PKTS,
+
+    /** SAI port stat ether stats fragments */
+    SAI_PORT_STAT_ETHER_STATS_FRAGMENTS,
+
+    /** SAI port stat ether stats pkts 64 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_64_OCTETS,
+
+    /** SAI port stat ether stats pkts 65 to 127 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_65_TO_127_OCTETS,
+
+    /** SAI port stat ether stats pkts 128 to 255 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_128_TO_255_OCTETS,
+
+    /** SAI port stat ether stats pkts 256 to 511 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_256_TO_511_OCTETS,
+
+    /** SAI port stat ether stats pkts 512 to 1023 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_512_TO_1023_OCTETS,
+
+    /** SAI port stat ether stats pkts 1024 to 1518 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_1024_TO_1518_OCTETS,
+
+    /** SAI port stat ether stats pkts 1519 to 2047 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_1519_TO_2047_OCTETS,
+
+    /** SAI port stat ether stats pkts 2048 to 4095 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_2048_TO_4095_OCTETS,
+
+    /** SAI port stat ether stats pkts 4096 to 9216 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_4096_TO_9216_OCTETS,
+
+    /** SAI port stat ether stats pkts 9217 to 16383 octets */
+    SAI_PORT_STAT_ETHER_STATS_PKTS_9217_TO_16383_OCTETS,
+
+    /** SAI port stat ether stats oversize pkts */
+    SAI_PORT_STAT_ETHER_STATS_OVERSIZE_PKTS,
+
+    /** SAI port stat ether rx oversize pkts */
+    SAI_PORT_STAT_ETHER_RX_OVERSIZE_PKTS,
+
+    /** SAI port stat ether tx oversize pkts */
+    SAI_PORT_STAT_ETHER_TX_OVERSIZE_PKTS,
+
+    /** SAI port stat ether stats jabbers */
+    SAI_PORT_STAT_ETHER_STATS_JABBERS,
+
+    /** SAI port stat ether stats octets */
+    SAI_PORT_STAT_ETHER_STATS_OCTETS,
+
+    /** SAI port stat ether stats pkts */
+    SAI_PORT_STAT_ETHER_STATS_PKTS,
+
+    /** SAI port stat ether stats collisions */
+    SAI_PORT_STAT_ETHER_STATS_COLLISIONS,
+
+    /** SAI port stat ether stats CRC align errors */
+    SAI_PORT_STAT_ETHER_STATS_CRC_ALIGN_ERRORS,
+
+    /** SAI port stat ether stats tx no errors */
+    SAI_PORT_STAT_ETHER_STATS_TX_NO_ERRORS,
+
+    /** SAI port stat ether stats rx no errors */
+    SAI_PORT_STAT_ETHER_STATS_RX_NO_ERRORS,
+
+    /** SAI port stat IP in receives */
+    SAI_PORT_STAT_IP_IN_RECEIVES,
+
+    /** SAI port stat IP in octets */
+    SAI_PORT_STAT_IP_IN_OCTETS,
+
+    /** SAI port stat IP in ucast pkts */
+    SAI_PORT_STAT_IP_IN_UCAST_PKTS,
+
+    /** SAI port stat IP in non ucast pkts */
+    SAI_PORT_STAT_IP_IN_NON_UCAST_PKTS,
+
+    /** SAI port stat IP in discards */
+    SAI_PORT_STAT_IP_IN_DISCARDS,
+
+    /** SAI port stat IP out octets */
+    SAI_PORT_STAT_IP_OUT_OCTETS,
+
+    /** SAI port stat IP out ucast pkts */
+    SAI_PORT_STAT_IP_OUT_UCAST_PKTS,
+
+    /** SAI port stat IP out non ucast pkts */
+    SAI_PORT_STAT_IP_OUT_NON_UCAST_PKTS,
+
+    /** SAI port stat IP out discards */
+    SAI_PORT_STAT_IP_OUT_DISCARDS,
+
+    /** SAI port stat IPv6 in receives */
+    SAI_PORT_STAT_IPV6_IN_RECEIVES,
+
+    /** SAI port stat IPv6 in octets */
+    SAI_PORT_STAT_IPV6_IN_OCTETS,
+
+    /** SAI port stat IPv6 in ucast pkts */
+    SAI_PORT_STAT_IPV6_IN_UCAST_PKTS,
+
+    /** SAI port stat IPv6 in non ucast pkts */
+    SAI_PORT_STAT_IPV6_IN_NON_UCAST_PKTS,
+
+    /** SAI port stat IPv6 in mcast pkts */
+    SAI_PORT_STAT_IPV6_IN_MCAST_PKTS,
+
+    /** SAI port stat IPv6 in discards */
+    SAI_PORT_STAT_IPV6_IN_DISCARDS,
+
+    /** SAI port stat IPv6 out octets */
+    SAI_PORT_STAT_IPV6_OUT_OCTETS,
+
+    /** SAI port stat IPv6 out ucast pkts */
+    SAI_PORT_STAT_IPV6_OUT_UCAST_PKTS,
+
+    /** SAI port stat IPv6 out non ucast pkts */
+    SAI_PORT_STAT_IPV6_OUT_NON_UCAST_PKTS,
+
+    /** SAI port stat IPv6 out mcast pkts */
+    SAI_PORT_STAT_IPV6_OUT_MCAST_PKTS,
+
+    /** SAI port stat IPv6 out discards */
+    SAI_PORT_STAT_IPV6_OUT_DISCARDS,
+
+    /** Get/set WRED green packet count [uint64_t] */
+    SAI_PORT_STAT_GREEN_DISCARD_DROPPED_PACKETS,
+
+    /** Get/set WRED green byte count [uint64_t] */
+    SAI_PORT_STAT_GREEN_DISCARD_DROPPED_BYTES,
+
+    /** Get/set WRED yellow packet count [uint64_t] */
+    SAI_PORT_STAT_YELLOW_DISCARD_DROPPED_PACKETS,
+
+    /** Get/set WRED yellow byte count [uint64_t] */
+    SAI_PORT_STAT_YELLOW_DISCARD_DROPPED_BYTES,
+
+    /** Get/set WRED red packet count [uint64_t] */
+    SAI_PORT_STAT_RED_DISCARD_DROPPED_PACKETS,
+
+    /** Get/set WRED red byte count [uint64_t] */
+    SAI_PORT_STAT_RED_DISCARD_DROPPED_BYTES,
+
+    /** Get/set WRED dropped packets count [uint64_t] */
+    SAI_PORT_STAT_DISCARD_DROPPED_PACKETS,
+
+    /** Get/set WRED dropped bytes count [uint64_t] */
+    SAI_PORT_STAT_DISCARD_DROPPED_BYTES,
+
+    /** Get/set packets marked by ECN count [uint64_t] */
+    SAI_PORT_STAT_ECN_MARKED_PACKETS,
+
+    /** Packet size based packets count rt stat ether in pkts 64 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_64_OCTETS,
+
+    /** SAI port stat ether in pkts 65 to 127 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_65_TO_127_OCTETS,
+
+    /** SAI port stat ether in pkts 128 to 255 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_128_TO_255_OCTETS,
+
+    /** SAI port stat ether in pkts 256 to 511 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_256_TO_511_OCTETS,
+
+    /** SAI port stat ether in pkts 512 to 1023 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_512_TO_1023_OCTETS,
+
+    /** SAI port stat ether in pkts 1024 to 1518 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_1024_TO_1518_OCTETS,
+
+    /** SAI port stat ether in pkts 1519 to 2047 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_1519_TO_2047_OCTETS,
+
+    /** SAI port stat ether in pkts 2048 to 4095 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_2048_TO_4095_OCTETS,
+
+    /** SAI port stat ether in pkts 4096 to 9216 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_4096_TO_9216_OCTETS,
+
+    /** SAI port stat ether in pkts 9217 to 16383 octets */
+    SAI_PORT_STAT_ETHER_IN_PKTS_9217_TO_16383_OCTETS,
+
+    /** SAI port stat ether out pkts 64 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_64_OCTETS,
+
+    /** SAI port stat ether out pkts 65 to 127 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_65_TO_127_OCTETS,
+
+    /** SAI port stat ether out pkts 128 to 255 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_128_TO_255_OCTETS,
+
+    /** SAI port stat ether out pkts 256 to 511 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_256_TO_511_OCTETS,
+
+    /** SAI port stat ether out pkts 512 to 1023 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_512_TO_1023_OCTETS,
+
+    /** SAI port stat ether out pkts 1024 to 1518 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_1024_TO_1518_OCTETS,
+
+    /** SAI port stat ether out pkts 1519 to 2047 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_1519_TO_2047_OCTETS,
+
+    /** SAI port stat ether out pkts 2048 to 4095 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_2048_TO_4095_OCTETS,
+
+    /** SAI port stat ether out pkts 4096 to 9216 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_4096_TO_9216_OCTETS,
+
+    /** SAI port stat ether out pkts 9217 to 16383 octets */
+    SAI_PORT_STAT_ETHER_OUT_PKTS_9217_TO_16383_OCTETS,
+
+    /** Get in port current occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_IN_CURR_OCCUPANCY_BYTES,
+
+    /** Get in port watermark occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_IN_WATERMARK_BYTES,
+
+    /** Get in port current shared occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_IN_SHARED_CURR_OCCUPANCY_BYTES,
+
+    /** Get in port watermark shared occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_IN_SHARED_WATERMARK_BYTES,
+
+    /** Get out port current occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_OUT_CURR_OCCUPANCY_BYTES,
+
+    /** Get out port watermark occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_OUT_WATERMARK_BYTES,
+
+    /** Get out port current shared occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_OUT_SHARED_CURR_OCCUPANCY_BYTES,
+
+    /** Get out port watermark shared occupancy in bytes [uint64_t] */
+    SAI_PORT_STAT_OUT_SHARED_WATERMARK_BYTES,
+
+    /** Get in port packet drops due to buffers [uint64_t] */
+    SAI_PORT_STAT_IN_DROPPED_PKTS,
+
+    /** Get out port packet drops due to buffers [uint64_t] */
+    SAI_PORT_STAT_OUT_DROPPED_PKTS,
+
+    /** Get the number of pause frames received on the port [uint64_t] */
+    SAI_PORT_STAT_PAUSE_RX_PKTS,
+
+    /** Get the number of pause frames transmitted on the port [uint64_t] */
+    SAI_PORT_STAT_PAUSE_TX_PKTS,
+
+    /** PFC Packet Counters for RX and TX per PFC priority [uint64_t] */
+    SAI_PORT_STAT_PFC_0_RX_PKTS,
+
+    /** SAI port stat PFC 0 tx pkts */
+    SAI_PORT_STAT_PFC_0_TX_PKTS,
+
+    /** SAI port stat PFC 1 rx pkts */
+    SAI_PORT_STAT_PFC_1_RX_PKTS,
+
+    /** SAI port stat PFC 1 tx pkts */
+    SAI_PORT_STAT_PFC_1_TX_PKTS,
+
+    /** SAI port stat PFC 2 rx pkts */
+    SAI_PORT_STAT_PFC_2_RX_PKTS,
+
+    /** SAI port stat PFC 2 tx pkts */
+    SAI_PORT_STAT_PFC_2_TX_PKTS,
+
+    /** SAI port stat PFC 3 rx pkts */
+    SAI_PORT_STAT_PFC_3_RX_PKTS,
+
+    /** SAI port stat PFC 3 tx pkts */
+    SAI_PORT_STAT_PFC_3_TX_PKTS,
+
+    /** SAI port stat PFC 4 rx pkts */
+    SAI_PORT_STAT_PFC_4_RX_PKTS,
+
+    /** SAI port stat PFC 4 tx pkts */
+    SAI_PORT_STAT_PFC_4_TX_PKTS,
+
+    /** SAI port stat PFC 5 rx pkts */
+    SAI_PORT_STAT_PFC_5_RX_PKTS,
+
+    /** SAI port stat PFC 5 tx pkts */
+    SAI_PORT_STAT_PFC_5_TX_PKTS,
+
+    /** SAI port stat PFC 6 rx pkts */
+    SAI_PORT_STAT_PFC_6_RX_PKTS,
+
+    /** SAI port stat PFC 6 tx pkts */
+    SAI_PORT_STAT_PFC_6_TX_PKTS,
+
+    /** SAI port stat PFC 7 rx pkts */
+    SAI_PORT_STAT_PFC_7_RX_PKTS,
+
+    /** SAI port stat PFC 7 tx pkts */
+    SAI_PORT_STAT_PFC_7_TX_PKTS,
+
+    /** PFC based ON to OFF pause transitions counter per PFC priority [uint64_t] */
+    SAI_PORT_STAT_PFC_0_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 1 on to off rx pkts */
+    SAI_PORT_STAT_PFC_1_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 2 on to off rx pkts */
+    SAI_PORT_STAT_PFC_2_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 3 on to off rx pkts */
+    SAI_PORT_STAT_PFC_3_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 4 on to off rx pkts */
+    SAI_PORT_STAT_PFC_4_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 5 on to off rx pkts */
+    SAI_PORT_STAT_PFC_5_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 6 on to off rx pkts */
+    SAI_PORT_STAT_PFC_6_ON2OFF_RX_PKTS,
+
+    /** SAI port stat PFC 7 on to off rx pkts */
+    SAI_PORT_STAT_PFC_7_ON2OFF_RX_PKTS,
+
+    /**
+     * @brief Number of times port state changed from
+     * high power mode to low power mode in TX direction [uint64_t]
+     */
+    SAI_PORT_STAT_EEE_TX_EVENT_COUNT,
+
+    /**
+     * @brief Number of times port state changed from
+     * high power mode to low power mode in RX direction [uint64_t]
+     */
+    SAI_PORT_STAT_EEE_RX_EVENT_COUNT,
+
+    /**
+     * @brief Port Low power mode duration(micro secs) in TX direction [uint64_t].
+     *
+     * This Duration is accumulative since EEE enable on port/from last clear stats.
+     */
+    SAI_PORT_STAT_EEE_TX_DURATION,
+
+    /**
+     * @brief Port Low power mode duration(micro secs) in RX direction [uint64_t]
+     *
+     * This Duration is accumulative since EEE enable on port/from last clear stats.
+     */
+    SAI_PORT_STAT_EEE_RX_DURATION,
+
+} sai_port_stat_t;
 
 /**
  * @brief Attribute Id in sai_set_port_attribute() and
@@ -1054,420 +1455,6 @@ typedef enum _sai_port_attr_t
 } sai_port_attr_t;
 
 /**
- * @brief Port counter IDs in sai_get_port_stats() call
- */
-typedef enum _sai_port_stat_t
-{
-    /** SAI port stat if in octets */
-    SAI_PORT_STAT_IF_IN_OCTETS,
-
-    /** SAI port stat if in ucast pkts */
-    SAI_PORT_STAT_IF_IN_UCAST_PKTS,
-
-    /** SAI port stat if in non ucast pkts */
-    SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS,
-
-    /** SAI port stat if in discards */
-    SAI_PORT_STAT_IF_IN_DISCARDS,
-
-    /** SAI port stat if in errors */
-    SAI_PORT_STAT_IF_IN_ERRORS,
-
-    /** SAI port stat if in unknown protocols */
-    SAI_PORT_STAT_IF_IN_UNKNOWN_PROTOS,
-
-    /** SAI port stat if in broadcast pkts */
-    SAI_PORT_STAT_IF_IN_BROADCAST_PKTS,
-
-    /** SAI port stat if in multicast pkts */
-    SAI_PORT_STAT_IF_IN_MULTICAST_PKTS,
-
-    /** SAI port stat if in vlan discards */
-    SAI_PORT_STAT_IF_IN_VLAN_DISCARDS,
-
-    /** SAI port stat if out octets */
-    SAI_PORT_STAT_IF_OUT_OCTETS,
-
-    /** SAI port stat if out ucast pkts */
-    SAI_PORT_STAT_IF_OUT_UCAST_PKTS,
-
-    /** SAI port stat if out non ucast pkts */
-    SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS,
-
-    /** SAI port stat if out discards */
-    SAI_PORT_STAT_IF_OUT_DISCARDS,
-
-    /** SAI port stat if out errors */
-    SAI_PORT_STAT_IF_OUT_ERRORS,
-
-    /** SAI port stat if out queue length */
-    SAI_PORT_STAT_IF_OUT_QLEN,
-
-    /** SAI port stat if out broadcast pkts */
-    SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS,
-
-    /** SAI port stat if out multicast pkts */
-    SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS,
-
-    /** SAI port stat ether stats drop events */
-    SAI_PORT_STAT_ETHER_STATS_DROP_EVENTS,
-
-    /** SAI port stat ether stats multicast pkts */
-    SAI_PORT_STAT_ETHER_STATS_MULTICAST_PKTS,
-
-    /** SAI port stat ether stats broadcast pkts */
-    SAI_PORT_STAT_ETHER_STATS_BROADCAST_PKTS,
-
-    /** SAI port stat ether stats undersized pkts */
-    SAI_PORT_STAT_ETHER_STATS_UNDERSIZE_PKTS,
-
-    /** SAI port stat ether stats fragments */
-    SAI_PORT_STAT_ETHER_STATS_FRAGMENTS,
-
-    /** SAI port stat ether stats pkts 64 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_64_OCTETS,
-
-    /** SAI port stat ether stats pkts 65 to 127 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_65_TO_127_OCTETS,
-
-    /** SAI port stat ether stats pkts 128 to 255 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_128_TO_255_OCTETS,
-
-    /** SAI port stat ether stats pkts 256 to 511 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_256_TO_511_OCTETS,
-
-    /** SAI port stat ether stats pkts 512 to 1023 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_512_TO_1023_OCTETS,
-
-    /** SAI port stat ether stats pkts 1024 to 1518 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_1024_TO_1518_OCTETS,
-
-    /** SAI port stat ether stats pkts 1519 to 2047 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_1519_TO_2047_OCTETS,
-
-    /** SAI port stat ether stats pkts 2048 to 4095 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_2048_TO_4095_OCTETS,
-
-    /** SAI port stat ether stats pkts 4096 to 9216 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_4096_TO_9216_OCTETS,
-
-    /** SAI port stat ether stats pkts 9217 to 16383 octets */
-    SAI_PORT_STAT_ETHER_STATS_PKTS_9217_TO_16383_OCTETS,
-
-    /** SAI port stat ether stats oversize pkts */
-    SAI_PORT_STAT_ETHER_STATS_OVERSIZE_PKTS,
-
-    /** SAI port stat ether rx oversize pkts */
-    SAI_PORT_STAT_ETHER_RX_OVERSIZE_PKTS,
-
-    /** SAI port stat ether tx oversize pkts */
-    SAI_PORT_STAT_ETHER_TX_OVERSIZE_PKTS,
-
-    /** SAI port stat ether stats jabbers */
-    SAI_PORT_STAT_ETHER_STATS_JABBERS,
-
-    /** SAI port stat ether stats octets */
-    SAI_PORT_STAT_ETHER_STATS_OCTETS,
-
-    /** SAI port stat ether stats pkts */
-    SAI_PORT_STAT_ETHER_STATS_PKTS,
-
-    /** SAI port stat ether stats collisions */
-    SAI_PORT_STAT_ETHER_STATS_COLLISIONS,
-
-    /** SAI port stat ether stats CRC align errors */
-    SAI_PORT_STAT_ETHER_STATS_CRC_ALIGN_ERRORS,
-
-    /** SAI port stat ether stats tx no errors */
-    SAI_PORT_STAT_ETHER_STATS_TX_NO_ERRORS,
-
-    /** SAI port stat ether stats rx no errors */
-    SAI_PORT_STAT_ETHER_STATS_RX_NO_ERRORS,
-
-    /** SAI port stat IP in receives */
-    SAI_PORT_STAT_IP_IN_RECEIVES,
-
-    /** SAI port stat IP in octets */
-    SAI_PORT_STAT_IP_IN_OCTETS,
-
-    /** SAI port stat IP in ucast pkts */
-    SAI_PORT_STAT_IP_IN_UCAST_PKTS,
-
-    /** SAI port stat IP in non ucast pkts */
-    SAI_PORT_STAT_IP_IN_NON_UCAST_PKTS,
-
-    /** SAI port stat IP in discards */
-    SAI_PORT_STAT_IP_IN_DISCARDS,
-
-    /** SAI port stat IP out octets */
-    SAI_PORT_STAT_IP_OUT_OCTETS,
-
-    /** SAI port stat IP out ucast pkts */
-    SAI_PORT_STAT_IP_OUT_UCAST_PKTS,
-
-    /** SAI port stat IP out non ucast pkts */
-    SAI_PORT_STAT_IP_OUT_NON_UCAST_PKTS,
-
-    /** SAI port stat IP out discards */
-    SAI_PORT_STAT_IP_OUT_DISCARDS,
-
-    /** SAI port stat IPv6 in receives */
-    SAI_PORT_STAT_IPV6_IN_RECEIVES,
-
-    /** SAI port stat IPv6 in octets */
-    SAI_PORT_STAT_IPV6_IN_OCTETS,
-
-    /** SAI port stat IPv6 in ucast pkts */
-    SAI_PORT_STAT_IPV6_IN_UCAST_PKTS,
-
-    /** SAI port stat IPv6 in non ucast pkts */
-    SAI_PORT_STAT_IPV6_IN_NON_UCAST_PKTS,
-
-    /** SAI port stat IPv6 in mcast pkts */
-    SAI_PORT_STAT_IPV6_IN_MCAST_PKTS,
-
-    /** SAI port stat IPv6 in discards */
-    SAI_PORT_STAT_IPV6_IN_DISCARDS,
-
-    /** SAI port stat IPv6 out octets */
-    SAI_PORT_STAT_IPV6_OUT_OCTETS,
-
-    /** SAI port stat IPv6 out ucast pkts */
-    SAI_PORT_STAT_IPV6_OUT_UCAST_PKTS,
-
-    /** SAI port stat IPv6 out non ucast pkts */
-    SAI_PORT_STAT_IPV6_OUT_NON_UCAST_PKTS,
-
-    /** SAI port stat IPv6 out mcast pkts */
-    SAI_PORT_STAT_IPV6_OUT_MCAST_PKTS,
-
-    /** SAI port stat IPv6 out discards */
-    SAI_PORT_STAT_IPV6_OUT_DISCARDS,
-
-    /** Get/set WRED green packet count [uint64_t] */
-    SAI_PORT_STAT_GREEN_DISCARD_DROPPED_PACKETS,
-
-    /** Get/set WRED green byte count [uint64_t] */
-    SAI_PORT_STAT_GREEN_DISCARD_DROPPED_BYTES,
-
-    /** Get/set WRED yellow packet count [uint64_t] */
-    SAI_PORT_STAT_YELLOW_DISCARD_DROPPED_PACKETS,
-
-    /** Get/set WRED yellow byte count [uint64_t] */
-    SAI_PORT_STAT_YELLOW_DISCARD_DROPPED_BYTES,
-
-    /** Get/set WRED red packet count [uint64_t] */
-    SAI_PORT_STAT_RED_DISCARD_DROPPED_PACKETS,
-
-    /** Get/set WRED red byte count [uint64_t] */
-    SAI_PORT_STAT_RED_DISCARD_DROPPED_BYTES,
-
-    /** Get/set WRED dropped packets count [uint64_t] */
-    SAI_PORT_STAT_DISCARD_DROPPED_PACKETS,
-
-    /** Get/set WRED dropped bytes count [uint64_t] */
-    SAI_PORT_STAT_DISCARD_DROPPED_BYTES,
-
-    /** Get/set packets marked by ECN count [uint64_t] */
-    SAI_PORT_STAT_ECN_MARKED_PACKETS,
-
-    /** Packet size based packets count rt stat ether in pkts 64 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_64_OCTETS,
-
-    /** SAI port stat ether in pkts 65 to 127 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_65_TO_127_OCTETS,
-
-    /** SAI port stat ether in pkts 128 to 255 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_128_TO_255_OCTETS,
-
-    /** SAI port stat ether in pkts 256 to 511 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_256_TO_511_OCTETS,
-
-    /** SAI port stat ether in pkts 512 to 1023 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_512_TO_1023_OCTETS,
-
-    /** SAI port stat ether in pkts 1024 to 1518 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_1024_TO_1518_OCTETS,
-
-    /** SAI port stat ether in pkts 1519 to 2047 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_1519_TO_2047_OCTETS,
-
-    /** SAI port stat ether in pkts 2048 to 4095 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_2048_TO_4095_OCTETS,
-
-    /** SAI port stat ether in pkts 4096 to 9216 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_4096_TO_9216_OCTETS,
-
-    /** SAI port stat ether in pkts 9217 to 16383 octets */
-    SAI_PORT_STAT_ETHER_IN_PKTS_9217_TO_16383_OCTETS,
-
-    /** SAI port stat ether out pkts 64 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_64_OCTETS,
-
-    /** SAI port stat ether out pkts 65 to 127 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_65_TO_127_OCTETS,
-
-    /** SAI port stat ether out pkts 128 to 255 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_128_TO_255_OCTETS,
-
-    /** SAI port stat ether out pkts 256 to 511 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_256_TO_511_OCTETS,
-
-    /** SAI port stat ether out pkts 512 to 1023 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_512_TO_1023_OCTETS,
-
-    /** SAI port stat ether out pkts 1024 to 1518 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_1024_TO_1518_OCTETS,
-
-    /** SAI port stat ether out pkts 1519 to 2047 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_1519_TO_2047_OCTETS,
-
-    /** SAI port stat ether out pkts 2048 to 4095 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_2048_TO_4095_OCTETS,
-
-    /** SAI port stat ether out pkts 4096 to 9216 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_4096_TO_9216_OCTETS,
-
-    /** SAI port stat ether out pkts 9217 to 16383 octets */
-    SAI_PORT_STAT_ETHER_OUT_PKTS_9217_TO_16383_OCTETS,
-
-    /** Get in port current occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_IN_CURR_OCCUPANCY_BYTES,
-
-    /** Get in port watermark occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_IN_WATERMARK_BYTES,
-
-    /** Get in port current shared occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_IN_SHARED_CURR_OCCUPANCY_BYTES,
-
-    /** Get in port watermark shared occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_IN_SHARED_WATERMARK_BYTES,
-
-    /** Get out port current occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_OUT_CURR_OCCUPANCY_BYTES,
-
-    /** Get out port watermark occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_OUT_WATERMARK_BYTES,
-
-    /** Get out port current shared occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_OUT_SHARED_CURR_OCCUPANCY_BYTES,
-
-    /** Get out port watermark shared occupancy in bytes [uint64_t] */
-    SAI_PORT_STAT_OUT_SHARED_WATERMARK_BYTES,
-
-    /** Get in port packet drops due to buffers [uint64_t] */
-    SAI_PORT_STAT_IN_DROPPED_PKTS,
-
-    /** Get out port packet drops due to buffers [uint64_t] */
-    SAI_PORT_STAT_OUT_DROPPED_PKTS,
-
-    /** Get the number of pause frames received on the port [uint64_t] */
-    SAI_PORT_STAT_PAUSE_RX_PKTS,
-
-    /** Get the number of pause frames transmitted on the port [uint64_t] */
-    SAI_PORT_STAT_PAUSE_TX_PKTS,
-
-    /** PFC Packet Counters for RX and TX per PFC priority [uint64_t] */
-    SAI_PORT_STAT_PFC_0_RX_PKTS,
-
-    /** SAI port stat PFC 0 tx pkts */
-    SAI_PORT_STAT_PFC_0_TX_PKTS,
-
-    /** SAI port stat PFC 1 rx pkts */
-    SAI_PORT_STAT_PFC_1_RX_PKTS,
-
-    /** SAI port stat PFC 1 tx pkts */
-    SAI_PORT_STAT_PFC_1_TX_PKTS,
-
-    /** SAI port stat PFC 2 rx pkts */
-    SAI_PORT_STAT_PFC_2_RX_PKTS,
-
-    /** SAI port stat PFC 2 tx pkts */
-    SAI_PORT_STAT_PFC_2_TX_PKTS,
-
-    /** SAI port stat PFC 3 rx pkts */
-    SAI_PORT_STAT_PFC_3_RX_PKTS,
-
-    /** SAI port stat PFC 3 tx pkts */
-    SAI_PORT_STAT_PFC_3_TX_PKTS,
-
-    /** SAI port stat PFC 4 rx pkts */
-    SAI_PORT_STAT_PFC_4_RX_PKTS,
-
-    /** SAI port stat PFC 4 tx pkts */
-    SAI_PORT_STAT_PFC_4_TX_PKTS,
-
-    /** SAI port stat PFC 5 rx pkts */
-    SAI_PORT_STAT_PFC_5_RX_PKTS,
-
-    /** SAI port stat PFC 5 tx pkts */
-    SAI_PORT_STAT_PFC_5_TX_PKTS,
-
-    /** SAI port stat PFC 6 rx pkts */
-    SAI_PORT_STAT_PFC_6_RX_PKTS,
-
-    /** SAI port stat PFC 6 tx pkts */
-    SAI_PORT_STAT_PFC_6_TX_PKTS,
-
-    /** SAI port stat PFC 7 rx pkts */
-    SAI_PORT_STAT_PFC_7_RX_PKTS,
-
-    /** SAI port stat PFC 7 tx pkts */
-    SAI_PORT_STAT_PFC_7_TX_PKTS,
-
-    /** PFC based ON to OFF pause transitions counter per PFC priority [uint64_t] */
-    SAI_PORT_STAT_PFC_0_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 1 on to off rx pkts */
-    SAI_PORT_STAT_PFC_1_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 2 on to off rx pkts */
-    SAI_PORT_STAT_PFC_2_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 3 on to off rx pkts */
-    SAI_PORT_STAT_PFC_3_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 4 on to off rx pkts */
-    SAI_PORT_STAT_PFC_4_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 5 on to off rx pkts */
-    SAI_PORT_STAT_PFC_5_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 6 on to off rx pkts */
-    SAI_PORT_STAT_PFC_6_ON2OFF_RX_PKTS,
-
-    /** SAI port stat PFC 7 on to off rx pkts */
-    SAI_PORT_STAT_PFC_7_ON2OFF_RX_PKTS,
-
-    /**
-     * @brief Number of times port state changed from
-     * high power mode to low power mode in TX direction [uint64_t]
-     */
-    SAI_PORT_STAT_EEE_TX_EVENT_COUNT,
-
-    /**
-     * @brief Number of times port state changed from
-     * high power mode to low power mode in RX direction [uint64_t]
-     */
-    SAI_PORT_STAT_EEE_RX_EVENT_COUNT,
-
-    /**
-     * @brief Port Low power mode duration(micro secs) in TX direction [uint64_t].
-     *
-     * This Duration is accumulative since EEE enable on port/from last clear stats.
-     */
-    SAI_PORT_STAT_EEE_TX_DURATION,
-
-    /**
-     * @brief Port Low power mode duration(micro secs) in RX direction [uint64_t]
-     *
-     * This Duration is accumulative since EEE enable on port/from last clear stats.
-     */
-    SAI_PORT_STAT_EEE_RX_DURATION,
-
-} sai_port_stat_t;
-
-/**
  * @brief Create port
  *
  * @param[out] port_id Port id
@@ -1558,6 +1545,19 @@ typedef sai_status_t (*sai_clear_port_stats_fn)(
  */
 typedef sai_status_t (*sai_clear_port_all_stats_fn)(
         _In_ sai_object_id_t port_id);
+
+/**
+ * @brief Defines the operational status of the port
+ */
+typedef struct _sai_port_oper_status_notification_t
+{
+    /** Port id */
+    sai_object_id_t port_id;
+
+    /** Port operational status */
+    sai_port_oper_status_t port_state;
+
+} sai_port_oper_status_notification_t;
 
 /**
  * @brief Port state change notification

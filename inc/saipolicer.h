@@ -85,6 +85,40 @@ typedef enum _sai_policer_color_source_t
 } sai_policer_color_source_t;
 
 /**
+ * @brief Enum defining policer statistics
+ */
+typedef enum _sai_policer_stat_t
+{
+    /** Get/set packet count [uint64_t] */
+    SAI_POLICER_STAT_PACKETS = 0x00000000,
+
+    /** Get/set byte count [uint64_t] */
+    SAI_POLICER_STAT_ATTR_BYTES = 0x00000001,
+
+    /** Get/set green packet count [uint64_t] */
+    SAI_POLICER_STAT_GREEN_PACKETS = 0x00000002,
+
+    /** Get/set green byte count [uint64_t] */
+    SAI_POLICER_STAT_GREEN_BYTES = 0x00000003,
+
+    /** Get/set yellow packet count [uint64_t] */
+    SAI_POLICER_STAT_YELLOW_PACKETS = 0x00000004,
+
+    /** Get/set yellow byte count [uint64_t] */
+    SAI_POLICER_STAT_YELLOW_BYTES = 0x00000005,
+
+    /** Get/set red packet count [uint64_t] */
+    SAI_POLICER_STAT_RED_PACKETS = 0x00000006,
+
+    /** Get/set red byte count [uint64_t] */
+    SAI_POLICER_STAT_RED_BYTES = 0x00000007,
+
+    /** Custom range base value */
+    SAI_POLICER_STAT_CUSTOM_RANGE_BASE = 0x10000000
+
+} sai_policer_stat_t;
+
+/**
  * @brief Enum defining Policer Attributes
  */
 typedef enum _sai_policer_attr_t
@@ -211,40 +245,6 @@ typedef enum _sai_policer_attr_t
     SAI_POLICER_ATTR_CUSTOM_RANGE_END
 
 } sai_policer_attr_t;
-
-/**
- * @brief Enum defining policer statistics
- */
-typedef enum _sai_policer_stat_t
-{
-    /** Get/set packet count [uint64_t] */
-    SAI_POLICER_STAT_PACKETS = 0x00000000,
-
-    /** Get/set byte count [uint64_t] */
-    SAI_POLICER_STAT_ATTR_BYTES = 0x00000001,
-
-    /** Get/set green packet count [uint64_t] */
-    SAI_POLICER_STAT_GREEN_PACKETS = 0x00000002,
-
-    /** Get/set green byte count [uint64_t] */
-    SAI_POLICER_STAT_GREEN_BYTES = 0x00000003,
-
-    /** Get/set yellow packet count [uint64_t] */
-    SAI_POLICER_STAT_YELLOW_PACKETS = 0x00000004,
-
-    /** Get/set yellow byte count [uint64_t] */
-    SAI_POLICER_STAT_YELLOW_BYTES = 0x00000005,
-
-    /** Get/set red packet count [uint64_t] */
-    SAI_POLICER_STAT_RED_PACKETS = 0x00000006,
-
-    /** Get/set red byte count [uint64_t] */
-    SAI_POLICER_STAT_RED_BYTES = 0x00000007,
-
-    /** Custom range base value */
-    SAI_POLICER_STAT_CUSTOM_RANGE_BASE = 0x10000000
-
-} sai_policer_stat_t;
 
 /**
  * @brief Create Policer

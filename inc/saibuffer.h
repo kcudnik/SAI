@@ -34,6 +34,43 @@
  */
 
 /**
+ * @brief Enum defining statistics for ingress priority group.
+ */
+typedef enum _sai_ingress_priority_group_stat_t
+{
+    /** Get rx packets count [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS = 0x00000000,
+
+    /** Get rx bytes count [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES = 0x00000001,
+
+    /** Get current pg occupancy in bytes [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES = 0x00000002,
+
+    /** Get watermark pg occupancy in bytes [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES = 0x00000003,
+
+    /** Get current pg shared occupancy in bytes [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES = 0x00000004,
+
+    /** Get watermark pg shared occupancy in bytes [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_WATERMARK_BYTES = 0x00000005,
+
+    /** Get current pg XOFF room occupancy in bytes [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES = 0x00000006,
+
+    /** Get watermark pg XOFF room occupancy in bytes [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_WATERMARK_BYTES = 0x00000007,
+
+    /** Get dropped packets count [uint64_t] */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS = 0x00000008,
+
+    /** Custom range base value */
+    SAI_INGRESS_PRIORITY_GROUP_STAT_CUSTOM_RANGE_BASE = 0x10000000
+
+} sai_ingress_priority_group_stat_t;
+
+/**
  * @brief Enum defining ingress priority group attributes.
  */
 typedef enum _sai_ingress_priority_group_attr_t
@@ -85,43 +122,6 @@ typedef enum _sai_ingress_priority_group_attr_t
     SAI_INGRESS_PRIORITY_GROUP_ATTR_CUSTOM_RANGE_END
 
 } sai_ingress_priority_group_attr_t;
-
-/**
- * @brief Enum defining statistics for ingress priority group.
- */
-typedef enum _sai_ingress_priority_group_stat_t
-{
-    /** Get rx packets count [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS = 0x00000000,
-
-    /** Get rx bytes count [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES = 0x00000001,
-
-    /** Get current pg occupancy in bytes [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES = 0x00000002,
-
-    /** Get watermark pg occupancy in bytes [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES = 0x00000003,
-
-    /** Get current pg shared occupancy in bytes [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES = 0x00000004,
-
-    /** Get watermark pg shared occupancy in bytes [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_WATERMARK_BYTES = 0x00000005,
-
-    /** Get current pg XOFF room occupancy in bytes [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES = 0x00000006,
-
-    /** Get watermark pg XOFF room occupancy in bytes [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_WATERMARK_BYTES = 0x00000007,
-
-    /** Get dropped packets count [uint64_t] */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS = 0x00000008,
-
-    /** Custom range base value */
-    SAI_INGRESS_PRIORITY_GROUP_STAT_CUSTOM_RANGE_BASE = 0x10000000
-
-} sai_ingress_priority_group_stat_t;
 
 /**
  * @brief Create ingress priority group
@@ -232,6 +232,25 @@ typedef enum _sai_buffer_pool_threshold_mode_t
 } sai_buffer_pool_threshold_mode_t;
 
 /**
+ * @brief Enum defining statistics for buffer pool.
+ */
+typedef enum _sai_buffer_pool_stat_t
+{
+    /** Get current pool occupancy in bytes [uint64_t] */
+    SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES = 0x00000000,
+
+    /** Get watermark pool occupancy in bytes [uint64_t] */
+    SAI_BUFFER_POOL_STAT_WATERMARK_BYTES = 0x00000001,
+
+    /** Get count of packets dropped in this pool [uint64_t] */
+    SAI_BUFFER_POOL_STAT_DROPPED_PACKETS = 0x00000002,
+
+    /** Custom range base value */
+    SAI_BUFFER_POOL_STAT_CUSTOM_RANGE_BASE = 0x10000000
+
+} sai_buffer_pool_stat_t;
+
+/**
  * @brief Enum defining buffer pool attributes.
  */
 typedef enum _sai_buffer_pool_attr_t
@@ -300,25 +319,6 @@ typedef enum _sai_buffer_pool_attr_t
     SAI_BUFFER_POOL_ATTR_CUSTOM_RANGE_END
 
 } sai_buffer_pool_attr_t;
-
-/**
- * @brief Enum defining statistics for buffer pool.
- */
-typedef enum _sai_buffer_pool_stat_t
-{
-    /** Get current pool occupancy in bytes [uint64_t] */
-    SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES = 0x00000000,
-
-    /** Get watermark pool occupancy in bytes [uint64_t] */
-    SAI_BUFFER_POOL_STAT_WATERMARK_BYTES = 0x00000001,
-
-    /** Get count of packets dropped in this pool [uint64_t] */
-    SAI_BUFFER_POOL_STAT_DROPPED_PACKETS = 0x00000002,
-
-    /** Custom range base value */
-    SAI_BUFFER_POOL_STAT_CUSTOM_RANGE_BASE = 0x10000000
-
-} sai_buffer_pool_stat_t;
 
 /**
  * @brief Create buffer pool

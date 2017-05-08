@@ -124,6 +124,58 @@ typedef enum _sai_udf_attr_t
 } sai_udf_attr_t;
 
 /**
+ * @brief Create UDF
+ *
+ * @param[out] udf_id UDF id
+ * @param[in] switch_id Switch id
+ * @param[in] attr_count Number of attributes
+ * @param[in] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_create_udf_fn)(
+        _Out_ sai_object_id_t *udf_id,
+        _In_ sai_object_id_t switch_id,
+        _In_ uint32_t attr_count,
+        _In_ const sai_attribute_t *attr_list);
+
+/**
+ * @brief Remove UDF
+ *
+ * @param[in] udf_id UDF id
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_remove_udf_fn)(
+        _In_ sai_object_id_t udf_id);
+
+/**
+ * @brief Set UDF attribute
+ *
+ * @param[in] udf_id UDF id
+ * @param[in] attr Attribute
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_set_udf_attribute_fn)(
+        _In_ sai_object_id_t udf_id,
+        _In_ const sai_attribute_t *attr);
+
+/**
+ * @brief Get UDF attribute value
+ *
+ * @param[in] udf_id UDF id
+ * @param[in] attr_count Number of attributes
+ * @param[inout] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_get_udf_attribute_fn)(
+        _In_ sai_object_id_t udf_id,
+        _In_ uint32_t attr_count,
+        _Inout_ sai_attribute_t *attr_list);
+
+/**
  * @brief Attribute id for UDF match
  */
 typedef enum _sai_udf_match_attr_t
@@ -189,6 +241,58 @@ typedef enum _sai_udf_match_attr_t
     SAI_UDF_MATCH_ATTR_CUSTOM_RANGE_END
 
 } sai_udf_match_attr_t;
+
+/**
+ * @brief Create UDF match
+ *
+ * @param[out] udf_match_id UDF match id
+ * @param[in] switch_id Switch id
+ * @param[in] attr_count Number of attributes
+ * @param[in] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_create_udf_match_fn)(
+        _Out_ sai_object_id_t *udf_match_id,
+        _In_ sai_object_id_t switch_id,
+        _In_ uint32_t attr_count,
+        _In_ const sai_attribute_t *attr_list);
+
+/**
+ * @brief Remove UDF match
+ *
+ * @param[in] udf_match_id UDF match id
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_remove_udf_match_fn)(
+        _In_ sai_object_id_t udf_match_id);
+
+/**
+ * @brief Set UDF match attribute
+ *
+ * @param[in] udf_match_id UDF match id
+ * @param[in] attr Attribute
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_set_udf_match_attribute_fn)(
+        _In_ sai_object_id_t udf_match_id,
+        _In_ const sai_attribute_t *attr);
+
+/**
+ * @brief Get UDF match attribute value
+ *
+ * @param[in] udf_match_id UDF match id
+ * @param[in] attr_count Number of attributes
+ * @param[inout] attr_list List of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_get_udf_match_attribute_fn)(
+        _In_ sai_object_id_t udf_match_id,
+        _In_ uint32_t attr_count,
+        _Inout_ sai_attribute_t *attr_list);
 
 /**
  * @brief UDF group type.
@@ -258,110 +362,6 @@ typedef enum _sai_udf_group_attr_t
     SAI_UDF_GROUP_ATTR_CUSTOM_RANGE_END
 
 } sai_udf_group_attr_t;
-
-/**
- * @brief Create UDF
- *
- * @param[out] udf_id UDF id
- * @param[in] switch_id Switch id
- * @param[in] attr_count Number of attributes
- * @param[in] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_create_udf_fn)(
-        _Out_ sai_object_id_t *udf_id,
-        _In_ sai_object_id_t switch_id,
-        _In_ uint32_t attr_count,
-        _In_ const sai_attribute_t *attr_list);
-
-/**
- * @brief Remove UDF
- *
- * @param[in] udf_id UDF id
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_remove_udf_fn)(
-        _In_ sai_object_id_t udf_id);
-
-/**
- * @brief Set UDF attribute
- *
- * @param[in] udf_id UDF id
- * @param[in] attr Attribute
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_set_udf_attribute_fn)(
-        _In_ sai_object_id_t udf_id,
-        _In_ const sai_attribute_t *attr);
-
-/**
- * @brief Get UDF attribute value
- *
- * @param[in] udf_id UDF id
- * @param[in] attr_count Number of attributes
- * @param[inout] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_get_udf_attribute_fn)(
-        _In_ sai_object_id_t udf_id,
-        _In_ uint32_t attr_count,
-        _Inout_ sai_attribute_t *attr_list);
-
-/**
- * @brief Create UDF match
- *
- * @param[out] udf_match_id UDF match id
- * @param[in] switch_id Switch id
- * @param[in] attr_count Number of attributes
- * @param[in] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_create_udf_match_fn)(
-        _Out_ sai_object_id_t *udf_match_id,
-        _In_ sai_object_id_t switch_id,
-        _In_ uint32_t attr_count,
-        _In_ const sai_attribute_t *attr_list);
-
-/**
- * @brief Remove UDF match
- *
- * @param[in] udf_match_id UDF match id
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_remove_udf_match_fn)(
-        _In_ sai_object_id_t udf_match_id);
-
-/**
- * @brief Set UDF match attribute
- *
- * @param[in] udf_match_id UDF match id
- * @param[in] attr Attribute
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_set_udf_match_attribute_fn)(
-        _In_ sai_object_id_t udf_match_id,
-        _In_ const sai_attribute_t *attr);
-
-/**
- * @brief Get UDF match attribute value
- *
- * @param[in] udf_match_id UDF match id
- * @param[in] attr_count Number of attributes
- * @param[inout] attr_list List of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_get_udf_match_attribute_fn)(
-        _In_ sai_object_id_t udf_match_id,
-        _In_ uint32_t attr_count,
-        _Inout_ sai_attribute_t *attr_list);
 
 /**
  * @brief Create UDF group

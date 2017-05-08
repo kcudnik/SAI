@@ -47,6 +47,25 @@ typedef enum _sai_fdb_entry_type_t
 } sai_fdb_entry_type_t;
 
 /**
+ * @brief FDB event type
+ */
+typedef enum _sai_fdb_event_t
+{
+    /** New FDB entry learned */
+    SAI_FDB_EVENT_LEARNED,
+
+    /** FDB entry aged */
+    SAI_FDB_EVENT_AGED,
+
+    /** FDB entry move */
+    SAI_FDB_EVENT_MOVE,
+
+    /** FDB entry flushed */
+    SAI_FDB_EVENT_FLUSHED,
+
+} sai_fdb_event_t;
+
+/**
  * @brief FDB entry key
  */
 typedef struct _sai_fdb_entry_t
@@ -69,25 +88,6 @@ typedef struct _sai_fdb_entry_t
     sai_object_id_t bv_id;
 
 } sai_fdb_entry_t;
-
-/**
- * @brief FDB event type
- */
-typedef enum _sai_fdb_event_t
-{
-    /** New FDB entry learned */
-    SAI_FDB_EVENT_LEARNED,
-
-    /** FDB entry aged */
-    SAI_FDB_EVENT_AGED,
-
-    /** FDB entry move */
-    SAI_FDB_EVENT_MOVE,
-
-    /** FDB entry flushed */
-    SAI_FDB_EVENT_FLUSHED,
-
-} sai_fdb_event_t;
 
 /**
  * @brief Attribute Id for FDB entry
@@ -166,6 +166,56 @@ typedef enum _sai_fdb_entry_attr_t
 } sai_fdb_entry_attr_t;
 
 /**
+ * @brief Create FDB entry
+ *
+ * @param[in] fdb_entry FDB entry
+ * @param[in] attr_count Number of attributes
+ * @param[in] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_create_fdb_entry_fn)(
+        _In_ const sai_fdb_entry_t *fdb_entry,
+        _In_ uint32_t attr_count,
+        _In_ const sai_attribute_t *attr_list);
+
+/**
+ * @brief Remove FDB entry
+ *
+ * @param[in] fdb_entry FDB entry
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_remove_fdb_entry_fn)(
+        _In_ const sai_fdb_entry_t *fdb_entry);
+
+/**
+ * @brief Set FDB entry attribute value
+ *
+ * @param[in] fdb_entry FDB entry
+ * @param[in] attr Attribute
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_set_fdb_entry_attribute_fn)(
+        _In_ const sai_fdb_entry_t *fdb_entry,
+        _In_ const sai_attribute_t *attr);
+
+/**
+ * @brief Get FDB entry attribute value
+ *
+ * @param[in] fdb_entry FDB entry
+ * @param[in] attr_count Number of attributes
+ * @param[inout] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_get_fdb_entry_attribute_fn)(
+        _In_ const sai_fdb_entry_t *fdb_entry,
+        _In_ uint32_t attr_count,
+        _Inout_ sai_attribute_t *attr_list);
+
+/**
  * @brief FDB Flush entry type.
  */
 typedef enum _sai_fdb_flush_entry_type_t
@@ -177,6 +227,25 @@ typedef enum _sai_fdb_flush_entry_type_t
     SAI_FDB_FLUSH_ENTRY_TYPE_STATIC,
 
 } sai_fdb_flush_entry_type_t;
+
+/**
+ * @brief Notification data format received from SAI FDB callback
+ */
+typedef struct _sai_fdb_event_notification_data_t
+{
+    /** Event type */
+    sai_fdb_event_t event_type;
+
+    /** FDB entry */
+    sai_fdb_entry_t fdb_entry;
+
+    /** Attributes count */
+    uint32_t attr_count;
+
+    /** Attributes */
+    sai_attribute_t *attr;
+
+} sai_fdb_event_notification_data_t;
 
 /**
  * @brief Attribute for FDB flush API to specify the type of FDB entries being flushed.
@@ -245,75 +314,6 @@ typedef enum _sai_fdb_flush_attr_t
     SAI_FDB_FLUSH_ATTR_CUSTOM_RANGE_END
 
 } sai_fdb_flush_attr_t;
-
-/**
- * @brief Notification data format received from SAI FDB callback
- */
-typedef struct _sai_fdb_event_notification_data_t
-{
-    /** Event type */
-    sai_fdb_event_t event_type;
-
-    /** FDB entry */
-    sai_fdb_entry_t fdb_entry;
-
-    /** Attributes count */
-    uint32_t attr_count;
-
-    /** Attributes */
-    sai_attribute_t *attr;
-
-} sai_fdb_event_notification_data_t;
-
-/**
- * @brief Create FDB entry
- *
- * @param[in] fdb_entry FDB entry
- * @param[in] attr_count Number of attributes
- * @param[in] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_create_fdb_entry_fn)(
-        _In_ const sai_fdb_entry_t *fdb_entry,
-        _In_ uint32_t attr_count,
-        _In_ const sai_attribute_t *attr_list);
-
-/**
- * @brief Remove FDB entry
- *
- * @param[in] fdb_entry FDB entry
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_remove_fdb_entry_fn)(
-        _In_ const sai_fdb_entry_t *fdb_entry);
-
-/**
- * @brief Set FDB entry attribute value
- *
- * @param[in] fdb_entry FDB entry
- * @param[in] attr Attribute
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_set_fdb_entry_attribute_fn)(
-        _In_ const sai_fdb_entry_t *fdb_entry,
-        _In_ const sai_attribute_t *attr);
-
-/**
- * @brief Get FDB entry attribute value
- *
- * @param[in] fdb_entry FDB entry
- * @param[in] attr_count Number of attributes
- * @param[inout] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_get_fdb_entry_attribute_fn)(
-        _In_ const sai_fdb_entry_t *fdb_entry,
-        _In_ uint32_t attr_count,
-        _Inout_ sai_attribute_t *attr_list);
 
 /**
  * @brief Remove all FDB entries by attribute set in sai_fdb_flush_attr

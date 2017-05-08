@@ -39,6 +39,32 @@
  */
 
 /**
+ * @brief Neighbor entry
+ */
+typedef struct _sai_neighbor_entry_t
+{
+    /**
+     * @brief Switch ID
+     *
+     * @objects SAI_OBJECT_TYPE_SWITCH
+     */
+    sai_object_id_t switch_id;
+
+    /**
+     * @brief Router interface ID
+     *
+     * @objects SAI_OBJECT_TYPE_ROUTER_INTERFACE
+     */
+    sai_object_id_t rif_id;
+
+    /**
+     * @brief IP address
+     */
+    sai_ip_address_t ip_address;
+
+} sai_neighbor_entry_t;
+
+/**
  * @brief Attribute Id for SAI neighbor object
  */
 typedef enum _sai_neighbor_entry_attr_t
@@ -101,32 +127,6 @@ typedef enum _sai_neighbor_entry_attr_t
     SAI_NEIGHBOR_ENTRY_ATTR_CUSTOM_RANGE_END
 
 } sai_neighbor_entry_attr_t;
-
-/**
- * @brief Neighbor entry
- */
-typedef struct _sai_neighbor_entry_t
-{
-    /**
-     * @brief Switch ID
-     *
-     * @objects SAI_OBJECT_TYPE_SWITCH
-     */
-    sai_object_id_t switch_id;
-
-    /**
-     * @brief Router interface ID
-     *
-     * @objects SAI_OBJECT_TYPE_ROUTER_INTERFACE
-     */
-    sai_object_id_t rif_id;
-
-    /**
-     * @brief IP address
-     */
-    sai_ip_address_t ip_address;
-
-} sai_neighbor_entry_t;
 
 /**
  * @brief Create neighbor entry

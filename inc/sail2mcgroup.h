@@ -73,44 +73,6 @@ typedef enum _sai_l2mc_group_attr_t
 
 } sai_l2mc_group_attr_t;
 
-typedef enum _sai_l2mc_group_member_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_L2MC_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief L2MC group id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_L2MC_GROUP
-     */
-    SAI_L2MC_GROUP_MEMBER_ATTR_L2MC_GROUP_ID = SAI_L2MC_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief L2MC output id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_BRIDGE_PORT
-     */
-    SAI_L2MC_GROUP_MEMBER_ATTR_L2MC_OUTPUT_ID,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_L2MC_GROUP_MEMBER_ATTR_END,
-
-    /** Custom range base value */
-    SAI_L2MC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START  = 0x10000000,
-
-    /** End of custom range base */
-    SAI_L2MC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
-
-} sai_l2mc_group_member_attr_t;
-
 /**
  * @brief Create L2MC group
  *
@@ -162,6 +124,44 @@ typedef sai_status_t (*sai_get_l2mc_group_attribute_fn)(
         _In_ sai_object_id_t l2mc_group_id,
         _In_ uint32_t attr_count,
         _Inout_ sai_attribute_t *attr_list);
+
+typedef enum _sai_l2mc_group_member_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_L2MC_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief L2MC group id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_L2MC_GROUP
+     */
+    SAI_L2MC_GROUP_MEMBER_ATTR_L2MC_GROUP_ID = SAI_L2MC_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief L2MC output id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_BRIDGE_PORT
+     */
+    SAI_L2MC_GROUP_MEMBER_ATTR_L2MC_OUTPUT_ID,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_L2MC_GROUP_MEMBER_ATTR_END,
+
+    /** Custom range base value */
+    SAI_L2MC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START  = 0x10000000,
+
+    /** End of custom range base */
+    SAI_L2MC_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
+
+} sai_l2mc_group_member_attr_t;
 
 /**
  * @brief Create L2MC group member

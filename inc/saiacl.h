@@ -34,6 +34,11 @@
  */
 
 /**
+ * @brief ACL User Defined Field Attribute ID Range
+ */
+#define SAI_ACL_USER_DEFINED_FIELD_ATTR_ID_RANGE 0xFF
+
+/**
  * @brief Attribute data for SAI_ACL_TABLE_ATTR_STAGE
  */
 typedef enum _sai_acl_stage_t
@@ -239,149 +244,6 @@ typedef enum _sai_acl_table_group_type_t
     SAI_ACL_TABLE_GROUP_TYPE_PARALLEL,
 
 } sai_acl_table_group_type_t;
-
-/**
- * @brief Attribute Id for acl_table_group
- */
-typedef enum _sai_acl_table_group_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_START,
-
-    /**
-     * @brief ACL stage
-     *
-     * @type sai_acl_stage_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_ACL_STAGE = SAI_ACL_TABLE_GROUP_ATTR_START,
-
-    /**
-     * @brief List of ACL bind points where this group will be applied.
-     *
-     * ACL group bind point list - create only attribute required for ACL
-     * groups to let the user specify his intention to allow further error
-     * checks and optimizations based on a specific ASIC SAI implementation.
-     * ACL members being added to this group SHOULD be a subset of the bind
-     * point list that ACL group was created with.
-     *
-     * @type sai_s32_list_t sai_acl_bind_point_type_t
-     * @flags CREATE_ONLY
-     * @default empty
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_ACL_BIND_POINT_TYPE_LIST,
-
-    /**
-     * @brief ACL table group type
-     *
-     * ACL table group type represents the way various ACL tables within this
-     * ACL table group perform their lookups. There are two optional values:
-     * Sequential - All the ACL tables are looked up in a sequential order,
-     * which is based on the ACL table priorities and only one ACL entry is matched
-     * with its corresponding ACL entry action applied. In case two ACL tables
-     * have the same priority they are looked up on a first come basis.
-     * Parallel - All the ACL tables within the ACL table groups are looked up
-     * in parallel and non-conflicting actions are resolved and applied from
-     * multiple matched ACL entries (each from different ACL tables of this group).
-     *
-     * @type sai_acl_table_group_type_t
-     * @flags CREATE_ONLY
-     * @default SAI_ACL_TABLE_GROUP_TYPE_SEQUENTIAL
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_TYPE,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_END,
-
-    /**
-     * @brief Custom range base value start
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_CUSTOM_RANGE_START = 0x10000000,
-
-    /**
-     * @brief End of Custom range base
-     */
-    SAI_ACL_TABLE_GROUP_ATTR_CUSTOM_RANGE_END
-
-} sai_acl_table_group_attr_t;
-
-/**
- * @brief Attribute Id for acl_table_group_member
- */
-typedef enum _sai_acl_table_group_member_attr_t
-{
-    /**
-     * @brief Start of attributes
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief ACL table group id
-     *
-     * This attribute is required to associate or attach a member object (acl_table_id)
-     * to a ACL table group id allocated during create ACL group API.
-     *
-     * User should always use the group id returned by SAI create_acl_group API,
-     * to group the tables else Invalid attribute value error code will be returned.
-     *
-     * The ACL Table lookup could be done serially or in parallel. In both the
-     * cases there could be a need to group multiple tables so that only single
-     * ACL rule entry actions are performed in case of serial, or non-conflicting
-     * actions are resolved in case of parallel.
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_ACL_TABLE_GROUP
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_ACL_TABLE_GROUP_ID = SAI_ACL_TABLE_GROUP_MEMBER_ATTR_START,
-
-    /**
-     * @brief ACL table id
-     *
-     * @type sai_object_id_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     * @objects SAI_OBJECT_TYPE_ACL_TABLE
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_ACL_TABLE_ID,
-
-    /**
-     * @brief Priority
-     *
-     * Value must be in the range defined in
-     * [SAI_SWITCH_ATTR_ACL_TABLE_MINIMUM_PRIORITY,
-     * SAI_SWITCH_ATTR_ACL_TABLE_MAXIMUM_PRIORITY]
-     * This priority attribute is only valid for SEQUENTIAL type of ACL groups
-     *
-     * @type sai_uint32_t
-     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_PRIORITY,
-
-    /**
-     * @brief End of attributes
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_END,
-
-    /**
-     * @brief Custom range base value start
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START = 0x10000000,
-
-    /**
-     * @brief End of Custom range base
-     */
-    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
-
-} sai_acl_table_group_member_attr_t;
-
-/**
- * @brief ACL User Defined Field Attribute ID Range
- */
-#define SAI_ACL_USER_DEFINED_FIELD_ATTR_ID_RANGE 0xFF
 
 /**
  * @brief Attribute Id for sai_acl_table
@@ -955,6 +817,58 @@ typedef enum _sai_acl_table_attr_t
     SAI_ACL_TABLE_ATTR_CUSTOM_RANGE_END
 
 } sai_acl_table_attr_t;
+
+/**
+ * @brief Create an ACL table
+ *
+ * @param[out] acl_table_id The ACL table id
+ * @param[in] switch_id Switch Object id
+ * @param[in] attr_count Number of attributes
+ * @param[in] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_create_acl_table_fn)(
+        _Out_ sai_object_id_t *acl_table_id,
+        _In_ sai_object_id_t switch_id,
+        _In_ uint32_t attr_count,
+        _In_ const sai_attribute_t *attr_list);
+
+/**
+ * @brief Delete an ACL table
+ *
+ * @param[in] acl_table_id The ACL table id
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_remove_acl_table_fn)(
+        _In_ sai_object_id_t acl_table_id);
+
+/**
+ * @brief Set ACL table attribute
+ *
+ * @param[in] acl_table_id The ACL table id
+ * @param[in] attr Attribute
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_set_acl_table_attribute_fn)(
+        _In_ sai_object_id_t acl_table_id,
+        _In_ const sai_attribute_t *attr);
+
+/**
+ * @brief Get ACL table attribute
+ *
+ * @param[in] acl_table_id ACL table id
+ * @param[in] attr_count Number of attributes
+ * @param[out] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_get_acl_table_attribute_fn)(
+        _In_ sai_object_id_t acl_table_id,
+        _In_ uint32_t attr_count,
+        _Out_ sai_attribute_t *attr_list);
 
 /**
  * @brief Attribute Id for sai_acl_entry
@@ -1773,6 +1687,58 @@ typedef enum _sai_acl_entry_attr_t
 } sai_acl_entry_attr_t;
 
 /**
+ * @brief Create an ACL entry
+ *
+ * @param[out] acl_entry_id The ACL entry id
+ * @param[in] switch_id The Switch Object id
+ * @param[in] attr_count Number of attributes
+ * @param[in] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_create_acl_entry_fn)(
+        _Out_ sai_object_id_t *acl_entry_id,
+        _In_ sai_object_id_t switch_id,
+        _In_ uint32_t attr_count,
+        _In_ const sai_attribute_t *attr_list);
+
+/**
+ * @brief Delete an ACL entry
+ *
+ * @param[in] acl_entry_id The ACL entry id
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_remove_acl_entry_fn)(
+        _In_ sai_object_id_t acl_entry_id);
+
+/**
+ * @brief Set ACL entry attribute
+ *
+ * @param[in] acl_entry_id The ACL entry id
+ * @param[in] attr Attribute
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_set_acl_entry_attribute_fn)(
+        _In_ sai_object_id_t acl_entry_id,
+        _In_ const sai_attribute_t *attr);
+
+/**
+ * @brief Get ACL entry attribute
+ *
+ * @param[in] acl_entry_id ACL entry id
+ * @param[in] attr_count Number of attributes
+ * @param[out] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_get_acl_entry_attribute_fn)(
+        _In_ sai_object_id_t acl_entry_id,
+        _In_ uint32_t attr_count,
+        _Out_ sai_attribute_t *attr_list);
+
+/**
  * @brief Attribute Id for sai_acl_counter
  */
 typedef enum _sai_acl_counter_attr_t
@@ -1849,6 +1815,58 @@ typedef enum _sai_acl_counter_attr_t
 } sai_acl_counter_attr_t;
 
 /**
+ * @brief Create an ACL counter
+ *
+ * @param[out] acl_counter_id The ACL counter id
+ * @param[in] switch_id The switch Object id
+ * @param[in] attr_count Number of attributes
+ * @param[in] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_create_acl_counter_fn)(
+        _Out_ sai_object_id_t *acl_counter_id,
+        _In_ sai_object_id_t switch_id,
+        _In_ uint32_t attr_count,
+        _In_ const sai_attribute_t *attr_list);
+
+/**
+ * @brief Delete an ACL counter
+ *
+ * @param[in] acl_counter_id The ACL counter id
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_remove_acl_counter_fn)(
+        _In_ sai_object_id_t acl_counter_id);
+
+/**
+ * @brief Set ACL counter attribute
+ *
+ * @param[in] acl_counter_id The ACL counter id
+ * @param[in] attr Attribute
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_set_acl_counter_attribute_fn)(
+        _In_ sai_object_id_t acl_counter_id,
+        _In_ const sai_attribute_t *attr);
+
+/**
+ * @brief Get ACL counter attribute
+ *
+ * @param[in] acl_counter_id ACL counter id
+ * @param[in] attr_count Number of attributes
+ * @param[out] attr_list Array of attributes
+ *
+ * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ */
+typedef sai_status_t (*sai_get_acl_counter_attribute_fn)(
+        _In_ sai_object_id_t acl_counter_id,
+        _In_ uint32_t attr_count,
+        _Out_ sai_attribute_t *attr_list);
+
+/**
  * @brief Attribute data for ACL Range Type
  */
 typedef enum _sai_acl_range_type_t
@@ -1917,162 +1935,6 @@ typedef enum _sai_acl_range_attr_t
 } sai_acl_range_attr_t;
 
 /**
- * @brief Create an ACL table
- *
- * @param[out] acl_table_id The ACL table id
- * @param[in] switch_id Switch Object id
- * @param[in] attr_count Number of attributes
- * @param[in] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_create_acl_table_fn)(
-        _Out_ sai_object_id_t *acl_table_id,
-        _In_ sai_object_id_t switch_id,
-        _In_ uint32_t attr_count,
-        _In_ const sai_attribute_t *attr_list);
-
-/**
- * @brief Delete an ACL table
- *
- * @param[in] acl_table_id The ACL table id
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_remove_acl_table_fn)(
-        _In_ sai_object_id_t acl_table_id);
-
-/**
- * @brief Set ACL table attribute
- *
- * @param[in] acl_table_id The ACL table id
- * @param[in] attr Attribute
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_set_acl_table_attribute_fn)(
-        _In_ sai_object_id_t acl_table_id,
-        _In_ const sai_attribute_t *attr);
-
-/**
- * @brief Get ACL table attribute
- *
- * @param[in] acl_table_id ACL table id
- * @param[in] attr_count Number of attributes
- * @param[out] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_get_acl_table_attribute_fn)(
-        _In_ sai_object_id_t acl_table_id,
-        _In_ uint32_t attr_count,
-        _Out_ sai_attribute_t *attr_list);
-
-/**
- * @brief Create an ACL entry
- *
- * @param[out] acl_entry_id The ACL entry id
- * @param[in] switch_id The Switch Object id
- * @param[in] attr_count Number of attributes
- * @param[in] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_create_acl_entry_fn)(
-        _Out_ sai_object_id_t *acl_entry_id,
-        _In_ sai_object_id_t switch_id,
-        _In_ uint32_t attr_count,
-        _In_ const sai_attribute_t *attr_list);
-
-/**
- * @brief Delete an ACL entry
- *
- * @param[in] acl_entry_id The ACL entry id
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_remove_acl_entry_fn)(
-        _In_ sai_object_id_t acl_entry_id);
-
-/**
- * @brief Set ACL entry attribute
- *
- * @param[in] acl_entry_id The ACL entry id
- * @param[in] attr Attribute
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_set_acl_entry_attribute_fn)(
-        _In_ sai_object_id_t acl_entry_id,
-        _In_ const sai_attribute_t *attr);
-
-/**
- * @brief Get ACL entry attribute
- *
- * @param[in] acl_entry_id ACL entry id
- * @param[in] attr_count Number of attributes
- * @param[out] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_get_acl_entry_attribute_fn)(
-        _In_ sai_object_id_t acl_entry_id,
-        _In_ uint32_t attr_count,
-        _Out_ sai_attribute_t *attr_list);
-
-/**
- * @brief Create an ACL counter
- *
- * @param[out] acl_counter_id The ACL counter id
- * @param[in] switch_id The switch Object id
- * @param[in] attr_count Number of attributes
- * @param[in] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_create_acl_counter_fn)(
-        _Out_ sai_object_id_t *acl_counter_id,
-        _In_ sai_object_id_t switch_id,
-        _In_ uint32_t attr_count,
-        _In_ const sai_attribute_t *attr_list);
-
-/**
- * @brief Delete an ACL counter
- *
- * @param[in] acl_counter_id The ACL counter id
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_remove_acl_counter_fn)(
-        _In_ sai_object_id_t acl_counter_id);
-
-/**
- * @brief Set ACL counter attribute
- *
- * @param[in] acl_counter_id The ACL counter id
- * @param[in] attr Attribute
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_set_acl_counter_attribute_fn)(
-        _In_ sai_object_id_t acl_counter_id,
-        _In_ const sai_attribute_t *attr);
-
-/**
- * @brief Get ACL counter attribute
- *
- * @param[in] acl_counter_id ACL counter id
- * @param[in] attr_count Number of attributes
- * @param[out] attr_list Array of attributes
- *
- * @return #SAI_STATUS_SUCCESS on success, failure status code on error
- */
-typedef sai_status_t (*sai_get_acl_counter_attribute_fn)(
-        _In_ sai_object_id_t acl_counter_id,
-        _In_ uint32_t attr_count,
-        _Out_ sai_attribute_t *attr_list);
-
-/**
  * @brief Create an ACL Range
  *
  * @param[out] acl_range_id The ACL range id
@@ -2122,6 +1984,75 @@ typedef sai_status_t (*sai_get_acl_range_attribute_fn)(
         _In_ sai_object_id_t acl_range_id,
         _In_ uint32_t attr_count,
         _Out_ sai_attribute_t *attr_list);
+
+/**
+ * @brief Attribute Id for acl_table_group
+ */
+typedef enum _sai_acl_table_group_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_START,
+
+    /**
+     * @brief ACL stage
+     *
+     * @type sai_acl_stage_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_ACL_STAGE = SAI_ACL_TABLE_GROUP_ATTR_START,
+
+    /**
+     * @brief List of ACL bind points where this group will be applied.
+     *
+     * ACL group bind point list - create only attribute required for ACL
+     * groups to let the user specify his intention to allow further error
+     * checks and optimizations based on a specific ASIC SAI implementation.
+     * ACL members being added to this group SHOULD be a subset of the bind
+     * point list that ACL group was created with.
+     *
+     * @type sai_s32_list_t sai_acl_bind_point_type_t
+     * @flags CREATE_ONLY
+     * @default empty
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_ACL_BIND_POINT_TYPE_LIST,
+
+    /**
+     * @brief ACL table group type
+     *
+     * ACL table group type represents the way various ACL tables within this
+     * ACL table group perform their lookups. There are two optional values:
+     * Sequential - All the ACL tables are looked up in a sequential order,
+     * which is based on the ACL table priorities and only one ACL entry is matched
+     * with its corresponding ACL entry action applied. In case two ACL tables
+     * have the same priority they are looked up on a first come basis.
+     * Parallel - All the ACL tables within the ACL table groups are looked up
+     * in parallel and non-conflicting actions are resolved and applied from
+     * multiple matched ACL entries (each from different ACL tables of this group).
+     *
+     * @type sai_acl_table_group_type_t
+     * @flags CREATE_ONLY
+     * @default SAI_ACL_TABLE_GROUP_TYPE_SEQUENTIAL
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_TYPE,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_END,
+
+    /**
+     * @brief Custom range base value start
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_CUSTOM_RANGE_START = 0x10000000,
+
+    /**
+     * @brief End of Custom range base
+     */
+    SAI_ACL_TABLE_GROUP_ATTR_CUSTOM_RANGE_END
+
+} sai_acl_table_group_attr_t;
 
 /**
  * @brief Create an ACL Table Group
@@ -2174,6 +2105,75 @@ typedef sai_status_t (*sai_get_acl_table_group_attribute_fn)(
         _In_ sai_object_id_t acl_table_group_id,
         _In_ uint32_t attr_count,
         _Out_ sai_attribute_t *attr_list);
+
+/**
+ * @brief Attribute Id for acl_table_group_member
+ */
+typedef enum _sai_acl_table_group_member_attr_t
+{
+    /**
+     * @brief Start of attributes
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief ACL table group id
+     *
+     * This attribute is required to associate or attach a member object (acl_table_id)
+     * to a ACL table group id allocated during create ACL group API.
+     *
+     * User should always use the group id returned by SAI create_acl_group API,
+     * to group the tables else Invalid attribute value error code will be returned.
+     *
+     * The ACL Table lookup could be done serially or in parallel. In both the
+     * cases there could be a need to group multiple tables so that only single
+     * ACL rule entry actions are performed in case of serial, or non-conflicting
+     * actions are resolved in case of parallel.
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_ACL_TABLE_GROUP
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_ACL_TABLE_GROUP_ID = SAI_ACL_TABLE_GROUP_MEMBER_ATTR_START,
+
+    /**
+     * @brief ACL table id
+     *
+     * @type sai_object_id_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     * @objects SAI_OBJECT_TYPE_ACL_TABLE
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_ACL_TABLE_ID,
+
+    /**
+     * @brief Priority
+     *
+     * Value must be in the range defined in
+     * [SAI_SWITCH_ATTR_ACL_TABLE_MINIMUM_PRIORITY,
+     * SAI_SWITCH_ATTR_ACL_TABLE_MAXIMUM_PRIORITY]
+     * This priority attribute is only valid for SEQUENTIAL type of ACL groups
+     *
+     * @type sai_uint32_t
+     * @flags MANDATORY_ON_CREATE | CREATE_ONLY
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_PRIORITY,
+
+    /**
+     * @brief End of attributes
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_END,
+
+    /**
+     * @brief Custom range base value start
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_CUSTOM_RANGE_START = 0x10000000,
+
+    /**
+     * @brief End of Custom range base
+     */
+    SAI_ACL_TABLE_GROUP_MEMBER_ATTR_CUSTOM_RANGE_END
+
+} sai_acl_table_group_member_attr_t;
 
 /**
  * @brief Create an ACL Table Group Member
