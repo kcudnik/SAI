@@ -3259,7 +3259,10 @@ sub CheckHeadersStyle
 
             if ($line =~ /(typedef|{|}|_In\w+|_Out\w+)( [^ ].*  |  )/ and not $line =~ /typedef\s+u?int/i)
             {
-                LogWarning "too many spaces $header $n:$line";
+                if (not $line =~ m!  \\$!)
+                {
+                    LogWarning "too many spaces $header $n:$line";
+                }
             }
 
             if ($line =~ m!/\*\*! and not $line =~ m!/\*\*\s*$! and not $line =~ m!/\*\*.+\*/!)
