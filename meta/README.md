@@ -15,3 +15,7 @@ To test your changes just type:
 ```sh
 make
 ```
+
+## SAI Objects Dependency Graph
+
+<img widtd="100%" src="https://cdn.rawgit.com/kcudnik/SAI/svg/meta/saidepgraph.svg" alt="Dependency Graph" />
