@@ -2,6 +2,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <byteswap.h>
 #include <sai.h>
 #include "saimetadatautils.h"
 #include "saimetadata.h"
@@ -165,12 +166,44 @@ int sai_serialize_ip_address(
     }
 }
 
+uint8_t get_ip_mask(
+        _In_ const uint8_t* mask,
+        _In_ bool ipv6)
+{
+    uint8_t ones = 0;
+    bool zeros = false;
+
+    uint8_t count = ipv6 ? 128 : 32;
+
+    for (uint8_t i = 0; i < count; i++)
+    {
+        bool bit = (mask[i/8]) & (1 << (7 - (i%8)));
+
+        if (zeros && bit)
+        {
+            SWSS_LOG_ERROR("FATAL: invalid ipv%d mask", ipv6 ? 6 : 4);
+            throw std::runtime_error("invalid ip mask");
+        }
+
+        zeros |= !bit;
+
+        if (bit)
+        {
+            ones++;
+        }
+    }
+
+    return ones;
+}
+
 int sai_serialize_ipv4_mask(
         _Out_ char *buffer,
-        _In_ const sai_ip4_t mask)
+        _In_ sai_ip4_t mask)
 {
     uint32_t n = 32;
     uint32_t tmp = 0xFFFFFFFF;
+
+    mask = __bswap_32(mask);
 
     /* TODO we may need to reverse bits to use network byte order*/
 
