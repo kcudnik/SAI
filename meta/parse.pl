@@ -1863,6 +1863,11 @@ sub ProcessStructMembers
 
     my @keys = GetStructKeysInOrder($struct);
 
+    if ($keys[0] ne "switch_id")
+    {
+        LogError "switch_id is not first item in $rawname";
+    }
+
     for my $key (@keys)
     {
         my $valuetype   = ProcessStructValueType($struct->{$key}{type});
@@ -2591,7 +2596,9 @@ sub ExtractStructInfo
     for my $member (@members)
     {
         my $name = $member->{name}[0];
-        my $type = $1 if $member->{definition}[0] =~ /^(\w+)/;
+        my $type = $member->{definition}[0];
+
+        $type = $1 if $type =~ /^(.+) _sai_\w+_t::\w+/;
 
         my $desc = ExtractDescription($struct, $struct, $member->{detaileddescription}[0]);
 
@@ -2635,11 +2642,6 @@ sub GetStructKeysInOrder
     for my $key (keys %$structRef)
     {
         $values[$structRef->{$key}->{idx}] = $key;
-    }
-
-    if ($values[0] ne "switch_id")
-    {
-        LogError "GetStructKeysInOrder failed, switch_id is not first item";
     }
 
     return @values;
@@ -3513,8 +3515,9 @@ sub CheckHeadersStyle
             next if $line =~ /^ \*($|[ \/])/;       # doxygen comment
             next if $line =~ /^$/;                  # empty line
             next if $line =~ /^typedef /;           # type definition
-            next if $line =~ /^sai_status/;         # return codes
-            next if $line =~ /^sai_object/;         # return codes
+            next if $line =~ /^sai_status_t sai_\w+\(/;     # return codes
+            next if $line =~ /^sai_object\w+_t sai_\w+\(/;  # return codes
+            next if $line =~ /^int sai_\w+\($/;             # methods returning int
             next if $line =~ /^extern /;            # extern in metadata
             next if $line =~ /^[{}#\/]/;            # start end of struct, define, start of comment
             next if $line =~ /^ {8}(_In|_Out|\.\.\.)/;     # function arguments
@@ -3995,7 +3998,7 @@ sub ProcessStructItem
 
     return if defined $SAI_ENUMS{$type}; # struct entry is enum
 
-    return if $type eq "union"; # union is special, but all union members are flattened anyway
+    return if $type =~ /^union /; # union is special, but all union members are flattened anyway
     return if $type eq "bool";
 
     return if $type =~/^sai_(u?int\d+|ip[46]|mac|cos|vlan_id|queue_index)_t/; # primitives, we could get that from defines
@@ -4093,6 +4096,155 @@ sub ProcessXmlFiles
         ProcessXmlFile("$XMLDIR/$file");
     }
 }
+
+
+
+#sub ProcessStructItem
+#{
+#    my $type = shift;
+#    my $struct = shift;
+#
+#    $type = $1 if $type =~/^(\w+)\*$/; # handle pointers
+#
+#    return if defined $ProcessedItems{$type};
+#
+#    return if defined $SAI_ENUMS{$type}; # struct entry is enum
+#
+#    return if $type eq "union"; # union is special, but all union members are flattened anyway
+#    return if $type eq "bool";
+#
+#    return if $type =~/^sai_(u?int\d+|ip[46]|mac|cos|vlan_id|queue_index)_t/; # primitives, we could get that from defines
+#    return if $type =~/^u?int\d+_t/;
+#    return if $type =~/^sai_[su]\d+_list_t/;
+#
+#    if ($type eq "sai_object_id_t" or $type eq "sai_object_list_t")
+#    {
+#        # NOTE: don't change that, we can't have object id's inside complicated structures
+#
+#        LogError "type $type in $struct can't be used, please convert struct to new object type and this item to an attribute";
+#        return;
+#    }
+#
+#    my %S = ExtractStructInfo($type, "struct_");
+#
+#    for my $key (sort keys %S)
+#    {
+#        my $item = $S{$key}{type};
+#
+#        ProcessStructItem($item, $type);
+#
+#        $ProcessedItems{$item} = 1;
+#    }
+#}
+
+sub Ser
+{
+    my $structName = shift;
+
+    my %struct = ExtractStructInfo($structName, "struct_");
+
+    my $structBase = $1 if $structName =~/^sai_(\w+)_t$/;
+
+# if scturcture has no pointers we could use %s for all members
+#
+# we should not use sprintf, but memcpy
+
+# TODO we need to find if structure is primitive, so if all inside structs (recursive)
+# don't contain any pointers then we can do a trick
+
+    my @keys = GetStructKeysInOrder(\%struct);
+#
+    WriteSource "int sai_serialize_${structBase}(";
+    WriteSource "        _Out_ char *buffer,";
+    WriteSource "        _In_ const $structName *$structBase)";
+    WriteSource "{";
+
+    my $template = "";
+
+    for my $member (@keys)
+    {
+        WriteSource "    char $member\[100\];"; # TODO base on memebr determine size
+    }
+
+    WriteSource "";
+    WriteSource "    int ret = 0;";
+    WriteSource "";
+
+    for my $member (@keys)
+    {
+        my $type = $struct{$member}{type};
+
+        $template .= "\\\"$member\\\":\\\"%s\\\",";
+
+        if ($type =~ m/^sai_(object_id|mac)_t$/)
+        {
+            WriteSource "    ret |= sai_serialize_$1($member, $structBase->$member);";
+            next;
+        }
+
+        # we can figure out that item is strict and then use 
+        if ($type =~ m/^sai_(ip_address|ip_prefix)_t$/)
+        {
+            WriteSource "    ret |= sai_serialize_$1($member, &$structBase->$member);";
+            next;
+        }
+
+        if ($type =~ m/^sai_(\w+_type)_t$/) # enum
+        {
+            WriteSource "    ret |= sai_serialize_enum($member, &metadata_enum_$type, $structBase->$member);";
+            next;
+        }
+
+        LogError "not supported '$member' -> $type";
+    }
+
+    chop $template;
+
+    WriteSource "";
+    WriteSource "    if (ret < 0)";
+    WriteSource "    {";
+    WriteSource "        SAI_META_LOG_WARN(\"failed to serialize $structName\");";
+    WriteSource "        return SAI_SERIALIZE_ERROR;";
+    WriteSource "    }";
+    WriteSource "";
+
+    my $locals = join(",", @keys);
+
+    WriteSource "    return sprintf(buffer,";
+    WriteSource "                   \"{$template}\",";
+    WriteSource "                   $locals);";
+
+
+    WriteSource "}";
+}
+
+WriteSource '#include <stdio.h>';
+WriteSource '#include <stdlib.h>';
+WriteSource '#include <sai.h>';
+WriteSource '#include "saiserialize.h"';
+
+
+
+Ser "sai_fdb_entry_t";
+Ser "sai_route_entry_t";
+Ser "sai_neighbor_entry_t";
+
+Ser "sai_ipmc_entry_t";
+Ser "sai_l2mc_entry_t";
+Ser "sai_mcast_fdb_entry_t";
+
+WriteFile("saimetadata.c", $SOURCE_CONTENT);
+exit;
+my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
+for my $s(@structs)
+{
+    chomp$s;
+    next if $s =~ /_api_t$/;
+
+    print "-- $s\n";
+    Ser $s;
+}
+
 
 #
 # MAIN
