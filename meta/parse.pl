@@ -2598,7 +2598,12 @@ sub ExtractStructInfo
         my $name = $member->{name}[0];
         my $type = $member->{definition}[0];
 
-        $type = $1 if $type =~ /^(.+) _sai_\w+_t::\w+/;
+        $type = $1 if $type =~ /^(.+) _sai_\w+_t::\w+(.*)$/;
+
+        if (defined $2 and $2 ne "")
+        {
+            LogError "not supported type '$member->{definition}[0]' == $2\n";
+        }
 
         my $desc = ExtractDescription($struct, $struct, $member->{detaileddescription}[0]);
 
@@ -4150,7 +4155,7 @@ sub Ser
 # we should not use sprintf, but memcpy
 
 # TODO we need to find if structure is primitive, so if all inside structs (recursive)
-# don't contain any pointers then we can do a trick
+# don't contain any pointers then we can do a trick - what trick ????
 
     my @keys = GetStructKeysInOrder(\%struct);
 #
@@ -4174,6 +4179,10 @@ sub Ser
     {
         my $type = $struct{$member}{type};
 
+# TODO we always add "" in %s, but this may be bad if returned stuff is json obejct as well, like list!
+# potentially we could check '{' on runtime, but thats bad, we need to know ad hoc that item we are serializeing
+# is struct and then skip ""
+
         $template .= "\\\"$member\\\":\\\"%s\\\",";
 
         if ($type =~ m/^sai_(object_id|mac)_t$/)
@@ -4182,14 +4191,14 @@ sub Ser
             next;
         }
 
-        # we can figure out that item is strict and then use 
+        # we can figure out that item is strict and then use "&"
         if ($type =~ m/^sai_(ip_address|ip_prefix)_t$/)
         {
             WriteSource "    ret |= sai_serialize_$1($member, &$structBase->$member);";
             next;
         }
 
-        if ($type =~ m/^sai_(\w+_type)_t$/) # enum
+        if ($type =~ m/^sai_(\w+_type)_t$/) # enum, check with ENUMS
         {
             WriteSource "    ret |= sai_serialize_enum($member, &metadata_enum_$type, $structBase->$member);";
             next;
@@ -4234,7 +4243,9 @@ Ser "sai_l2mc_entry_t";
 Ser "sai_mcast_fdb_entry_t";
 
 WriteFile("saimetadata.c", $SOURCE_CONTENT);
-exit;
+
+# TODO serialize object meta key with auto adding non object ids
+
 my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
 for my $s(@structs)
 {
@@ -4245,6 +4256,7 @@ for my $s(@structs)
     Ser $s;
 }
 
+exit;
 
 #
 # MAIN
