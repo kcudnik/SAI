@@ -67,6 +67,10 @@ int sai_serialize_ip_prefix(
         _Out_ char *buffer,
         _In_ const sai_ip_prefix_t *ip_prefix);
 
+int sai_serialize_ipv4_mask(
+        _Out_ char *buffer,
+        _In_ sai_ip4_t mask);
+
 /**
  * @}
  */

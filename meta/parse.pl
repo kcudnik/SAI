@@ -4168,6 +4168,9 @@ sub CreateSerializeForNoIdStructs
     }
 }
 
+# XXX this serialize is wrong, it should go like normal struct since
+# its combination for easier readibility, we need 2 versions of this ?
+
 sub CreateSerializeMetaKey
 {
     WriteHeader "int sai_serialize_object_meta_key(";

@@ -208,21 +208,18 @@ int sai_serialize_ipv4_mask(
     uint32_t n = 32;
     uint32_t tmp = 0xFFFFFFFF;
 
-    mask = __bswap_32(mask);
+    mask = ntohl(mask);
 
-    /* TODO we may need to reverse bits to use network byte order*/
-
-    for (; (tmp != mask) && tmp; tmp <<= 1);
+    for (; (tmp != mask) && tmp; tmp <<= 1, n--);
     
     if (tmp == mask)
     {
         return sai_serialize_u32(buffer, n);
     }
 
-    SAI_META_LOG_WARN("ipv4 mask 0x%X has holes", mask);
+    SAI_META_LOG_WARN("ipv4 mask 0x%X has holes", htonl(mask));
 
     return SAI_SERIALIZE_ERROR;
-    /* return sai_serialize_ipv4(buffer, mask); */
 }
 
 int sai_serialize_ipv6_mask(
