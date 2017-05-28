@@ -9,8 +9,8 @@
 #define TEST_ASSERT_TRUE(x,fmt,...)                         \
     if (!(x)){                                              \
         fprintf(stderr,                                     \
-                "ASSERT TRUE FAILED(%d): %s: " fmt "\n",    \
-                __LINE__, #x, ##__VA_ARGS__);               \
+                "ASSERT TRUE FAILED(%s:%d): %s: " fmt "\n", \
+                __func__, __LINE__, #x, ##__VA_ARGS__);     \
         exit(1);}
 
 void subtest_serialize_object_id(
@@ -210,6 +210,138 @@ void test_serialize_ipv6_mask()
     }
 }
 
+void subtest_deserialize_u8(
+        _In_ const char *buffer,
+        _In_ uint8_t result,
+        _In_ int len)
+{
+    uint8_t u8;
+
+    int res = sai_deserialize_u8(buffer, &u8);
+
+    printf ("res %d u8: %u\n", res, u8);
+    TEST_ASSERT_TRUE(u8 == result, "result to be equal %u vs %u", u8, result);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(res == len, "expected equal lenght number: %d vs %d", res, len);
+}
+
+void test_deserialize_uint()
+{
+    /*
+     * possible strings endings : 255,}]"\0
+     */
+
+    subtest_deserialize_u8("255",   255, 3);
+    subtest_deserialize_u8("255 ",  255, 3);
+    subtest_deserialize_u8("255,",  255, 3);
+    subtest_deserialize_u8("255]",  255, 3);
+    subtest_deserialize_u8("255}",  255, 3);
+    subtest_deserialize_u8("255\"", 255, 3);
+    subtest_deserialize_u8("99",     99, 2);
+    subtest_deserialize_u8("9",      9,  1);
+    subtest_deserialize_u8("0",      0,  1);
+    subtest_deserialize_u8("0x9",    0,  1);
+    subtest_deserialize_u8("077",   77,  3);
+    subtest_deserialize_u8("0000000000000000000077",   77,  22);
+
+    int res;
+    uint8_t u8;
+
+    res = sai_deserialize_u8("", &u8);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    res = sai_deserialize_u8("300", &u8); /* overflow */
+
+    printf ("res %d u8: %u\n", res, u8);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    res = sai_deserialize_u8("-1", &u8);
+
+    printf ("res %d u8: %u\n", res, u8);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    uint16_t u16;
+    res = sai_deserialize_u16("65536", &u16);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    res = sai_deserialize_u16("65535", &u16);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(u16 == (uint16_t)-1, "result to be equal");
+
+    uint32_t u32;
+    res = sai_deserialize_u32("4294967296", &u32);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    res = sai_deserialize_u32("4294967295", &u32);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(u32 == (uint32_t)-1, "result to be equal");
+
+    uint64_t u64;
+    res = sai_deserialize_u64("18446744073709551616", &u64);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    res = sai_deserialize_u64("18446744073709551615", &u64);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(u64 == (uint64_t)-1, "result to be equal");
+
+    res = sai_deserialize_u8("18446744073709551616", &u8);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+}
+
+void test_deserialize_int()
+{
+    /* TODO */
+}
+
+void test_deserialize_enum()
+{
+    char buf[1024];
+    int res;
+
+    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_status_t, SAI_STATUS_NOT_IMPLEMENTED);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+
+    printf ("%s\n", buf);
+
+    int value;
+
+    res = sai_deserialize_enum(buf, &sai_metadata_enum_sai_status_t, &value);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(value == SAI_STATUS_NOT_IMPLEMENTED, "expected same value");
+
+    size_t len = strlen(buf);
+    buf[len++] = '"';
+    buf[len++] = 0;
+
+    res = sai_deserialize_enum(buf, &sai_metadata_enum_sai_status_t, &value);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(value == SAI_STATUS_NOT_IMPLEMENTED, "expected same value");
+
+    /* test all enums to be sure! */
+
+    size_t enumindex = 0;
+
+    for (; enumindex < sai_metadata_all_enums_count; ++enumindex)
+    {
+        const sai_enum_metadata_t* emd = sai_metadata_all_enums[enumindex];
+
+        size_t count = 0;
+
+        printf("checking enum %s %zu\n", emd->name, enumindex);
+
+        for (; count < emd->valuescount; ++count)
+        {
+            /* make sure there is something after string in the buffer */
+
+            sprintf(buf, "%s\"", emd->valuesnames[count]);
+
+            res = sai_deserialize_enum(buf, emd, &value);
+            TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+            TEST_ASSERT_TRUE(value == emd->values[count], "expected same value");
+        }
+    }
+}
+
 int main()
 {
     /* list automatically symbols to execute all tests */
@@ -219,6 +351,11 @@ int main()
     test_serialize_mac();
     test_serialize_ipv4_mask();
     test_serialize_ipv6_mask();
+
+    test_deserialize_uint();
+    test_deserialize_int();
+
+    test_deserialize_enum();
 
     return 0;
 }

@@ -2,11 +2,15 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <ctype.h>
 #include <byteswap.h>
+#include <inttypes.h>
 #include <sai.h>
 #include "saimetadatautils.h"
 #include "saimetadata.h"
 #include "saiserialize.h"
+
+#define MAX_PRINT_CHARS 60
 
 int sai_serialize_bool(
         _Out_ char *buffer,
@@ -515,4 +519,190 @@ int sai_serialize_s32_range(
         _In_ const sai_u32_range_t *range)
 {
     return sprintf(buffer, "{\"min\":%d,\"max\":%d}", range->min, range->max);
+}
+
+/* deserialize functions */
+
+static int sai_deserialize_uint(
+        _In_ const char *buffer,
+        _Out_ uint64_t *u64,
+        _In_ uint64_t limit)
+{
+    int len = 0;
+    uint64_t result = 0;
+    uint64_t last = 0;
+
+    while (isdigit(*buffer))
+    {
+        result = result * 10 + (uint64_t)(*buffer - '0');
+
+        if (result > limit || last > result) /* overflow */
+        {
+            buffer -= len;
+            len = 0;
+            break;
+        }
+
+        len++;
+        last = result;
+        buffer++;
+    }
+
+    if (len > 0)
+    {
+        *u64 = result;
+        return len;
+    }
+
+    SAI_META_LOG_WARN("parse '%.*s...' as uint with limit 0x%lX failed", MAX_PRINT_CHARS, buffer, limit);
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_deserialize_u64(
+        _In_ const char *buffer,
+        _Out_ uint64_t *u64)
+{
+     return sai_deserialize_uint(buffer, u64, ULONG_MAX);
+}
+
+int sai_deserialize_u32(
+        _In_ const char *buffer,
+        _Out_ uint32_t *u32)
+{
+    uint64_t u64;
+    int res = sai_deserialize_uint(buffer, &u64, UINT_MAX);
+
+    if (res > 0)
+    {
+        *u32 = (uint32_t)u64;
+    }
+
+    return res;
+}
+
+int sai_deserialize_u16(
+        _In_ const char *buffer,
+        _Out_ uint16_t *u16)
+{
+    uint64_t u64;
+    int res = sai_deserialize_uint(buffer, &u64, USHRT_MAX);
+
+    if (res > 0)
+    {
+        *u16 = (uint16_t)u64;
+    }
+
+    return res;
+}
+
+int sai_deserialize_u8(
+        _In_ const char *buffer,
+        _Out_ uint8_t *u8)
+{
+    uint64_t u64;
+    int res = sai_deserialize_uint(buffer, &u64, UCHAR_MAX);
+
+    if (res > 0)
+    {
+        *u8 = (uint8_t)u64;
+    }
+
+    return res;
+}
+
+static int sai_deserialize_int(
+        _In_ const char *buffer,
+        _Out_ int64_t *s64,
+        _In_ int64_t lowetlimit,
+        _In_ int64_t upperlimit)
+
+{
+    /* TODO  populate */
+    return -1;
+}
+
+int sai_deserialize_s64(
+        _In_ const char *buffer,
+        _Out_ int64_t *s64)
+{
+     return sai_deserialize_int(buffer, s64, LONG_MIN, LONG_MAX);
+}
+
+int sai_deserialize_s32(
+        _In_ const char *buffer,
+        _Out_ int32_t *s32)
+{
+    int64_t s64;
+    int res = sai_deserialize_int(buffer, &s64, INT_MIN, INT_MAX);
+
+    if (res > 0)
+    {
+        *s32 = (int32_t)s64;
+    }
+
+    return res;
+}
+
+int sai_deserialize_s16(
+        _In_ const char *buffer,
+        _Out_ int16_t *s16)
+{
+    int64_t s64;
+    int res = sai_deserialize_int(buffer, &s64, SHRT_MIN, SHRT_MAX);
+
+    if (res > 0)
+    {
+        *s16 = (int16_t)s64;
+    }
+
+    return res;
+}
+
+int sai_deserialize_s8(
+        _In_ const char *buffer,
+        _Out_ int8_t *s8)
+{
+    int64_t s64;
+    int res = sai_deserialize_int(buffer, &s64, CHAR_MIN, CHAR_MAX);
+
+    if (res > 0)
+    {
+        *s8 = (int8_t)s64;
+    }
+
+    return res;
+}
+
+int sai_deserialize_enum(
+        _In_ const char *buffer,
+        _In_ const sai_enum_metadata_t *meta,
+        _Out_ int32_t *value)
+{
+    if (meta == NULL)
+    {
+        return sai_deserialize_s32(buffer, value);
+    }
+
+    size_t i;
+
+    int len = 0;
+
+    while (isalnum(buffer[len]) || buffer[len] == '_')
+    {
+        len++;
+    }
+
+    for (i = 0; i < meta->valuescount; ++i)
+    {
+        if (strncmp(buffer, meta->valuesnames[i], (size_t)len) == 0 &&
+               meta->valuesnames[i][len] == 0)
+        {
+            *value = meta->values[i];
+            return len;
+        }
+    }
+
+    SAI_META_LOG_WARN("enum %.*s... not found in enum %s", MAX_PRINT_CHARS, buffer, meta->name);
+
+    return sai_deserialize_s32(buffer, value);
 }

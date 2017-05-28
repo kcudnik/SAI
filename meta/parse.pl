@@ -3291,7 +3291,7 @@ sub CheckHeadersStyle
             {
                 my $param = $1;
 
-                my $pattern = '^(attr_count|object_count|number_of_counters|count)$';
+                my $pattern = '^(attr_count|object_count|number_of_counters|count|u32)$';
 
                 if (not $param =~ /$pattern/)
                 {
@@ -4077,7 +4077,7 @@ sub PopulateValueTypes
     ProcessValues(\%Union, \%ACL_FIELD_TYPES, \%ACL_FIELD_TYPES_TO_VT);
 }
 
-sub CreateSerialieMethodsForNonObjectId
+sub CreateSerializeMethodsForNonObjectId
 {
     my $structName = shift;
 
@@ -4164,7 +4164,7 @@ sub CreateSerializeForNoIdStructs
 
     for my $rawname (@rawnames)
     {
-        CreateSerialieMethodsForNonObjectId("sai_${rawname}_t");
+        CreateSerializeMethodsForNonObjectId("sai_${rawname}_t");
     }
 }
 

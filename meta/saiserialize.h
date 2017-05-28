@@ -31,6 +31,11 @@
  * @{
  */
 
+/**
+ * @def SAI_SERIALIZE_ERROR
+ *
+ * Returned from serialize/deserialize methods on any error.
+ */
 #define SAI_SERIALIZE_ERROR (-1)
 
 /**
@@ -40,7 +45,7 @@
  * @param[in] object_id Object ID to be serialized.
  *
  * @return Number of characters written to buffer excluding '\0',
- * or negative value on error.
+ * or #SAI_SERIALIZE_ERROR on error.
  */
 int sai_serialize_object_id(
         _Out_ char *buffer,
@@ -59,6 +64,14 @@ int sai_serialize_enum(
         _In_ const sai_enum_metadata_t *meta,
         _In_ int32_t value);
 
+int sai_serialize_ipv4(
+        _Out_ char *buffer,
+        _In_ const sai_ip4_t ip);
+
+int sai_serialize_ipv6(
+        _Out_ char *buffer,
+        _In_ const sai_ip6_t ip);
+
 int sai_serialize_ip_address(
         _Out_ char *buffer,
         _In_ const sai_ip_address_t *ip_address);
@@ -75,9 +88,71 @@ int sai_serialize_ipv6_mask(
         _Out_ char *buffer,
         _In_ const sai_ip6_t mask);
 
-int sai_serialize_ipv6(
-        _Out_ char *buffer,
-        _In_ const sai_ip6_t ip);
+/* deserialize functions */
+
+int sai_deserialize_u8(
+        _In_ const char *buffer,
+        _Out_ uint8_t *u8);
+
+int sai_deserialize_u16(
+        _In_ const char *buffer,
+        _Out_ uint16_t *u16);
+
+int sai_deserialize_u32(
+        _In_ const char *buffer,
+        _Out_ uint32_t *u32);
+
+int sai_deserialize_u64(
+        _In_ const char *buffer,
+        _Out_ uint64_t *u64);
+
+/**
+ * @brief Deserialize signed 8 bit integer.
+ *
+ * @note Buffer don't need to end with zero character, it can end at any
+ * non-digit character and function will still succeed. This is helpful when
+ * parsing larger combined data.
+ *
+ * @param[in] buffer Buffer to be examined.
+ * @param[out] s8 Deserialized signed 8 bit integer.
+ *
+ * @return Length of the examined characters in the buffer or
+ * #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_deserialize_s8(
+        _In_ const char *buffer,
+        _Out_ int8_t *s8);
+
+int sai_deserialize_s16(
+        _In_ const char *buffer,
+        _Out_ int16_t *s16);
+
+int sai_deserialize_s32(
+        _In_ const char *buffer,
+        _Out_ int32_t *s32);
+
+int sai_deserialize_s64(
+        _In_ const char *buffer,
+        _Out_ int64_t *s64);
+
+/**
+ * @brief Deserialize enum value.
+ *
+ * @note Buffer don't need to end with zero character, it can end at any
+ * non-alpha and non-underscore character and function will still succeed. This
+ * is helpful when parsing larger combined data.
+ *
+ * @param[in] buffer Buffer to be examined.
+ * @param[in] meta Enum metadata to be checked against.
+ * @param[out] value Deserialized value.
+ *
+ * @return Length of the examined characters in the buffer or
+ * #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_deserialize_enum(
+        _In_ const char *buffer,
+        _In_ const sai_enum_metadata_t *meta,
+        _Out_ int32_t *value);
 
 /**
  * @}
