@@ -71,6 +71,14 @@ int sai_serialize_ipv4_mask(
         _Out_ char *buffer,
         _In_ sai_ip4_t mask);
 
+int sai_serialize_ipv6_mask(
+        _Out_ char *buffer,
+        _In_ const sai_ip6_t mask);
+
+int sai_serialize_ipv6(
+        _Out_ char *buffer,
+        _In_ const sai_ip6_t ip);
+
 /**
  * @}
  */

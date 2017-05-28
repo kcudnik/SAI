@@ -159,7 +159,7 @@ void test_serialize_ipv4_mask()
 
         TEST_ASSERT_TRUE(res > 0, "expected positive number");
         TEST_ASSERT_TRUE(strcmp(buf, exp) == 0, "expected same string");
-        
+
         mask = mask << 1;
     }
 
@@ -170,6 +170,46 @@ void test_serialize_ipv4_mask()
     TEST_ASSERT_TRUE(res < 0, "expected negative number");
 }
 
+void test_serialize_ipv6_mask()
+{
+    int res;
+    char buf[128];
+
+    sai_ip6_t mask = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    mask[1] = 0xff; /* mask with holes */
+
+    res = sai_serialize_ipv6_mask(buf, mask);
+
+    TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    uint8_t *m = (uint8_t*)mask;
+
+    int n = 0;
+    char bufn[10];
+    char ipv6[100];
+
+    for (; n <= 128; n++)
+    {
+        memset(m, 0, 16);
+
+        int k;
+        for (k = 0; k < n; k++)
+        {
+            m[k/8] |= (uint8_t)(0xff << (7 - k%8));
+        }
+
+        sprintf(bufn, "%d", n);
+
+        sai_serialize_ipv6(ipv6, mask);
+        res = sai_serialize_ipv6_mask(buf, mask);
+
+        printf("n = %s vs res %s ipv6 %s\n", bufn, buf, ipv6);
+        TEST_ASSERT_TRUE(res > 0, "expected positive number");
+        TEST_ASSERT_TRUE(strcmp(buf, bufn) == 0, "expected same string");
+    }
+}
+
 int main()
 {
     /* list automatically symbols to execute all tests */
@@ -178,6 +218,7 @@ int main()
     test_serialize_ip_address();
     test_serialize_mac();
     test_serialize_ipv4_mask();
+    test_serialize_ipv6_mask();
 
     return 0;
 }

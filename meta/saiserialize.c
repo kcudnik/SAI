@@ -122,7 +122,6 @@ int sai_serialize_ipv4(
     if (inet_ntop(AF_INET, &(sa.sin_addr), buffer, INET_ADDRSTRLEN) == NULL)
     {
         SAI_META_LOG_WARN("failed to convert ipv4 address, errno: %s", strerror(errno));
-
         return SAI_SERIALIZE_ERROR;
     }
 
@@ -140,7 +139,6 @@ int sai_serialize_ipv6(
     if (inet_ntop(AF_INET6, &(sa6.sin6_addr), buffer, INET6_ADDRSTRLEN) == NULL)
     {
         SAI_META_LOG_WARN("failed to convert ipv6 address, errno: %s", strerror(errno));
-
         return SAI_SERIALIZE_ERROR;
     }
 
@@ -164,42 +162,9 @@ int sai_serialize_ip_address(
         default:
 
             SAI_META_LOG_WARN("invalid ip address family: %d", ip_address->addr_family);
-
             return SAI_SERIALIZE_ERROR;
     }
 }
-
-/*
-uint8_t get_ip_mask(
-        _In_ const uint8_t* mask,
-        _In_ bool ipv6)
-{
-    uint8_t ones = 0;
-    bool zeros = false;
-
-    uint8_t count = ipv6 ? 128 : 32;
-
-    for (uint8_t i = 0; i < count; i++)
-    {
-        bool bit = (mask[i/8]) & (1 << (7 - (i%8)));
-
-        if (zeros && bit)
-        {
-            SWSS_LOG_ERROR("FATAL: invalid ipv%d mask", ipv6 ? 6 : 4);
-            throw std::runtime_error("invalid ip mask");
-        }
-
-        zeros |= !bit;
-
-        if (bit)
-        {
-            ones++;
-        }
-    }
-
-    return ones;
-}
-*/
 
 int sai_serialize_ipv4_mask(
         _Out_ char *buffer,
@@ -208,17 +173,16 @@ int sai_serialize_ipv4_mask(
     uint32_t n = 32;
     uint32_t tmp = 0xFFFFFFFF;
 
-    mask = ntohl(mask);
+    mask = __builtin_bswap32(mask);
 
     for (; (tmp != mask) && tmp; tmp <<= 1, n--);
-    
+
     if (tmp == mask)
     {
         return sai_serialize_u32(buffer, n);
     }
 
     SAI_META_LOG_WARN("ipv4 mask 0x%X has holes", htonl(mask));
-
     return SAI_SERIALIZE_ERROR;
 }
 
@@ -226,50 +190,40 @@ int sai_serialize_ipv6_mask(
         _Out_ char *buffer,
         _In_ const sai_ip6_t mask)
 {
-    uint32_t n = 0;
+    uint32_t n = 64;
+    uint64_t tmp = 0xFFFFFFFFFFFFFFFFUL;
 
-    int i = 0;
+    uint64_t high = *((const uint64_t*)mask);
+    uint64_t low  = *((const uint64_t*)mask + 1);
 
-    for (; i < 16; i++)
+    high = __builtin_bswap64(high);
+    low = __builtin_bswap64(low);
+
+    if (high == tmp)
     {
-        uint8_t b = mask[i];
+        for (; (tmp != low) && tmp; tmp <<= 1, n--);
 
-        if (b == 0xFF)
+        if (tmp == low)
         {
-            n += 8;
-            continue;
+            return sai_serialize_u32(buffer, 64 + n);
         }
+    }
+    else if (low == 0)
+    {
+        for (; (tmp != high) && tmp; tmp <<= 1, n--);
 
-        i++;
-
-        switch (b)
+        if (tmp == high)
         {
-            case 0xFE: n++;
-            case 0xFC: n++;
-            case 0xF0: n++;
-            case 0xE0: n++;
-            case 0xC0: n++;
-            case 0x80: n++;
-            case 0x00: 
-                       /* break for switch not loop WRONG ! XXX */
-                       break;
-            default:
-
-                       SAI_META_LOG_WARN("ipv6 mask hs holes");
-                       return SAI_SERIALIZE_ERROR;
+            return sai_serialize_u32(buffer, n);
         }
     }
 
-    for (; i < 16; ++i)
-    {
-        if (mask[i] != 0)
-        {
-            SAI_META_LOG_WARN("ipv6 mask hs holes");
-            return SAI_SERIALIZE_ERROR;
-        }
-    }
+    char buf[128];
 
-    return sai_serialize_u32(buffer, n);
+    sai_serialize_ipv6(buf, mask);
+
+    SAI_META_LOG_WARN("ipv6 mask %s has holes", buf);
+    return SAI_SERIALIZE_ERROR;
 }
 
 int sai_serialize_ip_prefix(
@@ -291,7 +245,6 @@ int sai_serialize_ip_prefix(
             if (ret < 0)
             {
                 SAI_META_LOG_WARN("failed to serialize ipv4");
-
                 return SAI_SERIALIZE_ERROR;
             }
 
@@ -305,7 +258,6 @@ int sai_serialize_ip_prefix(
             if (ret < 0)
             {
                 SAI_META_LOG_WARN("failed to serialize ipv6");
-
                 return SAI_SERIALIZE_ERROR;
             }
 
@@ -314,7 +266,6 @@ int sai_serialize_ip_prefix(
         default:
 
             SAI_META_LOG_WARN("invalid ip address family: %d", ip_prefix->addr_family);
-
             return SAI_SERIALIZE_ERROR;
     }
 
