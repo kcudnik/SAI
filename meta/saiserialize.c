@@ -706,3 +706,84 @@ int sai_deserialize_enum(
 
     return sai_deserialize_s32(buffer, value);
 }
+
+static int sai_deserialize_hex_uint(
+        _In_ const char *buffer,
+        _Out_ uint64_t *u64,
+        _In_ uint64_t limit)
+{
+    int len = 0;
+    uint64_t result = 0;
+    uint64_t last = 0;
+
+    if (*buffer != '0' || *(buffer + 1) != 'x')
+    {
+        SAI_META_LOG_WARN("parse '%.*s...' as hex uint with limit 0x%lX failed", MAX_PRINT_CHARS, buffer, limit);
+        return SAI_SERIALIZE_ERROR;
+    }
+
+    buffer += 2;
+
+    while (true)
+    {
+        char c = *buffer;
+
+        if (c >= '0' && c <= '9')
+        {
+            c = (char)(c - '0');
+        }
+        else if (c >= 'A' && c <= 'F')
+        {
+            c = (char)(c - 'A');
+        }
+        else if (c >= 'a' && c <= 'f')
+        {
+            c = (char)(c - 'a');
+        }
+        else
+        {
+            break;
+        }
+
+        /* wrong: last = 0x1FFF so next result will be 0xFFF0 */
+        result = result * 16 + (uint64_t)(c);
+
+        if (result > limit || last > result) /* overflow */
+        {
+            buffer -= len + 2;
+            len = 0;
+            break;
+        }
+
+        len++;
+        last = result;
+        buffer++;
+    }
+
+    if (len > 0)
+    {
+        *u64 = result;
+        return len + 2;
+    }
+
+    SAI_META_LOG_WARN("parse '%.*s...' as hex uint with limit 0x%lX failed", MAX_PRINT_CHARS, buffer, limit);
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_deserialize_object_id(
+        _In_ const char *buffer,
+        _Out_ sai_object_id_t *object_id)
+{
+    if (strcmp(buffer, "oid:0x") == 0)
+    {
+        int res = sai_deserialize_hex_uint(buffer + 4, (uint64_t*)object_id, ULONG_MAX);
+
+        if (res > 0)
+        {
+            return 4 + res;
+        }
+    }
+
+    SAI_META_LOG_WARN("invalid oid: %.*s...", MAX_PRINT_CHARS, buffer);
+    return SAI_SERIALIZE_ERROR;
+}

@@ -90,6 +90,10 @@ int sai_serialize_ipv6_mask(
 
 /* deserialize functions */
 
+int sai_deserialize_object_id(
+        _In_ const char *buffer,
+        _Out_ sai_object_id_t *object_id);
+
 int sai_deserialize_u8(
         _In_ const char *buffer,
         _Out_ uint8_t *u8);
