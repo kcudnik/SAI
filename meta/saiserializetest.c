@@ -305,6 +305,21 @@ void test_deserialize_uint()
             TEST_ASSERT_TRUE(y == u64, "expected equal");
         }
     }
+
+    /* extra chars at the end */
+
+    res = sai_deserialize_u64("18446744073709551615\"", &u64);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(u64 == (uint64_t)-1, "result to be equal");
+
+    res = sai_deserialize_u64("18446744073709551615f", &u64);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(u64 == (uint64_t)-1, "result to be equal");
+
+    res = sai_deserialize_u64("18446744073709551615:", &u64);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+    TEST_ASSERT_TRUE(u64 == (uint64_t)-1, "result to be equal");
+    TEST_ASSERT_TRUE(res == (int)strlen("18446744073709551615"), "expected to be equal");
 }
 
 void test_deserialize_int()
@@ -370,7 +385,6 @@ void test_deserialize_object_id()
     res = sai_deserialize_object_id("oid:0x1FFFFFFFFFFFFFFF", &id);
     TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
 
-    printf("0x%lX\n", id);
     TEST_ASSERT_TRUE(id == 0x1FFFFFFFFFFFFFFFUL, "expected to be equal");
 
     /* too big number */

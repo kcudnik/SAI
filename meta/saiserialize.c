@@ -541,7 +541,8 @@ static int sai_deserialize_uint(
          * then next multiplication with 10 will cause overflow.
          */
 
-        if ((result > ((uint64_t)(-1))/10) || ((result == ((uint64_t)(-1))/10) && c > 5))
+
+        if (result > (ULONG_MAX/10) || ((result == ULONG_MAX/10) && (c > (char)(ULONG_MAX % 10))))
         {
             buffer -= len;
             len = 0;
