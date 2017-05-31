@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <ctype.h>
+#include <limits.h>
 #include <byteswap.h>
 #include <inttypes.h>
 #include <sai.h>
@@ -530,13 +531,27 @@ static int sai_deserialize_uint(
 {
     int len = 0;
     uint64_t result = 0;
-    uint64_t last = 0;
 
     while (isdigit(*buffer))
     {
-        result = result * 10 + (uint64_t)(*buffer - '0');
+        char c = (char)(*buffer - '0');
 
-        if (result > limit || last > result) /* overflow */
+        /*
+         * Base is 10 we can check, that if result is greater than (2^64-1)/10)
+         * then next multiplication with 10 will cause overflow.
+         */
+
+        if ((result > ((uint64_t)(-1))/10) || ((result == ((uint64_t)(-1))/10) && c > 5))
+        {
+            buffer -= len;
+            len = 0;
+            break;
+        }
+
+        /* wrong: last = 0x1FFF so next result will be 0xFFF0, problem is only with overflow numbers */
+        result = result * 10 + (uint64_t)(c);
+
+        if (result > limit) /* overflow */
         {
             buffer -= len;
             len = 0;
@@ -544,7 +559,6 @@ static int sai_deserialize_uint(
         }
 
         len++;
-        last = result;
         buffer++;
     }
 
@@ -712,10 +726,6 @@ static int sai_deserialize_hex_uint(
         _Out_ uint64_t *u64,
         _In_ uint64_t limit)
 {
-    int len = 0;
-    uint64_t result = 0;
-    uint64_t last = 0;
-
     if (*buffer != '0' || *(buffer + 1) != 'x')
     {
         SAI_META_LOG_WARN("parse '%.*s...' as hex uint with limit 0x%lX failed", MAX_PRINT_CHARS, buffer, limit);
@@ -723,6 +733,9 @@ static int sai_deserialize_hex_uint(
     }
 
     buffer += 2;
+
+    int len = 0;
+    uint64_t result = 0;
 
     while (true)
     {
@@ -734,29 +747,33 @@ static int sai_deserialize_hex_uint(
         }
         else if (c >= 'A' && c <= 'F')
         {
-            c = (char)(c - 'A');
+            c = (char)(c - 'A' + 10);
         }
         else if (c >= 'a' && c <= 'f')
         {
-            c = (char)(c - 'a');
+            c = (char)(c - 'a' + 10);
         }
         else
         {
             break;
         }
 
-        /* wrong: last = 0x1FFF so next result will be 0xFFF0 */
         result = result * 16 + (uint64_t)(c);
 
-        if (result > limit || last > result) /* overflow */
+        /*
+         * Check for overflow, hex uint can't have more than 16 chars, but
+         * parsing 0x000000000001 as uint8_t will succeed.
+         */
+
+        if (result > limit || len > 15)
         {
             buffer -= len + 2;
             len = 0;
+            SAI_META_LOG_WARN("hex uint overflow");
             break;
         }
 
         len++;
-        last = result;
         buffer++;
     }
 
@@ -774,7 +791,7 @@ int sai_deserialize_object_id(
         _In_ const char *buffer,
         _Out_ sai_object_id_t *object_id)
 {
-    if (strcmp(buffer, "oid:0x") == 0)
+    if (strncmp(buffer, "oid:0x", 6) == 0)
     {
         int res = sai_deserialize_hex_uint(buffer + 4, (uint64_t*)object_id, ULONG_MAX);
 

@@ -286,6 +286,25 @@ void test_deserialize_uint()
 
     res = sai_deserialize_u8("18446744073709551616", &u8);
     TEST_ASSERT_TRUE(res < 0, "expected negative number");
+
+    int bits;
+    uint64_t x;
+    char buf[100];
+
+    for (bits = 0; bits < 64; bits++)
+    {
+        for (x = 0; x < 0x100; x++)
+        {
+            uint64_t y = x << bits;
+
+            sprintf(buf, "%lu", y);
+
+            res = sai_deserialize_u64(buf, &u64);
+
+            TEST_ASSERT_TRUE(res > 0, "expected positive number");
+            TEST_ASSERT_TRUE(y == u64, "expected equal");
+        }
+    }
 }
 
 void test_deserialize_int()
@@ -342,6 +361,50 @@ void test_deserialize_enum()
     }
 }
 
+void test_deserialize_object_id()
+{
+    sai_object_id_t id;
+
+    int res;
+
+    res = sai_deserialize_object_id("oid:0x1FFFFFFFFFFFFFFF", &id);
+    TEST_ASSERT_TRUE(res > 0, "expected positive number: res = %d", res);
+
+    printf("0x%lX\n", id);
+    TEST_ASSERT_TRUE(id == 0x1FFFFFFFFFFFFFFFUL, "expected to be equal");
+
+    /* too big number */
+    res = sai_deserialize_object_id("oid:0xFFFFFFFFFFFFFFFFFFFFFFF", &id);
+    TEST_ASSERT_TRUE(res < 0, "expected negative number: res = %d", res);
+
+    uint64_t x = 0;
+    int bits = 0;
+
+    char buf[100];
+
+    for (bits = 0; bits < 64; bits++)
+    {
+        for (x = 0; x < 0x100; x++)
+        {
+            uint64_t y = x << bits;
+
+            sprintf(buf, "oid:0x%lx", y);
+
+            res = sai_deserialize_object_id(buf, &id);
+
+            TEST_ASSERT_TRUE(res > 0, "expected positive number");
+            TEST_ASSERT_TRUE(y == id, "expected equal");
+
+            sprintf(buf, "oid:0x%lX", y);
+
+            res = sai_deserialize_object_id(buf, &id);
+
+            TEST_ASSERT_TRUE(res > 0, "expected positive number");
+            TEST_ASSERT_TRUE(y == id, "expected equal");
+        }
+    }
+}
+
 int main()
 {
     /* list automatically symbols to execute all tests */
@@ -356,6 +419,7 @@ int main()
     test_deserialize_int();
 
     test_deserialize_enum();
+    test_deserialize_object_id();
 
     return 0;
 }
