@@ -51,10 +51,6 @@ int sai_serialize_object_id(
         _Out_ char *buffer,
         _In_ sai_object_id_t object_id);
 
-int sai_serialize_object_type(
-        _Out_ char *buffer,
-        _In_ sai_object_type_t object_type);
-
 int sai_serialize_mac(
         _Out_ char *buffer,
         _In_ const sai_mac_t mac);

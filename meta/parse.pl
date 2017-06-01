@@ -4077,6 +4077,33 @@ sub PopulateValueTypes
     ProcessValues(\%Union, \%ACL_FIELD_TYPES, \%ACL_FIELD_TYPES_TO_VT);
 }
 
+sub CreateSerializeForEnums
+{
+    for my $key (sort keys %SAI_ENUMS)
+    {
+        next if $key =~/_attr_t$/;
+
+        if (not $key =~ /^sai_(\w+)_t$/)
+        {
+            LogWarning "wrong enum name '$key'";
+            next;
+        }
+
+        my $inner = $1;
+
+        WriteHeader "extern int sai_serialize_$inner(";
+        WriteHeader "        _Out_ char *buffer,";
+        WriteHeader "        _In_ $key $inner);";
+
+        WriteSource "int sai_serialize_$inner(";
+        WriteSource "        _Out_ char *buffer,";
+        WriteSource "        _In_ $key $inner)";
+        WriteSource "{";
+        WriteSource "    return sai_serialize_enum(buffer, &sai_metadata_enum_$key, $inner);";
+        WriteSource "}";
+    }
+}
+
 sub CreateSerializeMethodsForNonObjectId
 {
     my $structName = shift;
@@ -4113,7 +4140,7 @@ sub CreateSerializeMethodsForNonObjectId
 
         # XXX we always add "quote" in %s, but this may be bad if we serialize other
         # object list list, or other structure, we need to know ad hoc that item we are
-        # serializeing, also single numbers don't need quotes
+        # serializing, also single numbers don't need quotes
 
         $template .= "\\\"$member\\\":\\\"%s\\\",";
 
@@ -4173,7 +4200,7 @@ sub CreateSerializeForNoIdStructs
 
 sub CreateSerializeMetaKey
 {
-    WriteHeader "int sai_serialize_object_meta_key(";
+    WriteHeader "extern int sai_serialize_object_meta_key(";
     WriteHeader "        _Out_ char *buffer,";
     WriteHeader "        _In_ const sai_object_meta_key_t *meta_key);";
 
@@ -4256,6 +4283,8 @@ CheckApiDefines();
 CheckAttributeValueUnion();
 
 CreateNotificationStruct();
+
+CreateSerializeForEnums();
 
 CreateSerializeForNoIdStructs();
 

@@ -1,11 +1,11 @@
+#include <arpa/inet.h>
+#include <byteswap.h>
+#include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <ctype.h>
-#include <limits.h>
-#include <byteswap.h>
-#include <inttypes.h>
 #include <sai.h>
 #include "saimetadatautils.h"
 #include "saimetadata.h"
@@ -101,13 +101,6 @@ int sai_serialize_enum(
     return sai_serialize_s32(buffer, value);
 }
 
-int sai_serialize_object_type(
-        _Out_ char *buffer,
-        _In_ sai_object_type_t object_type)
-{
-    return sai_serialize_enum(buffer, &sai_metadata_enum_sai_object_type_t, object_type);
-}
-
 int sai_serialize_mac(
         _Out_ char *buffer,
         _In_ const sai_mac_t mac)
@@ -120,11 +113,7 @@ int sai_serialize_ipv4(
         _Out_ char *buffer,
         _In_ sai_ip4_t ip)
 {
-    struct sockaddr_in sa;
-
-    memcpy(&sa.sin_addr, &ip, 4);
-
-    if (inet_ntop(AF_INET, &(sa.sin_addr), buffer, INET_ADDRSTRLEN) == NULL)
+    if (inet_ntop(AF_INET, &ip, buffer, INET_ADDRSTRLEN) == NULL)
     {
         SAI_META_LOG_WARN("failed to convert ipv4 address, errno: %s", strerror(errno));
         return SAI_SERIALIZE_ERROR;
@@ -137,11 +126,7 @@ int sai_serialize_ipv6(
         _Out_ char *buffer,
         _In_ const sai_ip6_t ip)
 {
-    struct sockaddr_in6 sa6;
-
-    memcpy(&sa6.sin6_addr, ip, 16);
-
-    if (inet_ntop(AF_INET6, &(sa6.sin6_addr), buffer, INET6_ADDRSTRLEN) == NULL)
+    if (inet_ntop(AF_INET6, ip, buffer, INET6_ADDRSTRLEN) == NULL)
     {
         SAI_META_LOG_WARN("failed to convert ipv6 address, errno: %s", strerror(errno));
         return SAI_SERIALIZE_ERROR;
@@ -549,7 +534,6 @@ static int sai_deserialize_uint(
             break;
         }
 
-        /* wrong: last = 0x1FFF so next result will be 0xFFF0, problem is only with overflow numbers */
         result = result * 10 + (uint64_t)(c);
 
         if (result > limit) /* overflow */
