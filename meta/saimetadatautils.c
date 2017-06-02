@@ -289,3 +289,235 @@ bool sai_metadata_is_condition_in_force(
 
     return met;
 }
+
+#define CASE_PRIMITIVE(x,y)                 \
+    case x:                                 \
+    dst_attr.value. #y = src_attr.value #y; \
+    return SAI_STATUS_SUCCESS;
+
+sai_status_t sai_metadata_transfer_attribute_value(
+        _In_ const sai_attr_metadata_t *metadata,
+        _In_ const sai_attribute_t *src_attr,
+        _Inout_ sai_attribute_t *dst_attr,
+        _In_ bool count_only)
+{
+
+    /* 
+     * We need serialize/deserialize for testing,
+     * complex types could be generated automaticly since we are using plane structs
+     */
+    
+    /* is primitive we could just transfer entrie stricture memcpy, ~ 40 bytes */
+    /* lists are generic, so only w list will handle all
+     * complex data need to be handles separetly - so far only acl capability
+     * */
+
+    switch (serialization_type)
+    {
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_BOOL, booldata);
+
+        case SAI_ATTR_VALUE_TYPE_CHARDATA:
+            memcpy(dst_attr.value.chardata, src_attr.value.chardata, sizeof(src_attr.value.chardata));
+            return SAI_STATUS_SUCCESS;
+
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_UINT8,  u8);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_INT8,   s8);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_UINT16, u16);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_INT16,  s16);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_UINT32, u32);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_INT32,  s32);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_UINT64, u64);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_INT64,  s64);
+
+        case SAI_ATTR_VALUE_TYPE_MAC:
+            memcpy(dst_attr.value.mac, src_attr.value.mac, sizeof(src_attr.value.mac));
+            break;
+
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_IPV4,  ip4);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_IPV6,  ip6);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_IP_ADDRESS,  ipaddr);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_OBJECT_ID,   oid);
+
+        case SAI_ATTR_VALUE_TYPE_OBJECT_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.objlist, dst_attr.value.objlist, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_UINT8_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.u8list, dst_attr.value.u8list, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_INT8_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.s8list, dst_attr.value.s8list, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_UINT16_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.u16list, dst_attr.value.u16list, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_INT16_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.s16list, dst_attr.value.s16list, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_UINT32_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.u32list, dst_attr.value.u32list, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_INT32_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.s32list, dst_attr.value.s32list, countOnly));
+            break;
+
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_UINT32_RANGE, u32range);
+        CASE_PRIMITIVE(SAI_ATTR_VALUE_TYPE_INT32_RANGE,  s32range);
+
+        case SAI_ATTR_VALUE_TYPE_VLAN_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.vlanlist, dst_attr.value.vlanlist, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_QOS_MAP_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.qosmap, dst_attr.value.qosmap, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_TUNNEL_MAP_LIST:
+            RETURN_ON_ERROR(transfer_list(src_attr.value.tunnelmap, dst_attr.value.tunnelmap, countOnly));
+            break;
+
+            /* we need to check enable since if disabled, list may not exists */
+            /* ACL FIELD DATA */
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_BOOL:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.data.booldata, dst_attr.value.aclfield.data.booldata);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT8:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.u8, dst_attr.value.aclfield.mask.u8);
+            transfer_primitive(src_attr.value.aclfield.data.u8, dst_attr.value.aclfield.data.u8);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_INT8:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.s8, dst_attr.value.aclfield.mask.s8);
+            transfer_primitive(src_attr.value.aclfield.data.s8, dst_attr.value.aclfield.data.s8);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT16:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.u16, dst_attr.value.aclfield.mask.u16);
+            transfer_primitive(src_attr.value.aclfield.data.u16, dst_attr.value.aclfield.data.u16);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_INT16:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.s16, dst_attr.value.aclfield.mask.s16);
+            transfer_primitive(src_attr.value.aclfield.data.s16, dst_attr.value.aclfield.data.s16);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT32:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.u16, dst_attr.value.aclfield.mask.u16);
+            transfer_primitive(src_attr.value.aclfield.data.u16, dst_attr.value.aclfield.data.u16);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_INT32:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.s32, dst_attr.value.aclfield.mask.s32);
+            transfer_primitive(src_attr.value.aclfield.data.s32, dst_attr.value.aclfield.data.s32);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_MAC:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.mac, dst_attr.value.aclfield.mask.mac);
+            transfer_primitive(src_attr.value.aclfield.data.mac, dst_attr.value.aclfield.data.mac);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_IPV4:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.ip4, dst_attr.value.aclfield.mask.ip4);
+            transfer_primitive(src_attr.value.aclfield.data.ip4, dst_attr.value.aclfield.data.ip4);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_IPV6:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.mask.ip6, dst_attr.value.aclfield.mask.ip6);
+            transfer_primitive(src_attr.value.aclfield.data.ip6, dst_attr.value.aclfield.data.ip6);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_ID:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            transfer_primitive(src_attr.value.aclfield.data.oid, dst_attr.value.aclfield.data.oid);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_LIST:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            RETURN_ON_ERROR(transfer_list(src_attr.value.aclfield.data.objlist, dst_attr.value.aclfield.data.objlist, countOnly));
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT8_LIST:
+            transfer_primitive(src_attr.value.aclfield.enable, dst_attr.value.aclfield.enable);
+            RETURN_ON_ERROR(transfer_list(src_attr.value.aclfield.mask.u8list, dst_attr.value.aclfield.mask.u8list, countOnly));
+            transfer_list(src_attr.value.aclfield.data.u8list, dst_attr.value.aclfield.data.u8list, countOnly);
+            break;
+
+            /* ACL ACTION DATA */
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_UINT8:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.u8, dst_attr.value.aclaction.parameter.u8);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_INT8:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.s8, dst_attr.value.aclaction.parameter.s8);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_UINT16:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.u16, dst_attr.value.aclaction.parameter.u16);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_INT16:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.s16, dst_attr.value.aclaction.parameter.s16);
+            break;
+
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_UINT32:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.u32, dst_attr.value.aclaction.parameter.u32);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_INT32:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.s32, dst_attr.value.aclaction.parameter.s32);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_MAC:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.mac, dst_attr.value.aclaction.parameter.mac);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_IPV4:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.ip4, dst_attr.value.aclaction.parameter.ip4);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_IPV6:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.ip6, dst_attr.value.aclaction.parameter.ip6);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_ID:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            transfer_primitive(src_attr.value.aclaction.parameter.oid, dst_attr.value.aclaction.parameter.oid);
+            break;
+
+        case SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_LIST:
+            transfer_primitive(src_attr.value.aclaction.enable, dst_attr.value.aclaction.enable);
+            RETURN_ON_ERROR(transfer_list(src_attr.value.aclaction.parameter.objlist, dst_attr.value.aclaction.parameter.objlist, countOnly));
+            break;
+
+        default:
+            return SAI_STATUS_NOT_IMPLEMENTED;
+    }
+}

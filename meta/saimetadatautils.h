@@ -153,6 +153,27 @@ extern bool sai_metadata_is_condition_in_force(
         _In_ const sai_attribute_t *attr_list);
 
 /**
+ * @brief Transfer one attribute value to another attribute.
+ *
+ * @param[in] metadata Attribute metadata.
+ * @param[in] src_attr Source attribute.
+ * @param[inout] dst_attr Destination attribute.
+ * @param[in] count_only Determines whether on list value only count should be transferred.
+ *
+ * @return #SAI_STATUS_SUCCESS if value was transferred,
+ * #SAI_STATUS_BUFFER_OVERFLOW if destination attribute is too small for transfer,
+ * #SAI_STATUS_FAILURE if destination buffer on list is NULL,
+ * #SAI_STATUS_NOT_IMPLEMENTED if attribute value type is not implemented
+ * (can only happen if there is a bug, since sanity check make sure all attributes
+ * values are transferable).
+ */
+extern sai_status_t sai_metadata_transfer_attribute_value(
+        _In_ const sai_attr_metadata_t *metadata,
+        _In_ const sai_attribute_t *src_attr,
+        _Inout_ sai_attribute_t *dst_attr,
+        _In_ bool count_only);
+
+/**
  * @}
  */
 #endif /** __SAIMETADATAUTILS_H_ */
