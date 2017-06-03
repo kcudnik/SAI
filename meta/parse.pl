@@ -17,6 +17,8 @@ my %SAI_ENUMS = ();
 my %METADATA = ();
 my %STRUCTS = ();
 my %options = ();
+my %ALL_STRUCTS = ();
+my %NOTIFY = ();
 
 my $NUMBER_REGEX = '(?:-?\d+|0x[A-F0-9]+)';
 
@@ -518,6 +520,82 @@ sub ProcessEnumSection
     }
 }
 
+sub ProcessNotifications
+{
+    my ($member, $typedefname) = @_;
+
+    my $args = $member->{argsstring}[0];
+
+    $args =~ s/[()]//g;
+
+    my @params = split/,/,$args;
+
+    my $idx = 0;
+
+    my $desc = ExtractDescription($typedefname, $typedefname, $member->{detaileddescription}[0]);
+
+    $desc =~ s/@@/\n@@/g;
+
+    my %Count = ();
+
+    while ($desc =~ /\@\@count\s+(\w+)\s+(\w+)/g)
+    {
+        # there can be multiple pointers and counts
+        $Count{$1} = $2;
+    }
+
+    for my $param (@params)
+    {
+        # NOTE multple pointers or consts are not supported
+        if (not $param =~ /_In_ ((const )?\w+\s*?\*?)\s*(\w+)$/)
+        {
+            LogWarning "can't match param '$param' on $typedefname";
+            next;
+        }
+
+        my $type = $1;
+        my $name = $3;
+
+        $NOTIFY{$typedefname}{$idx}{type} = $type;
+        $NOTIFY{$typedefname}{$idx}{name} = $name;
+        $NOTIFY{$typedefname}{$name} = $idx;
+
+        # other approach could be deduce prebious param as "count" but this
+        # takes away flexibility to use the same count for multiple params
+        # but it's nicer ;)
+ 
+        if ($type =~ /\*/)
+        {
+            if (not defined $Count{$name})
+            {
+                LogWarning "type '$type' is pointer, \@count is required, but missing on $typedefname";
+                next;
+            }
+
+            $NOTIFY{$typedefname}{$idx}{count} = $Count{$name};
+
+            if ($Count{$name} =~ /^(\d+)$/)
+            {
+                # count is given explicit
+                next;
+            }
+
+            my $countidx = $NOTIFY{$typedefname}{ $Count{$name} };
+
+            my $counttype = $NOTIFY{$typedefname}{$countidx}{type};
+
+            # TODO add support for "n" if count is not present
+
+            if (not $counttype =~ /^(uint32_t|sai_size_t)$/)
+            {
+                LogWarning "param '$Count{$name}' used as count for param '$name' ($typedefname) is wrong type '$counttype' allowed: uint32_t|sai_size_t";
+            }
+        }
+
+        $idx++;
+    }
+}
+
 sub ProcessTypedefSection
 {
     my $section = shift;
@@ -536,6 +614,25 @@ sub ProcessTypedefSection
 
         $typedeftype = $memberdef->{type}[0]->{content} if ref $memberdef->{type}[0] eq "HASH";
 
+        if ($typedeftype =~ /^struct /)
+        {
+            # record structs for later serialization
+            $ALL_STRUCTS{$typedefname} = 1;
+            next;
+        }
+
+        if ($typedefname =~ /^sai_\w+_notification_fn$/)
+        {
+            if (not $typedeftype =~ /void\(\*/)
+            {
+                LogWarning "notification $typedefname should return void, but got '$typedeftype'";
+                next;
+            }
+
+            ProcessNotifications($memberdef, $typedefname);
+            next;
+        }
+
         next if not $typedeftype =~ /^enum /;
 
         if (not defined $SAI_ENUMS{$typedefname})
@@ -553,6 +650,27 @@ sub ProcessTypedefSection
         my %ENUM = %{ $SAI_ENUMS{$typedefname} };
 
         $ENUM{"objecttype"} = $objecttype;
+    }
+}
+
+sub ProcessTypedefStructsSection
+{
+    my $section = shift;
+
+    for my $memberdef (@{ $section->{memberdef} })
+    {
+        next if not $memberdef->{kind} eq "typedef";
+
+        my $id = $memberdef->{id};
+
+        my $typedefname = $memberdef->{name}[0];
+
+        my $typedeftype;
+
+        $typedeftype = $memberdef->{type}[0] if ref $memberdef->{type}[0] eq "";
+
+        $typedeftype = $memberdef->{type}[0]->{content} if ref $memberdef->{type}[0] eq "HASH";
+
     }
 }
 
@@ -2525,7 +2643,7 @@ sub ExtractStructInfo
         my $name = $member->{name}[0];
         my $type = $member->{definition}[0];
         my $args = $member->{argsstring}[0];
-        my $loc  = $member->{location}[0]->{file};
+        my $file = $member->{location}[0]->{file};
 
         # if argstring is empty in xml, then it returns empty hash, skip this
         # args contain extra arguments like [32] for "char foo[32]" or
@@ -2555,7 +2673,7 @@ sub ExtractStructInfo
         $S{$name}{desc} = $desc;
         $S{$name}{args} = $args;
         $S{$name}{idx}  = $idx++;
-        $S{$name}{loc}  = $loc;
+        $S{$name}{file} = $file;
     }
 
     return %S;
@@ -4073,6 +4191,8 @@ sub ProcessXmlFiles
 {
     for my $file (GetXmlFiles($XMLDIR))
     {
+        # XXX TODO remove
+        next if not $file =~ /saitam|saiswitch|saifdb|saihostif|saiqueue|saiport/;
         LogInfo "Processing $file";
 
         ProcessXmlFile("$XMLDIR/$file");
@@ -4330,6 +4450,8 @@ sub CreateSerializeMetaKey
     WriteSource "}";
 }
 
+ProcessXmlFiles();
+exit;
 my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
 for my $s(@structs)
 {
@@ -4340,9 +4462,9 @@ for my $s(@structs)
 
     my %struct = ExtractStructInfo($s, "struct_");
 
-    next if $struct{ (keys %struct)[0] }->{loc} =~ /saimetadatatypes/;
+    next if $struct{ (keys %struct)[0] }->{file} =~ /saimetadatatypes/;
 
-# for pointers we could add 
+# for pointers we could add
 #
 # "@count" to description and point to struct member with that name and it will be treated as count for pointers
 # when ther is no pointer, @count -- shoule be like hypens or -1
