@@ -2512,9 +2512,9 @@ sub ExtractStructInfo
 
     $count = @members;
 
-    if ($count < 2)
+    if ($count < 1)
     {
-        LogError "there must be at least 2 members in struct $struct";
+        LogError "there must be at least 1 member in struct $struct";
         return %S;
     }
 
@@ -2525,6 +2525,7 @@ sub ExtractStructInfo
         my $name = $member->{name}[0];
         my $type = $member->{definition}[0];
         my $args = $member->{argsstring}[0];
+        my $loc  = $member->{location}[0]->{file};
 
         # if argstring is empty in xml, then it returns empty hash, skip this
         # args contain extra arguments like [32] for "char foo[32]" or
@@ -2554,6 +2555,7 @@ sub ExtractStructInfo
         $S{$name}{desc} = $desc;
         $S{$name}{args} = $args;
         $S{$name}{idx}  = $idx++;
+        $S{$name}{loc}  = $loc;
     }
 
     return %S;
@@ -4328,6 +4330,41 @@ sub CreateSerializeMetaKey
     WriteSource "}";
 }
 
+my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
+for my $s(@structs)
+{
+    chomp$s;
+    next if $s =~ /_api_t$/;
+
+    next if $s =~/saimetadatatypes/;
+
+    my %struct = ExtractStructInfo($s, "struct_");
+
+    next if $struct{ (keys %struct)[0] }->{loc} =~ /saimetadatatypes/;
+
+# for pointers we could add 
+#
+# "@count" to description and point to struct member with that name and it will be treated as count for pointers
+# when ther is no pointer, @count -- shoule be like hypens or -1
+# for notifications, hmm how to detect count ? - in descripthom method we could add @count x y
+# and 2 params names which to which should be
+# and notifications we can treat like structs, we could actually declare struct for deserialize
+# with those exact parameters as notification
+#
+# we could also generate deserialize_and call_notifation where notification strict would be passed
+# and wight notification would be called and free itself but on exception there will be memory leak
+#
+# and force all structs with pointers should have @count attribute and count should be always uint32 bit
+#
+# count 1 if there is not param
+#
+# then we could generate serialize/deserialize and free methods for all
+
+    print "-- $s\n";
+    CreateSerializeMethodsForNonObjectId $s;
+}
+
+exit;
 #
 # MAIN
 #
