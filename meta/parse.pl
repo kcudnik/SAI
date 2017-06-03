@@ -534,7 +534,7 @@ sub ProcessNotifications
 
     my $desc = ExtractDescription($typedefname, $typedefname, $member->{detaileddescription}[0]);
 
-    $desc =~ s/@@/\n@@/g;
+    $desc =~ s/@@/\n@@/g; # @count data[count], attr_list[attr_count], foo[1]
 
     my %Count = ();
 
@@ -4775,3 +4775,8 @@ WriteTestMain();
 WriteLoggerVariables();
 
 WriteMetaDataFiles();
+
+- saistaysaddd hasflags
+- default values to acl fields and actions
+- change log function names 
+- change buffer count order and change to uint32
