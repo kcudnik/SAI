@@ -538,11 +538,21 @@ sub ProcessNotifications
 
     my %Count = ();
 
+    $typedefname = $1 if $typedefname =~ /^sai_(\w+)_fn$/;
+
     while ($desc =~ /\@\@count\s+(\w+)\s+(\w+)/g)
     {
         # there can be multiple pointers and counts
         $Count{$1} = $2;
+
+        if ($1 eq $2)
+        {
+            LogError "notification count '$1' can't point to itself in \@count";
+            return;
+        }
     }
+
+    # TODO if is attribute then we need object type and must be exactly 1
 
     for my $param (@params)
     {
@@ -4155,12 +4165,25 @@ sub CreateNotificationStruct
 
     WriteHeader "typedef struct _sai_switch_notifications_t {";
 
+    my $pointersCount = @pointers;
+    my $notificationsCount =(keys %NOTIFY);
+
+    if ($pointersCount != $notificationsCount)
+    {
+        LogError "switch pointers ($pointersCount) != notifications ($notificationsCount)";
+    }
+
     for my $pointer (sort @pointers)
     {
         if (not $pointer =~ /^sai_(\w+)_notification_fn/)
         {
             LogWarning "notification function $pointer is not ending on _notification_fn";
             next;
+        }
+
+        if (not defined $NOTIFY{$pointer})
+        {
+            LogError "$pointer is not defined in notifications";
         }
 
         WriteHeader "    $pointer on_$1;";
@@ -4450,20 +4473,205 @@ sub CreateSerializeMetaKey
     WriteSource "}";
 }
 
-ProcessXmlFiles();
-exit;
-my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
-for my $s(@structs)
+sub CreateSerializeSingleNotification
 {
-    chomp$s;
-    next if $s =~ /_api_t$/;
+    my ($ntfname, $ntf) = @_;
 
-    next if $s =~/saimetadatatypes/;
+    my $idx = 0;
 
-    my %struct = ExtractStructInfo($s, "struct_");
+    WriteSource "int sai_serialize_$ntfname(";
+    WriteSource "        _Inout_ char *output_buffer,";
 
-    next if $struct{ (keys %struct)[0] }->{file} =~ /saimetadatatypes/;
+    # write params
+    while (defined $ntf->{$idx})
+    {
+        my $end = (defined $ntf->{$idx+1}) ? "," : ")";
 
+        WriteSource "        _In_ $ntf->{$idx}{type} $ntf->{$idx}{name}" . $end;
+
+        $idx++;
+    }
+
+    my $max = $idx - 1;
+
+    WriteSource "{";
+
+    my @locals = ();
+
+    # XXX length of notification can be arbitrary long since we have buffers etc and attributes
+
+    for $idx (0 .. $max)
+    {
+        my $member = "buf_" . $ntf->{$idx}{name};
+
+        push@locals,$member;
+
+        WriteSource "    char $member\[128\];"; # TODO base on memebr determine size
+    }
+
+    WriteSource "";
+    WriteSource "    int ret = 0;";
+    WriteSource "";
+
+    my $template = "";
+
+    for $idx (0 .. $max)
+    {
+        my $type = $ntf->{$idx}{type};
+        my $member = $ntf->{$idx}{name};
+        my $count = $ntf->{$idx}{count};
+
+        # XXX we always add "quote" in %s, but this may be bad if we serialize other
+        # object list list, or other structure, we need to know ad hoc that item we are
+        # serializing, also single numbers don't need quotes
+
+        $template .= "\\\"$member\\\":\\\"%s\\\",";
+
+        # for object type should we extract object types and check ?
+        if ($type =~ m/^sai_(object_id|mac)_t$/)
+        {
+            WriteSource "    ret |= sai_serialize_$1(buf_$member, $member);";
+            next;
+        }
+
+        # we can figure out that item is strict and then use "&"
+        if ($type =~ m/^sai_(ip_address|ip_prefix|size)_t$/)
+        {
+            WriteSource "    ret |= sai_serialize_$1(buf_$member, $member);";
+            next;
+        }
+
+        if ($type =~ m/^(uint\d+)_t$/)
+        {
+            $type =~ s/uint/u/;
+
+            WriteSource "    ret |= sai_serialize_$type(buf_$member, $member);";
+            next;
+        }
+
+        if ($type =~ /^(?:const )?(sai_attribute_t)(\s*\*)?$/)
+        {
+            WriteSource "    sai_serialize_attribute(OT, $member);";
+            next;
+        }
+
+        if ($type =~ /^(?:const )?(sai_(\w+)_t)\s*\*$/)
+        {
+            WriteSource "    {";
+
+            $type = $1;
+
+            if (not defined $SAI_ENUMS{$type} and not defined $ALL_STRUCTS{$type})
+            {
+                LogError "type '$type' not enum and not struct, FIXME";
+                next;
+            }
+
+            my $i = $NOTIFY{$ntfname}{$count};
+            my $countName = $NOTIFY{$ntfname}{$i}{name};
+            my $countType = $NOTIFY{$ntfname}{$i}{type};
+
+            # can be enum or struct
+
+            WriteSource "        $countType idx = 0;";
+
+            WriteSource "        for (; idx < $countName; idx)";
+            WriteSource "        {";
+            WriteSource "            sai_serialize_$type(buf_$member, $member\[$idx\]);"; #TODO enums should be by value strut by pointer
+            WriteSource "        }";
+
+            WriteSource "    }";
+
+            next;
+        }
+
+        if ($type =~ /^(?:const )?void(\s*\*)$/)
+        {
+            WriteSource "    sai_serialize_u8_list(buf_$member, (uint8_*)$member);";
+            next;
+        }
+
+        if ($type =~ /^(?:const )?(sai_(\w+)_t)$/)
+        {
+            $type = $1;
+
+            if (defined $SAI_ENUMS{$type} and not defined $ALL_STRUCTS{$type})
+            {
+                WriteSource "    sai_serialize_$type(buf_$member, $member);";
+                next;
+            }
+
+            if (defined $ALL_STRUCTS{$type})
+            {
+                WriteSource "    sai_serialize_$type(buf_$member, &$member);";
+                next;
+            }
+
+            LogError "type '$type' not enum and not struct, FIXME";
+            next;
+        }
+
+        #if (defined $SAI_ENUMS{$type})
+        #{
+        #    WriteSource "    ret |= sai_serialize_enum(buf_$member, &sai_metadata_enum_$type, $member);";
+        #    next;
+        #}
+
+        LogError "not supported '$member' -> '$type', FIXME";
+    }
+
+    chop $template;
+
+    WriteSource "";
+    WriteSource "    if (ret < 0)";
+    WriteSource "    {";
+    WriteSource "        SAI_META_LOG_WARN(\"failed to serialize $ntfname\");";
+    WriteSource "        return SAI_SERIALIZE_ERROR;";
+    WriteSource "    }";
+    WriteSource "";
+
+    my $locals = join(",", @locals);
+
+    WriteSource "    return sprintf(buffer,";
+    WriteSource "                   \"{$template}\",";
+    WriteSource "                   $locals);";
+
+    WriteSource "}";
+}
+
+
+
+sub CreateSerializeNotifications
+{
+    for my $ntf (sort keys %NOTIFY)
+    {
+        CreateSerializeSingleNotification($ntf, $NOTIFY{$ntf});
+    }
+}
+
+ProcessXmlFiles();
+
+CreateSerializeNotifications();
+
+    WriteFile("saimetadata.c", $SOURCE_CONTENT);
+exit;
+#my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
+#for my $s(@structs)
+#{
+#    chomp$s;
+#    next if $s =~ /_api_t$/;
+#
+#    next if $s =~/saimetadatatypes/;
+#
+#    my %struct = ExtractStructInfo($s, "struct_");
+#
+#    next if $struct{ (keys %struct)[0] }->{file} =~ /saimetadatatypes/;
+#
+#
+#    print "-- $s\n";
+#    CreateSerializeMethodsForNonObjectId $s;
+#}
+#exit;
 # for pointers we could add
 #
 # "@count" to description and point to struct member with that name and it will be treated as count for pointers
@@ -4481,12 +4689,13 @@ for my $s(@structs)
 # count 1 if there is not param
 #
 # then we could generate serialize/deserialize and free methods for all
+#
+# TODO generate notifications metadata, if param is object type then objects must be specified
+# for validation wheter notification returned valid object, and each struct that is using object_type
+# should have @objects on object id members - a lot of work
+#
+# then we should generate all struct infos to get all functions for oid extraction etc
 
-    print "-- $s\n";
-    CreateSerializeMethodsForNonObjectId $s;
-}
-
-exit;
 #
 # MAIN
 #
