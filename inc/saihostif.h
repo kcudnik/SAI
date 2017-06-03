@@ -1039,8 +1039,8 @@ typedef sai_status_t (*sai_send_hostif_packet_fn)(
  * @count buffer buffer_size
  *
  * @param[in] switch_id Switch Object ID
- * @param[in] buffer Packet buffer
  * @param[in] buffer_size Actual packet size in bytes
+ * @param[in] buffer Packet buffer
  * @param[in] attr_count Number of attributes
  * @param[in] attr_list Array of attributes
  */
