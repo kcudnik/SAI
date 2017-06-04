@@ -425,7 +425,7 @@ typedef struct _sai_tam_threshold_breach_event_t
  * set to false, then the event data passed to the callback function will
  * have the field is_snapshot_valid set to false.
  *
- * @count data count
+ * @count data[count]
  *
  * @param[in] count Number of events
  * @param[in] data Pointer to TAM events data array

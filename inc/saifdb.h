@@ -345,7 +345,7 @@ typedef sai_status_t (*sai_flush_fdb_entries_fn)(
 /**
  * @brief FDB notifications
  *
- * @count data count
+ * @count data[count]
  *
  * @param[in] count Number of notifications
  * @param[in] data Pointer to FDB event notification data array

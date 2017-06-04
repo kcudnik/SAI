@@ -1632,7 +1632,7 @@ typedef sai_status_t (*sai_clear_port_all_stats_fn)(
  *
  * Passed as a parameter into sai_initialize_switch()
  *
- * @count data count
+ * @count data[count]
  *
  * @param[in] count Number of notifications
  * @param[in] data Array of port operational status

@@ -534,13 +534,13 @@ sub ProcessNotifications
 
     my $desc = ExtractDescription($typedefname, $typedefname, $member->{detaileddescription}[0]);
 
-    $desc =~ s/@@/\n@@/g; # @count data[count], attr_list[attr_count], foo[1]
+    $desc =~ s/@@/\n@@/g; # @count data[count] | attr_list[attr_count] | foo[1]
 
     my %Count = ();
 
-    $typedefname = $1 if $typedefname =~ /^sai_(\w+)_fn$/;
+    # $typedefname = $1 if $typedefname =~ /^sai_(\w+)_fn$/;
 
-    while ($desc =~ /\@\@count\s+(\w+)\s+(\w+)/g)
+    while ($desc =~ /\@\@count\s+(\w+)\[(\w+|\d+)\]/g)
     {
         # there can be multiple pointers and counts
         $Count{$1} = $2;
@@ -552,7 +552,14 @@ sub ProcessNotifications
         }
     }
 
-    # TODO if is attribute then we need object type and must be exactly 1
+    my %Objects = ();
+
+    while ($desc =~ /\@\@(?:objects|type)\s+(\w+)\s+(SAI_OBJECT_TYPE_\w+)\s*$/g)
+    {
+        $Objects{$1} = $2;
+    }
+
+    # NOTE: if there are only 2 elements, one is uint32_t and second is pointer
 
     for my $param (@params)
     {
@@ -568,38 +575,54 @@ sub ProcessNotifications
 
         $NOTIFY{$typedefname}{$idx}{type} = $type;
         $NOTIFY{$typedefname}{$idx}{name} = $name;
+        $NOTIFY{$typedefname}{$idx}{ot} = $Objects{$name};
         $NOTIFY{$typedefname}{$name} = $idx;
 
         # other approach could be deduce prebious param as "count" but this
         # takes away flexibility to use the same count for multiple params
         # but it's nicer ;)
- 
-        if ($type =~ /\*/)
+
+        $idx++;
+    }
+
+    $idx = 0;
+
+    # second pass is needed if count is defined after pointer
+    for my $param (@params)
+    {
+        next if (not $param =~ /_In_ ((const )?\w+\s*?\*?)\s*(\w+)$/);
+
+        my $type = $1;
+        my $name = $3;
+
+        if (not $type =~ /\*/)
         {
-            if (not defined $Count{$name})
-            {
-                LogWarning "type '$type' is pointer, \@count is required, but missing on $typedefname";
-                next;
-            }
+            $idx++;
+            next;
+        }
 
-            $NOTIFY{$typedefname}{$idx}{count} = $Count{$name};
+        if (not defined $Count{$name})
+        {
+            LogWarning "type '$type' is pointer, \@count is required, but missing on $typedefname";
+            next;
+        }
 
-            if ($Count{$name} =~ /^(\d+)$/)
-            {
-                # count is given explicit
-                next;
-            }
+        $NOTIFY{$typedefname}{$idx}{count} = $Count{$name};
 
-            my $countidx = $NOTIFY{$typedefname}{ $Count{$name} };
+        if ($Count{$name} =~ /^(\d+)$/)
+        {
+            # count is given explicit
+            next;
+        }
 
-            my $counttype = $NOTIFY{$typedefname}{$countidx}{type};
+        my $countidx = $NOTIFY{$typedefname}{ $Count{$name} };
 
-            # TODO add support for "n" if count is not present
+        my $counttype = $NOTIFY{$typedefname}{$countidx}{type};
 
-            if (not $counttype =~ /^(uint32_t|sai_size_t)$/)
-            {
-                LogWarning "param '$Count{$name}' used as count for param '$name' ($typedefname) is wrong type '$counttype' allowed: uint32_t|sai_size_t";
-            }
+        if (not $counttype =~ /^(uint32_t|sai_size_t)$/)
+        {
+            LogWarning "param '$Count{$name}' used as count for param '$name' ($typedefname)";
+            LogWarning " is wrong type '$counttype' allowed: uint32_t|sai_size_t";
         }
 
         $idx++;
@@ -4214,8 +4237,6 @@ sub ProcessXmlFiles
 {
     for my $file (GetXmlFiles($XMLDIR))
     {
-        # XXX TODO remove
-        next if not $file =~ /saitam|saiswitch|saifdb|saihostif|saiqueue|saiport/;
         LogInfo "Processing $file";
 
         ProcessXmlFile("$XMLDIR/$file");
@@ -4360,7 +4381,7 @@ sub CreateSerializeMethodsForNonObjectId
 
     for my $member (@keys)
     {
-        WriteSource "    char $member\[128\];"; # TODO base on memebr determine size
+        WriteSource "    char $member\[128\];"; # TODO base on member determine size
     }
 
     WriteSource "";
@@ -4473,21 +4494,34 @@ sub CreateSerializeMetaKey
     WriteSource "}";
 }
 
+# TODO we would need version like snprintf with buffer length check
+# since here we don't know how long input buffer should be
+
 sub CreateSerializeSingleNotification
 {
-    my ($ntfname, $ntf) = @_;
+    my ($ntftype, $ntf) = @_;
+
+    my $ntfname = $1 if $ntftype =~ /^sai_(\w+)_fn$/;
 
     my $idx = 0;
+    my $buf = "buf"; # can be changed if there will be name conflict
 
     WriteSource "int sai_serialize_$ntfname(";
-    WriteSource "        _Inout_ char *output_buffer,";
+    WriteSource "        _Inout_ char *$buf,";
 
-    # write params
+    WriteHeader "extern int sai_serialize_$ntfname(";
+    WriteHeader "        _Inout_ char *$buf,";
+
     while (defined $ntf->{$idx})
     {
-        my $end = (defined $ntf->{$idx+1}) ? "," : ")";
+        my $end = (defined $ntf->{$idx + 1}) ? "," : ")";
+        my $endheader = (defined $ntf->{$idx + 1}) ? "," : ");";
 
-        WriteSource "        _In_ $ntf->{$idx}{type} $ntf->{$idx}{name}" . $end;
+        my $type = $ntf->{$idx}{type};
+        my $name = $ntf->{$idx}{name};
+
+        WriteSource "        _In_  $type $name$end";
+        WriteHeader "        _In_  $type $name$endheader";
 
         $idx++;
     }
@@ -4495,151 +4529,140 @@ sub CreateSerializeSingleNotification
     my $max = $idx - 1;
 
     WriteSource "{";
+    WriteSource "    char *start_$buf = $buf;\n";
 
-    my @locals = ();
+    # we will treat notification params as struct members
+    # and they will be serialized as json object
 
-    # XXX length of notification can be arbitrary long since we have buffers etc and attributes
+    # all consts printfs could be exchanged to memcpy for optimize but we
+    # assume number of notifications is small, and this is fast enough
 
-    for $idx (0 .. $max)
-    {
-        my $member = "buf_" . $ntf->{$idx}{name};
+    WriteSource "    $buf += sprintf($buf, \"{\\\"$ntfname\\\":\");";
+    WriteSource "    $buf += sprintf($buf, \"{\");";
 
-        push@locals,$member;
+    # maybe drop quotes on param names?
 
-        WriteSource "    char $member\[128\];"; # TODO base on memebr determine size
-    }
-
-    WriteSource "";
-    WriteSource "    int ret = 0;";
-    WriteSource "";
-
-    my $template = "";
-
+    # TODO reuse this in struct serialize
     for $idx (0 .. $max)
     {
         my $type = $ntf->{$idx}{type};
-        my $member = $ntf->{$idx}{name};
+        my $name = $ntf->{$idx}{name};
         my $count = $ntf->{$idx}{count};
 
-        # XXX we always add "quote" in %s, but this may be bad if we serialize other
-        # object list list, or other structure, we need to know ad hoc that item we are
-        # serializing, also single numbers don't need quotes
+        my $comma = ($idx != 0) ? "," : "";
 
-        $template .= "\\\"$member\\\":\\\"%s\\\",";
+        WriteSource "    $buf += sprintf($buf, \"$comma\\\"$name\\\":\");";
 
-        # for object type should we extract object types and check ?
-        if ($type =~ m/^sai_(object_id|mac)_t$/)
+        if ($type =~ /^(?:const )?(sai_(\w+)_t|void)\s*\*$/)
         {
-            WriteSource "    ret |= sai_serialize_$1(buf_$member, $member);";
-            next;
-        }
-
-        # we can figure out that item is strict and then use "&"
-        if ($type =~ m/^sai_(ip_address|ip_prefix|size)_t$/)
-        {
-            WriteSource "    ret |= sai_serialize_$1(buf_$member, $member);";
-            next;
-        }
-
-        if ($type =~ m/^(uint\d+)_t$/)
-        {
-            $type =~ s/uint/u/;
-
-            WriteSource "    ret |= sai_serialize_$type(buf_$member, $member);";
-            next;
-        }
-
-        if ($type =~ /^(?:const )?(sai_attribute_t)(\s*\*)?$/)
-        {
-            WriteSource "    sai_serialize_attribute(OT, $member);";
-            next;
-        }
-
-        if ($type =~ /^(?:const )?(sai_(\w+)_t)\s*\*$/)
-        {
-            WriteSource "    {";
-
             $type = $1;
 
-            if (not defined $SAI_ENUMS{$type} and not defined $ALL_STRUCTS{$type})
+            my $shorttype = $2;
+
+            my $numberList = 0;
+
+            my $isstruct = (defined $ALL_STRUCTS{$type}) ? "&" : "";
+
+            if ($type eq "void")
+            {
+                # treat void* as uint8_t*
+
+                $numberList = 1;
+                $shorttype = "u8";
+                $name = "((const uint8_t*)$name)";
+            }
+            elsif (not defined $SAI_ENUMS{$type} and not defined $ALL_STRUCTS{$type})
             {
                 LogError "type '$type' not enum and not struct, FIXME";
                 next;
             }
 
-            my $i = $NOTIFY{$ntfname}{$count};
-            my $countName = $NOTIFY{$ntfname}{$i}{name};
-            my $countType = $NOTIFY{$ntfname}{$i}{type};
+            if (not defined $count)
+            {
+                LogError "count is not defined for '$name' on $ntfname";
+                return;
+            }
 
-            # can be enum or struct
+            if ($type eq "sai_attribute_t")
+            {
+                if (not defined $ntf->{$idx}{ot})
+                {
+                    LogError "param '$name' is $type and requires object type specified, but not provided";
+                    next;
+                }
 
-            WriteSource "        $countType idx = 0;";
+                my $objectType = $ntf->{$idx}{ot};
 
-            WriteSource "        for (; idx < $countName; idx)";
-            WriteSource "        {";
-            WriteSource "            sai_serialize_$type(buf_$member, $member\[$idx\]);"; #TODO enums should be by value strut by pointer
-            WriteSource "        }";
+                $isstruct = "$objectType, &";
+            }
 
+            WriteSource "    if ($name == NULL)";
+            WriteSource "    {";
+            WriteSource "        $buf += sprintf($buf, \"null\");";
             WriteSource "    }";
+            WriteSource "    else";
+            WriteSource "    {";
+            WriteSource "        $buf += sprintf($buf, \"[\");"; # begin of array
 
+            my $index     = $ntf->{$count};
+            my $countName = $ntf->{$index}{name};
+            my $countType = $ntf->{$index}{type};
+
+            WriteSource "        $countType idx;";
+
+            WriteSource "        for (idx = 0; idx < $countName; idx++)";
+            WriteSource "        {";
+            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $isstruct eq "" and not $numberList;
+            WriteSource "            int ret = sai_serialize_$shorttype($buf, $isstruct$name\[idx\]);";
+            WriteSource "            if (ret < 0)";
+            WriteSource "            {";
+            WriteSource "                SAI_META_LOG_WARN(\"failed to serialize '$name' at index %u\", (uint32_t)idx);";
+            WriteSource "                return SAI_SERIALIZE_ERROR;";
+            WriteSource "            }";
+            WriteSource "            $buf += ret;";
+            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $isstruct eq "" and not $numberList;
+            WriteSource "            if (idx != $countName - 1)";
+            WriteSource "               $buf += sprintf($buf, \",\");";
+            WriteSource "        }";
+            WriteSource "        $buf += sprintf($buf, \"]\");"; # end of array
+            WriteSource "    }";
             next;
         }
 
-        if ($type =~ /^(?:const )?void(\s*\*)$/)
+        # primitives or types where serialization is defined explicitly
+        # and it requires quotes (not numbers) and not structs/objects
+
+        if ($type =~ m/^sai_(object_id|mac|ip_address_ip_prefix)_t$/ or defined $SAI_ENUMS{$type})
         {
-            WriteSource "    sai_serialize_u8_list(buf_$member, (uint8_*)$member);";
+            $type = $1 if $type =~ /^sai_(\w+)_t$/;
+
+            WriteSource "    $buf += sprintf($buf, \"\\\"\");";
+            WriteSource "    $buf += sai_serialize_$type($buf, $name);";
+            WriteSource "    $buf += sprintf($buf, \"\\\"\");";
             next;
         }
 
-        if ($type =~ /^(?:const )?(sai_(\w+)_t)$/)
+        # primitives, numbers which don't require quotes
+
+        if ($type =~ m/^(?:sai_)?(size|u?int\d+)_t$/)
         {
             $type = $1;
+            $type =~ s/uint/u/;
+            $type =~ s/int/s/;
 
-            if (defined $SAI_ENUMS{$type} and not defined $ALL_STRUCTS{$type})
-            {
-                WriteSource "    sai_serialize_$type(buf_$member, $member);";
-                next;
-            }
-
-            if (defined $ALL_STRUCTS{$type})
-            {
-                WriteSource "    sai_serialize_$type(buf_$member, &$member);";
-                next;
-            }
-
-            LogError "type '$type' not enum and not struct, FIXME";
+            WriteSource "    $buf += sai_serialize_$type($buf, $name);";
             next;
         }
 
-        #if (defined $SAI_ENUMS{$type})
-        #{
-        #    WriteSource "    ret |= sai_serialize_enum(buf_$member, &sai_metadata_enum_$type, $member);";
-        #    next;
-        #}
-
-        LogError "not supported '$member' -> '$type', FIXME";
+        LogError "not handled $type $name, FIXME";
+        next;
     }
 
-    chop $template;
-
-    WriteSource "";
-    WriteSource "    if (ret < 0)";
-    WriteSource "    {";
-    WriteSource "        SAI_META_LOG_WARN(\"failed to serialize $ntfname\");";
-    WriteSource "        return SAI_SERIALIZE_ERROR;";
-    WriteSource "    }";
-    WriteSource "";
-
-    my $locals = join(",", @locals);
-
-    WriteSource "    return sprintf(buffer,";
-    WriteSource "                   \"{$template}\",";
-    WriteSource "                   $locals);";
-
+    WriteSource "    $buf += sprintf($buf, \"}\");"; # end of notification object with members
+    WriteSource "    $buf += sprintf($buf, \"}\");"; # end of entire object
+    WriteSource "    return (int)($buf - start_$buf);";
     WriteSource "}";
 }
-
-
 
 sub CreateSerializeNotifications
 {
@@ -4649,12 +4672,19 @@ sub CreateSerializeNotifications
     }
 }
 
-ProcessXmlFiles();
-
-CreateSerializeNotifications();
-
-    WriteFile("saimetadata.c", $SOURCE_CONTENT);
-exit;
+#ProcessXmlFiles();
+#
+#    WriteSource "#include <sai.h>";
+#    WriteSource "#include \"saimetadatatypes.h\"";
+#    WriteSource "#include \"saimetadatautils.h\"";
+#    WriteSource "#include \"saimetadatalogger.h\"";
+#    WriteSource "#include \"saiserialize.h\"";
+#    WriteSource "#include \"stdio.h\"";
+#
+#CreateSerializeNotifications();
+#
+#    WriteFile("saimetadata.c", $SOURCE_CONTENT);
+#exit;
 #my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
 #for my $s(@structs)
 #{
@@ -4740,13 +4770,15 @@ CheckApiDefines();
 
 CheckAttributeValueUnion();
 
-CreateNotificationStruct();
-
 CreateSerializeForEnums();
 
 CreateSerializeForNoIdStructs();
 
 CreateSerializeMetaKey();
+
+CreateSerializeNotifications();
+
+CreateNotificationStruct();
 
 WriteHeaderFotter();
 
@@ -4775,8 +4807,3 @@ WriteTestMain();
 WriteLoggerVariables();
 
 WriteMetaDataFiles();
-
-- saistaysaddd hasflags
-- default values to acl fields and actions
-- change log function names 
-- change buffer count order and change to uint32
