@@ -336,6 +336,12 @@ sub CreateSerializeSingleStruct
             $ispointer = 1;
         }
 
+# TODO for lists we need countOnly param ! damn!
+
+        # TODO all this quote/amp, suffix could be defined on respected members
+        # as metadata and we could automatically get that, and keep track in
+        # deserialize and free methods by free
+
         if ($type eq "bool")
         {
             $needQuote = 1;
@@ -464,6 +470,7 @@ sub CreateSerializeSingleStruct
         WriteSource "        $countType idx;";
         WriteSource "        for (idx = 0; idx < $structBase->$countName; idx++)";
         WriteSource "        {";
+#_In_ const sai_attr_metadata_t& meta,
         WriteSource "            $quot;" if $needQuote;
         WriteSource "            int ret = sai_serialize_$suffix($buf, $amp$structBase->$name\[idx\]);";
         WriteSource "            if (ret < 0)";

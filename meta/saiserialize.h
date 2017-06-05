@@ -324,6 +324,25 @@ int sai_serialize_tlv(
         _In_ const sai_tlv_t *tlv);
 
 /**
+ * @brief Serialize SAI attribute.
+ *
+ * @param[out] buffer Output buffer for serialized value.
+ * @param[in] meta Attribute metadata.
+ * @param[in] attr Attribute to be serialized.
+ * @param[in] only_count Flag specifies whether on *_list_t only
+ * list count should be serialized, this is handy when serializing
+ * attributes when API returned #SAI_STATUS_BUFFER_OVERFLOW.
+ *
+ * @return Number of characters written to buffer excluding '\0',
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_serialize_attribute(
+        _Out_ char *buffer,
+        _In_ const sai_attr_metadata_t *meta,
+        _In_ const sai_attribute_t *attr,
+        _In_ bool only_count);
+
+/**
  * @}
  */
 #endif /** __SAISERIALIZE_H_ */

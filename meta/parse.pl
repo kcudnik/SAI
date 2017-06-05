@@ -2619,10 +2619,9 @@ my %ProcessedItems = ();
 
 sub ProcessStructItem
 {
-    my $type = shift;
-    my $struct = shift;
+    my ($type, $struct, $allowPointers) = @_;
 
-    $type = $1 if $type =~/^(\w+)\*$/; # handle pointers
+    $type = $1 if $struct =~ /^sai_(\w+)_list_t$/ and $type =~/^(\w+)\*$/;
 
     return if defined $ProcessedItems{$type};
 
@@ -2701,7 +2700,7 @@ sub CheckAttributeValueUnion
 
         next if grep(/^$type$/, @primitives);
 
-        ProcessStructItem($type, "sai_attribute_value_t");
+        ProcessStructItem($type, "sai_attribute_value_t", 1);
     }
 }
 

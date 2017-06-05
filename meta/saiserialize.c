@@ -291,3 +291,13 @@ int sai_serialize_tlv(
     SAI_META_LOG_WARN("not implemented");
     return SAI_SERIALIZE_ERROR;
 }
+
+int sai_serialize_attribute(
+        _Out_ char *buffer,
+        _In_ const sai_attr_metadata_t *meta,
+        _In_ const sai_attribute_t *attr,
+        _In_ bool only_count)
+{
+    SAI_META_LOG_WARN("not implemented");
+    return SAI_SERIALIZE_ERROR;
+}
