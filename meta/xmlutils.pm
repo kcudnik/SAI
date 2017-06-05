@@ -240,6 +240,7 @@ sub ExtractStructInfo
         my $name = $member->{name}[0];
         my $type = $member->{definition}[0];
         my $args = $member->{argsstring}[0];
+        my $file = $member->{location}[0]->{file};
 
         # if argstring is empty in xml, then it returns empty hash, skip this
         # args contain extra arguments like [32] for "char foo[32]" or
@@ -268,6 +269,7 @@ sub ExtractStructInfo
         $S{$name}{type} = $type;
         $S{$name}{desc} = $desc;
         $S{$name}{args} = $args;
+        $S{$name}{file} = $file;
         $S{$name}{idx}  = $idx++;
     }
 
