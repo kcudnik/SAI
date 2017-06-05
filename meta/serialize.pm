@@ -108,6 +108,8 @@ sub CreateSerializeSingleNotification
     my $idx = 0;
     my $buf = "buf"; # can be changed if there will be name conflict
 
+    LogInfo "Creating serialzie for $ntfname";
+
     WriteSource "int sai_serialize_$ntfname(";
     WriteSource "        _Inout_ char *$buf,";
 
@@ -122,8 +124,8 @@ sub CreateSerializeSingleNotification
         my $type = $ntf->{$idx}{type};
         my $name = $ntf->{$idx}{name};
 
-        WriteSource "        _In_  $type $name$end";
-        WriteHeader "        _In_  $type $name$endheader";
+        WriteSource "        _In_ $type $name$end";
+        WriteHeader "        _In_ $type $name$endheader";
 
         $idx++;
     }
@@ -266,6 +268,16 @@ sub CreateSerializeSingleNotification
     WriteSource "}";
 }
 
+sub CreateSerializeNotifications
+{
+    WriteSectionComment "Serialize notifications";
+
+    for my $ntf (sort keys %main::NOTIFICATIONS)
+    {
+        CreateSerializeSingleNotification($ntf, $main::NOTIFICATIONS{$ntf});
+    }
+}
+
 # TODO we need unified hash for notifications/structs
 
 sub CreateSerializeSingleStruct
@@ -278,10 +290,10 @@ sub CreateSerializeSingleStruct
 
     my @keys = GetStructKeysInOrder(\%struct);
 
-    # don't create serialize methods for metadata structs 
+    # don't create serialize methods for metadata structs
     return if ($struct{$keys[0]}->{file} =~ m!meta/sai\w+.h$!);
 
-    LogInfo "Create serialzie for $structName";
+    LogInfo "Creating serialzie for $structName";
 
     my $buf = "buf"; # can be changed if there will be name conflict
 
@@ -305,7 +317,6 @@ sub CreateSerializeSingleStruct
     for my $name (@keys)
     {
         my $type = $struct{$name}{type};
-        my $count = $struct{$name}{count};
 
         my $comma = ($idx != 0) ? "," : "";
 
@@ -316,6 +327,7 @@ sub CreateSerializeSingleStruct
         my $needQuote = 0;
         my $ispointer = 0;
         my $amp = "";
+        my $objectType = "NULL";
 
         if ($type =~ /\s*\*$/)
         {
@@ -326,21 +338,6 @@ sub CreateSerializeSingleStruct
 
         if ($type eq "bool")
         {
-            $needQuote = 1;
-        }
-        elsif ($type =~ m/^sai_(object_id|mac|ip_address|ip_prefix)_t$/)
-        {
-            $suffix = $1;
-            $needQuote = 1;
-        }
-        elsif (defined $main::ALL_STRUCTS{$type} and $type =~ /^sai_(\w+)_t$/)
-        {
-            $suffix = $1;
-            $amp = "&";
-        }
-        elsif (defined $main::SAI_ENUMS{$type} and $type =~ /^sai_(\w+)_t$/)
-        {
-            $suffix = $1;
             $needQuote = 1;
         }
         elsif ($type =~ /^sai_ip6_t$/)
@@ -362,6 +359,53 @@ sub CreateSerializeSingleStruct
             $suffix =~ s/uint/u/;
             $suffix =~ s/int/s/;
         }
+        elsif ($type =~ m/^sai_(ip_address|ip_prefix)_t$/)
+        {
+            $suffix = $1;
+            $needQuote = 1;
+            $amp = "&";
+        }
+        elsif ($type =~ m/^sai_(object_id|mac)_t$/)
+        {
+            $suffix = $1;
+            $needQuote = 1;
+        }
+        elsif ($type =~ /^sai_(attribute)_t$/)
+        {
+            $suffix = $1;
+
+            if (not defined $struct{$name}{objecttype})
+            {
+                LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
+                next;
+            }
+
+            my @ot = @{ $struct{$name}{objecttype} };
+
+            if (scalar@ot != 1)
+            {
+                LogWarning "expected only 1 obejct type, but given '@ot'";
+                next;
+            }
+
+            $objectType = $ot[0];
+
+            if (not defined $main::OBJECT_TYPE_MAP{$objectType})
+            {
+                LogError "unknown object type '$objectType' on $structName :: $name";
+                next;
+            }
+        }
+        elsif (defined $main::ALL_STRUCTS{$type} and $type =~ /^sai_(\w+)_t$/)
+        {
+            $suffix = $1;
+            $amp = "&";
+        }
+        elsif (defined $main::SAI_ENUMS{$type} and $type =~ /^sai_(\w+)_t$/)
+        {
+            $suffix = $1;
+            $needQuote = 1;
+        }
         else
         {
             LogError "not handled $type $name in $structName, FIXME";
@@ -378,12 +422,37 @@ sub CreateSerializeSingleStruct
             next;
         }
 
-        # this is pointer
+        my $countName = "count";
+        my $countType = "uint32_t";
 
-        # we don't have indexing in structs
-        my $index     = $struct{ $keys[$count] }{count};
-        my $countName = $struct{ $keys[$count] }{name};
-        my $countType = $struct{ $keys[$count] }{type};
+        # for _list_t we can deduce type, since we force lists to have only 2 elements
+        if (not $structName =~ /^sai_(\w+)_list_t$/)
+        {
+            my $count = $struct{$name}{count};
+
+            if (not defined $count)
+            {
+                LogError "count must be defined for pointer '$name' in $structName";
+                next;
+            }
+
+            if (not defined $struct{$count})
+            {
+                LogWarning "count '$count' not found in '$structName'";
+                next;
+            }
+
+            # this is pointer
+
+            $countName = $struct{$count}{name};
+            $countType = $struct{$count}{type};
+
+            if (not $countType =~ /^uint32_t$/)
+            {
+                LogWarning "count '$count' on '$structName' has invalid type '$countType', expected uint32_t";
+                next;
+            }
+        }
 
         WriteSource "    if ($structBase->$name == NULL)";
         WriteSource "    {";
@@ -404,141 +473,16 @@ sub CreateSerializeSingleStruct
         WriteSource "            }";
         WriteSource "            $buf += ret;";
         WriteSource "            $quot;" if $needQuote;
-        WriteSource "            if (idx != $countName - 1)";
+        WriteSource "            if (idx != $structBase->$countName - 1)";
         WriteSource "               $buf += sprintf($buf, \",\");";
         WriteSource "        }";
         WriteSource "        $buf += sprintf($buf, \"]\");"; # end of array
         WriteSource "    }";
-
-        next;
-
-        #--------------------
-
-        if (defined $main::ALL_STRUCTS{$type})
-        {
-            $type = $1 if $type =~ /^sai_(\w+)_t$/;
-
-            WriteSource "    $buf += sai_serialize_$type($buf, $structBase->$name);";
-            next;
-        }
-
-        # TODO need quote / need amp
-
-        if ($type =~ m/^sai_(object_id|mac|ip_address|ip_prefix)_t$/ 
-                or defined $main::SAI_ENUMS{$type}
-                or $type eq "bool")
-        {
-            $type = $1 if $type =~ /^sai_(\w+)_t$/;
-
-            WriteSource "    $quot;";
-            WriteSource "    $buf += sai_serialize_$type($buf, $structBase->$name);";
-            WriteSource "    $quot;";
-            next;
-        }
-
-        # pointers types
-        if ($type =~ /^(?:const )?(sai_(\w+)_t|void)\s*\*$/)
-        {
-            $type = $1;
-
-            my $shorttype = $2;
-
-            my $numberList = 0;
-
-            my $isstruct = (defined $main::ALL_STRUCTS{$type}) ? "&" : "";
-
-            if ($type eq "void")
-            {
-                # treat void* as uint8_t*
-
-                $numberList = 1;
-                $shorttype = "u8";
-                $name = "((const uint8_t*)$name)";
-            }
-            elsif (not defined $main::SAI_ENUMS{$type} and not defined $main::ALL_STRUCTS{$type})
-            {
-                LogError "type '$type*' not enum and not struct, FIXME";
-                next;
-            }
-
-            if (not defined $count)
-            {
-                LogError "count is not defined for '$name' on $structName";
-                return;
-            }
-
-            if ($type eq "sai_attribute_t")
-            {
-                LogError "not supported $type in $structName";
-                return
-            }
-
-            WriteSource "    if ($name == NULL)";
-            WriteSource "    {";
-            WriteSource "        $buf += sprintf($buf, \"null\");";
-            WriteSource "    }";
-            WriteSource "    else";
-            WriteSource "    {";
-            WriteSource "        $buf += sprintf($buf, \"[\");"; # begin of array
-
-            # we don't have indexing in structs
-            my $index     = $struct{ $keys[$count] }{count};
-            my $countName = $struct{ $keys[$count] }{name};
-            my $countType = $struct{ $keys[$count] }{type};
-
-            WriteSource "        $countType idx;";
-
-            WriteSource "        for (idx = 0; idx < $countName; idx++)";
-            WriteSource "        {";
-            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $isstruct eq "" and not $numberList;
-            WriteSource "            int ret = sai_serialize_$shorttype($buf, $isstruct$name\[idx\]);";
-            WriteSource "            if (ret < 0)";
-            WriteSource "            {";
-            WriteSource "                SAI_META_LOG_WARN(\"failed to serialize '$name' at index %u\", (uint32_t)idx);";
-            WriteSource "                return SAI_SERIALIZE_ERROR;";
-            WriteSource "            }";
-            WriteSource "            $buf += ret;";
-            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $isstruct eq "" and not $numberList;
-            WriteSource "            if (idx != $countName - 1)";
-            WriteSource "               $buf += sprintf($buf, \",\");";
-            WriteSource "        }";
-            WriteSource "        $buf += sprintf($buf, \"]\");"; # end of array
-            WriteSource "    }";
-            next;
-        }
-
-        # primitives or types where serialization is defined explicitly
-        # and it requires quotes (not numbers) and not structs/objects
-
-        # primitives, numbers which don't require quotes
-
-        if ($type =~ m/^(?:sai_)?(size|u?int\d+)_t$/)
-        {
-            $type = $1;
-            $type =~ s/uint/u/;
-            $type =~ s/int/s/;
-
-            WriteSource "    $buf += sai_serialize_$type($buf, $name);";
-            next;
-        }
-
-        LogError "not handled $type $name in $structName, FIXME";
-        next;
     }
 
     WriteSource "    $buf += sprintf($buf, \"}\");"; # end of struct
     WriteSource "    return (int)($buf - start_$buf);";
     WriteSource "}";
-}
-
-sub CreateSerializeNotifications
-{
-    WriteSectionComment "Serialize notifications";
-
-    for my $ntf (sort keys %main::NOTIFICATIONS)
-    {
-        CreateSerializeSingleNotification($ntf, $main::NOTIFICATIONS{$ntf});
-    }
 }
 
 sub CreateSerializeStructs
@@ -563,7 +507,7 @@ sub CreateSerializeStructs
         next if $struct eq "sai_tlv_t";
         next if $struct eq "sai_hmac_t";
 
-        # TODO sai_acl_capability_t has enum list and it's only valid when 
+        # TODO sai_acl_capability_t has enum list and it's only valid when
         # similar for sai_tam_threshold_breach_event_t
 
         # non serializable

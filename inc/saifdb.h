@@ -261,6 +261,8 @@ typedef enum _sai_fdb_flush_attr_t
 
 /**
  * @brief Notification data format received from SAI FDB callback
+ *
+ * @count attr[attr_count]
  */
 typedef struct _sai_fdb_event_notification_data_t
 {
@@ -273,7 +275,11 @@ typedef struct _sai_fdb_event_notification_data_t
     /** Attributes count */
     uint32_t attr_count;
 
-    /** Attributes */
+    /** 
+     * @brief Attributes
+     *
+     * @objects SAI_OBJECT_TYPE_FDB_ENTRY
+     */
     sai_attribute_t *attr;
 
 } sai_fdb_event_notification_data_t;

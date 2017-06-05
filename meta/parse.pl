@@ -43,9 +43,9 @@ my %TAGS = (
         );
 
 my %options = ();
-getopts("d:sAS", \%options);
+getopts("dsAS", \%options);
 
-our $optionPrintDebug        = 1 + $options{d} if defined $options{d};
+our $optionPrintDebug        = 1 if defined $options{d};
 our $optionDisableAspell     = 1 if defined $options{A};
 our $optionUseXmlSimple      = 1 if defined $options{s};
 our $optionDisableStyleCheck = 1 if defined $options{S};
