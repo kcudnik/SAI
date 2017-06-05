@@ -275,7 +275,7 @@ typedef struct _sai_fdb_event_notification_data_t
     /** Attributes count */
     uint32_t attr_count;
 
-    /** 
+    /**
      * @brief Attributes
      *
      * @objects SAI_OBJECT_TYPE_FDB_ENTRY
