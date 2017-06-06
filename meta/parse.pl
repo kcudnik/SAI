@@ -1579,24 +1579,31 @@ sub CreateMetadataForAttributes
     WriteSource "const size_t sai_metadata_attr_by_object_type_count = $count;";
 }
 
+sub CreateEnumHelperMethod
+{
+    my $key = shift;
+
+    return if not $key =~ /^sai_(\w+)_t/;
+
+    WriteSource "const char* sai_metadata_get_$1_name(";
+    WriteSource "        _In_ $key value)";
+    WriteSource "{";
+    WriteSource "    return sai_metadata_get_enum_value_name(&sai_metadata_enum_$key, value);";
+    WriteSource "}";
+
+    WriteHeader "extern const char* sai_metadata_get_$1_name(";
+    WriteHeader "        _In_ $key value);";
+}
+
 sub CreateEnumHelperMethods
 {
     WriteSectionComment "Get enum name helper methods";
 
     for my $key (sort keys %SAI_ENUMS)
     {
-        next if not $key =~ /^sai_(\w+)_t/;
-
         next if $key =~/_attr_t$/;
 
-        WriteSource "const char* sai_metadata_get_$1_name(";
-        WriteSource "        _In_ $key value)";
-        WriteSource "{";
-        WriteSource "    return sai_metadata_get_enum_value_name(&sai_metadata_enum_$key, value);";
-        WriteSource "}";
-
-        WriteHeader "extern const char* sai_metadata_get_$1_name(";
-        WriteHeader "        _In_ $key value);";
+        CreateEnumHelperMethod($key);
     }
 }
 
@@ -2715,18 +2722,65 @@ sub CreateNotificationStruct
 
     WriteHeader "typedef struct _sai_switch_notifications_t {";
 
-    for my $pointer (sort keys %NOTIFICATIONS)
+    for my $name (sort keys %NOTIFICATIONS)
     {
-        if (not $pointer =~ /^sai_(\w+)_notification_fn/)
+        if (not $name =~ /^sai_(\w+)_notification_fn/)
         {
-            LogWarning "notification function $pointer is not ending on _notification_fn";
+            LogWarning "notification function $name is not ending on _notification_fn";
             next;
         }
 
-        WriteHeader "    $pointer on_$1;";
+        WriteHeader "    $name on_$1;";
     }
 
     WriteHeader "} sai_switch_notifications_t;";
+}
+
+sub CreateNotificationEnum
+{
+    #
+    # create notification enum for easier notification
+    # manipulation in code
+    #
+
+    WriteSectionComment "SAI notifications enum";
+
+    my $typename = "sai_switch_notification_type_t";
+
+    WriteHeader "typedef enum _$typename {";
+
+    my $prefix = uc $typename;
+
+    chop $prefix;
+
+    my @values = ();
+
+    for my $name (sort keys %NOTIFICATIONS)
+    {
+        if (not $name =~ /^sai_(\w+)_notification_fn/)
+        {
+            LogWarning "notification function '$name' is not ending on _notification_fn";
+            next;
+        }
+
+        $name = uc $1;
+
+        WriteHeader "    ${prefix}$name,";
+
+        push @values, "${prefix}$name";
+    }
+
+    WriteHeader "} $typename;";
+
+    $SAI_ENUMS{$typename}{values} = \@values;
+
+    WriteSectionComment "sai_switch_notification_type_t metadata";
+
+    ProcessSingleEnum($typename, $typename, $prefix);
+
+    WriteSectionComment "Get sai_switch_notification_type_t helper method";
+
+    CreateEnumHelperMethod("sai_switch_notification_type_t");
 }
 
 sub WriteHeaderHeader
@@ -2854,6 +2908,8 @@ CheckApiDefines();
 CheckAttributeValueUnion();
 
 CreateNotificationStruct();
+
+CreateNotificationEnum();
 
 CreateSerializeMethods();
 

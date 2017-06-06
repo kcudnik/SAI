@@ -564,38 +564,6 @@ sub CreateSerializeStructs
     }
 }
 
-#ProcessXmlFiles();
-#
-#    WriteSource "#include <sai.h>";
-#    WriteSource "#include \"saimetadatatypes.h\"";
-#    WriteSource "#include \"saimetadatautils.h\"";
-#    WriteSource "#include \"saimetadatalogger.h\"";
-#    WriteSource "#include \"saiserialize.h\"";
-#    WriteSource "#include \"stdio.h\"";
-#
-#CreateSerializeNotifications();
-#
-#    WriteFile("saimetadata.c", $SOURCE_CONTENT);
-#exit;
-#my @structs = `ls xml/struct__sai_*|perl -npe 's/__/_/g;s/.+(sai_\\w+_t).xml/\\1/g'`;
-#for my $s(@structs)
-#{
-#    chomp$s;
-#    next if $s =~ /_api_t$/;
-#
-#    next if $s =~/saimetadatatypes/;
-#
-#    my %struct = ExtractStructInfo($s, "struct_");
-#
-#    next if $struct{ (keys %struct)[0] }->{file} =~ /saimetadatatypes/;
-#
-#
-#    print "-- $s\n";
-#    CreateSerializeMethodsForNonObjectId $s;
-#}
-#exit;
-# for pointers we could add
-#
 # "@count" to description and point to struct member with that name and it will be treated as count for pointers
 # when ther is no pointer, @count -- shoule be like hypens or -1
 # for notifications, hmm how to detect count ? - in descripthom method we could add @count x y
@@ -640,4 +608,4 @@ BEGIN
 1;
 
 # TODO generate auto serialize test for all structs with empty structs
-# generate enum with notification name, and 2 functions converting enum to string and string to enum
+# TODO -and 2 functions converting enum to string and string to enum
