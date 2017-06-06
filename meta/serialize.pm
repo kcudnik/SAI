@@ -103,7 +103,10 @@ sub CreateSerializeSingleNotification
 
     my ($ntftype, $ntf) = @_;
 
-    my $ntfname = $1 if $ntftype =~ /^sai_(\w+)_fn$/;
+    $ntftype =~ /^sai_((\w+)_notification)_fn$/;
+
+    my $ntfname = $1;
+    my $shortntfname = $2;
 
     my $idx = 0;
     my $buf = "buf"; # can be changed if there will be name conflict
@@ -141,12 +144,9 @@ sub CreateSerializeSingleNotification
     # all consts printfs could be exchanged to memcpy for optimize but we
     # assume number of notifications is small, and this is fast enough
 
-    WriteSource "    $buf += sprintf($buf, \"{\\\"$ntfname\\\":\");";
+    WriteSource "    $buf += sprintf($buf, \"{\\\"notification\\\":\\\"$shortntfname\\\",\\\"params\\\":\");";
     WriteSource "    $buf += sprintf($buf, \"{\");";
 
-    # maybe drop quotes on param names?
-
-    # TODO reuse this in struct serialize
     for $idx (0 .. $max)
     {
         my $type = $ntf->{$idx}{type};
@@ -163,9 +163,11 @@ sub CreateSerializeSingleNotification
 
             my $shorttype = $2;
 
+            my $isattribute = 0;
             my $numberList = 0;
+            my $objectType = "UNKNOWN_OBJ_TYPE";
 
-            my $isstruct = (defined $main::ALL_STRUCTS{$type}) ? "&" : "";
+            my $amp = (defined $main::ALL_STRUCTS{$type}) ? "&" : "";
 
             if ($type eq "void")
             {
@@ -189,15 +191,16 @@ sub CreateSerializeSingleNotification
 
             if ($type eq "sai_attribute_t")
             {
+                $isattribute = 1;
+                $amp = "&";
+
                 if (not defined $ntf->{$idx}{ot})
                 {
                     LogError "param '$name' is $type and requires object type specified, but not provided";
                     next;
                 }
 
-                my $objectType = $ntf->{$idx}{ot};
-
-                $isstruct = "$objectType, &";
+                $objectType = $ntf->{$idx}{ot};
             }
 
             WriteSource "    if ($name == NULL)";
@@ -216,15 +219,26 @@ sub CreateSerializeSingleNotification
 
             WriteSource "        for (idx = 0; idx < $countName; idx++)";
             WriteSource "        {";
-            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $isstruct eq "" and not $numberList;
-            WriteSource "            int ret = sai_serialize_$shorttype($buf, $isstruct$name\[idx\]);";
+            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $amp eq "" and not $numberList;
+
+            if ($isattribute)
+            {
+                WriteSource "            const sai_attr_metadata_t *meta =";
+                WriteSource "                       sai_metadata_get_attr_metadata($objectType, $name\[idx\].id);";
+                WriteSource "            int ret = sai_serialize_$shorttype($buf, meta, $amp$name\[idx\]);";
+            }
+            else
+            {
+                WriteSource "            int ret = sai_serialize_$shorttype($buf, $amp$name\[idx\]);";
+            }
+
             WriteSource "            if (ret < 0)";
             WriteSource "            {";
             WriteSource "                SAI_META_LOG_WARN(\"failed to serialize '$name' at index %u\", (uint32_t)idx);";
             WriteSource "                return SAI_SERIALIZE_ERROR;";
             WriteSource "            }";
             WriteSource "            $buf += ret;";
-            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $isstruct eq "" and not $numberList;
+            WriteSource "            $buf += sprintf($buf, \"\\\"\");" if $amp eq "" and not $numberList;
             WriteSource "            if (idx != $countName - 1)";
             WriteSource "               $buf += sprintf($buf, \",\");";
             WriteSource "        }";
@@ -306,11 +320,17 @@ sub CreateSerializeSingleStruct
     WriteSource "        _In_ const $structName *$structBase)";
     WriteSource "{";
     WriteSource "    char *start_$buf = $buf;";
+    WriteSource "    int ret;";
     WriteSource "    $buf += sprintf($buf, \"{\");";
 
     my $quot = "$buf += sprintf($buf, \"\\\"\")";
 
     my $idx = 0;
+
+    # TODO for lists we need countOnly param, as separate version?
+    # * @param[in] only_count Flag specifies whether on *_list_t only
+    # * list count should be serialized, this is handy when serializing
+    # * attributes when API returned #SAI_STATUS_BUFFER_OVERFLOW.
 
     # TODO on s32/s32_list in struct we could declare enum type
 
@@ -326,21 +346,19 @@ sub CreateSerializeSingleStruct
 
         my $needQuote = 0;
         my $ispointer = 0;
+        my $isattribute = 0;
         my $amp = "";
-        my $objectType = "NULL";
+        my $objectType = "UNKNOWN_OBJ_TYPE";
 
         if ($type =~ /\s*\*$/)
         {
             $type =~ s!\s*\*$!!;
-            # we need count !
             $ispointer = 1;
         }
 
-# TODO for lists we need countOnly param ! damn!
-
         # TODO all this quote/amp, suffix could be defined on respected members
         # as metadata and we could automatically get that, and keep track in
-        # deserialize and free methods by free
+        # deserialize and free methods by free instead of listing all of them here
 
         if ($type eq "bool")
         {
@@ -379,6 +397,8 @@ sub CreateSerializeSingleStruct
         elsif ($type =~ /^sai_(attribute)_t$/)
         {
             $suffix = $1;
+            $amp = "&";
+            $isattribute = 1;
 
             if (not defined $struct{$name}{objecttype})
             {
@@ -422,8 +442,16 @@ sub CreateSerializeSingleStruct
 
         if (not $ispointer)
         {
+            # XXX we don't need to check for many types which won't fail like int/uint, object id, enums
+
             WriteSource "    $quot;" if $needQuote;
-            WriteSource "    $buf += sai_serialize_$suffix($buf, $amp$structBase->$name);";
+            WriteSource "    ret = sai_serialize_$suffix($buf, $amp$structBase->$name);";
+            WriteSource "    if (ret < 0)";
+            WriteSource "    {";
+            WriteSource "        SAI_META_LOG_WARN(\"failed to serialize '$name'\");";
+            WriteSource "        return SAI_SERIALIZE_ERROR;";
+            WriteSource "    }";
+            WriteSource "    $buf += ret;";
             WriteSource "    $quot;" if $needQuote;
             next;
         }
@@ -470,9 +498,19 @@ sub CreateSerializeSingleStruct
         WriteSource "        $countType idx;";
         WriteSource "        for (idx = 0; idx < $structBase->$countName; idx++)";
         WriteSource "        {";
-#_In_ const sai_attr_metadata_t& meta,
         WriteSource "            $quot;" if $needQuote;
-        WriteSource "            int ret = sai_serialize_$suffix($buf, $amp$structBase->$name\[idx\]);";
+
+        if ($isattribute)
+        {
+            WriteSource "            const sai_attr_metadata_t *meta =";
+            WriteSource "                       sai_metadata_get_attr_metadata($objectType, $structBase->$name\[idx\].id);";
+            WriteSource "            ret = sai_serialize_$suffix($buf, meta, $amp$structBase->$name\[idx\]);";
+        }
+        else
+        {
+            WriteSource "            ret = sai_serialize_$suffix($buf, $amp$structBase->$name\[idx\]);";
+        }
+
         WriteSource "            if (ret < 0)";
         WriteSource "            {";
         WriteSource "                SAI_META_LOG_WARN(\"failed to serialize '$name' at index %u\", (uint32_t)idx);";
@@ -600,3 +638,6 @@ BEGIN
 }
 
 1;
+
+# TODO generate auto serialize test for all structs with empty structs
+# generate enum with notification name, and 2 functions converting enum to string and string to enum

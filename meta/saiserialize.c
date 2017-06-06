@@ -295,8 +295,7 @@ int sai_serialize_tlv(
 int sai_serialize_attribute(
         _Out_ char *buffer,
         _In_ const sai_attr_metadata_t *meta,
-        _In_ const sai_attribute_t *attr,
-        _In_ bool only_count)
+        _In_ const sai_attribute_t *attr)
 {
     SAI_META_LOG_WARN("not implemented");
     return SAI_SERIALIZE_ERROR;
