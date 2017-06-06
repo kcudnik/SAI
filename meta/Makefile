@@ -49,7 +49,7 @@ OBJ = saimetadata.o saimetadatautils.o saiserialize.o
 SYMBOLS = $(OBJ:=.symbols)
 
 all: saisanitycheck saimetadatatest saiserializetest saidepgraph.svg $(SYMBOLS)
-	./saimetadatatest > /dev/null
+	./saimetadatatest >/dev/null
 	./saiserializetest >/dev/null 2>/dev/null
 	./saisanitycheck
 
@@ -62,7 +62,7 @@ xml: $(DEPS) Doxyfile $(CONSTHEADERS)
 EXTRA = acronyms.txt aspell.en.pws *.pm
 
 saimetadatatest.c saimetadata.c saimetadata.h: xml $(XMLDEPS) parse.pl $(CONSTHEADERS) $(EXTRA)
-	perl parse.pl -S
+	perl parse.pl
 
 HEADERS = saimetadata.h $(CONSTHEADERS)
 
