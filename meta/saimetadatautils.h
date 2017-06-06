@@ -153,6 +153,26 @@ extern bool sai_metadata_is_condition_in_force(
         _In_ const sai_attribute_t *attr_list);
 
 /**
+ * @brief Get IPv4 mask as integer.
+ *
+ * @param[in] mask IPv4 mask to be converted.
+ *
+ * @return Number <0,32> or negative number if mask has holes.
+ */
+extern int sai_metadata_get_ipv4_mask(
+        _In_ sai_ip4_t mask);
+
+/**
+ * @brief Get IPv6 mask as integer.
+ *
+ * @param[in] mask IPv6 mask to be converted.
+ *
+ * @return Number <0,128> or negative number if mask has holes.
+ */
+extern int sai_metadata_get_ipv6_mask(
+        _In_ const sai_ip6_t mask);
+
+/**
  * @}
  */
 #endif /** __SAIMETADATAUTILS_H_ */

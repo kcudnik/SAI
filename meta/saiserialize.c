@@ -220,60 +220,34 @@ int sai_serialize_ipv4_mask(
         _Out_ char *buffer,
         _In_ sai_ip4_t mask)
 {
-    uint32_t n = 32;
-    uint32_t tmp = 0xFFFFFFFF;
+    int n = sai_metadata_get_ipv4_mask(mask);
 
-    mask = __builtin_bswap32(mask);
-
-    for (; (tmp != mask) && tmp; tmp <<= 1, n--);
-
-    if (tmp == mask)
+    if (n < 0)
     {
-        return sai_serialize_u32(buffer, n);
+        SAI_META_LOG_WARN("ipv4 mask 0x%X has holes", htonl(mask));
+        return SAI_SERIALIZE_ERROR;
     }
 
-    SAI_META_LOG_WARN("ipv4 mask 0x%X has holes", htonl(mask));
-    return SAI_SERIALIZE_ERROR;
+    return sai_serialize_s32(buffer, n);
 }
 
 int sai_serialize_ipv6_mask(
         _Out_ char *buffer,
         _In_ const sai_ip6_t mask)
 {
-    uint32_t n = 64;
-    uint64_t tmp = 0xFFFFFFFFFFFFFFFFUL;
+    int n = sai_metadata_get_ipv6_mask(mask);
 
-    uint64_t high = *((const uint64_t*)mask);
-    uint64_t low  = *((const uint64_t*)mask + 1);
-
-    high = __builtin_bswap64(high);
-    low = __builtin_bswap64(low);
-
-    if (high == tmp)
+    if (n < 0)
     {
-        for (; (tmp != low) && tmp; tmp <<= 1, n--);
+        char buf[PRIMITIVE_BUFFER_SIZE];
 
-        if (tmp == low)
-        {
-            return sai_serialize_u32(buffer, 64 + n);
-        }
-    }
-    else if (low == 0)
-    {
-        for (; (tmp != high) && tmp; tmp <<= 1, n--);
+        sai_serialize_ipv6(buf, mask);
 
-        if (tmp == high)
-        {
-            return sai_serialize_u32(buffer, n);
-        }
+        SAI_META_LOG_WARN("ipv6 mask %s has holes", buf);
+        return SAI_SERIALIZE_ERROR;
     }
 
-    char buf[PRIMITIVE_BUFFER_SIZE];
-
-    sai_serialize_ipv6(buf, mask);
-
-    SAI_META_LOG_WARN("ipv6 mask %s has holes", buf);
-    return SAI_SERIALIZE_ERROR;
+    return sai_serialize_s32(buffer, n);
 }
 
 int sai_serialize_hmac(

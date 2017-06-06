@@ -303,3 +303,55 @@ bool sai_metadata_is_condition_in_force(
 
     return met;
 }
+
+int sai_metadata_get_ipv4_mask(
+        _In_ sai_ip4_t mask)
+{
+    uint32_t n = 32;
+    uint32_t tmp = 0xFFFFFFFF;
+
+    mask = __builtin_bswap32(mask);
+
+    for (; (tmp != mask) && tmp; tmp <<= 1, n--);
+
+    if (tmp == mask)
+    {
+        return (int)n;
+    }
+
+    return -1; /* invalid mask, has holes */
+}
+
+int sai_metadata_get_ipv6_mask(
+        _In_ const sai_ip6_t mask)
+{
+    uint32_t n = 64;
+    uint64_t tmp = 0xFFFFFFFFFFFFFFFFUL;
+
+    uint64_t high = *((const uint64_t*)mask);
+    uint64_t low  = *((const uint64_t*)mask + 1);
+
+    high = __builtin_bswap64(high);
+    low = __builtin_bswap64(low);
+
+    if (high == tmp)
+    {
+        for (; (tmp != low) && tmp; tmp <<= 1, n--);
+
+        if (tmp == low)
+        {
+            return 64 + (int)n;
+        }
+    }
+    else if (low == 0)
+    {
+        for (; (tmp != high) && tmp; tmp <<= 1, n--);
+
+        if (tmp == high)
+        {
+            return (int)n;
+        }
+    }
+
+    return -1; /* invalid mask, has holes */
+}
