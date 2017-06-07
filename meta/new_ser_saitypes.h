@@ -21,6 +21,11 @@ typedef struct _sai_ip_address_t
 
 /**
  * @serialize skip <- will mean that user provided serialize for this
+ *
+ * pozniej mozna wygenerowac funkcje validacji:
+ *
+ * sai_is_valid_ip_prefix or sai_is_ip_prefix_valid(..);
+ *
  */
 typedef struct _sai_ip_prefix_t
 {
@@ -112,6 +117,8 @@ typedef struct _sai_acl_field_data_t
         sai_uint16_t u16;
         sai_int16_t s16;
         sai_uint32_t u32;
+
+        /* @enum meta->enummetadata */
         sai_int32_t s32; /* enum */
         sai_mac_t mac;
         sai_ip4_t ip4;
@@ -120,7 +127,7 @@ typedef struct _sai_acl_field_data_t
         /** 
          * @type sai_attr_value_type_t == SAI_ATTR_VALUT_TYPE_ACL_FIELD_OBJECT_ID 
          * 
-         * @objects - depends on metadata alowed objects
+         * @objects meta->objecttypes ?
          */
         sai_object_id_t oid;
 
@@ -133,6 +140,7 @@ typedef struct _sai_acl_field_data_t
 /**
  * @brief Defines a single ACL action
  *
+ * @param const sai_attr_metadata_t *meta
  * @note IPv4 and IPv6 Address expected in Network Byte Order
  */
 typedef struct _sai_acl_action_data_t
@@ -144,6 +152,8 @@ typedef struct _sai_acl_action_data_t
 
     /**
      * @brief Action parameter
+     *
+     * @validonly enable == true
      */
     union _parameter {
         sai_uint8_t u8;
@@ -212,10 +222,14 @@ typedef struct _sai_tlv_t
         /** @validonly SAI_TLV_TYPE_EGRESS_NODE */
         sai_ip6_t egress_node;
 
-        /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS_NODE */
+        /* ten jest bardzje rozszezalny bomozemy podac rozne parametery 
+         * bo param bedzei sie nazywal tlv, wiec bezposrednio mozna to wkleic jako kod
+         * vlidacja sai_\w+_t->\w+ == (SAI_|bool)
+         * */
+        /** @validonly tlv->tlv_type == SAI_TLV_TYPE_EGRESS_NODE */
         sai_uint32_t opaque_container[4];
 
-        /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS_NODE */
+        /** @validonly tlv->tlv_type == SAI_TLV_TYPE_EGRESS_NODE */
         sai_hmac_t hmac;
     } entry;
 } sai_tlv_t;
@@ -239,6 +253,8 @@ typedef union _sai_attribute_value_t
     sai_uint16_t u16;
     sai_int16_t s16;
     sai_uint32_t u32;
+
+    /* meta->enummetadata */
     sai_int32_t s32;  /* int 32 and int32list* should always be considered enums */
     sai_uint64_t u64;
     sai_int64_t s64;
@@ -276,7 +292,7 @@ typedef union _sai_attribute_value_t
      * swietnie - tylko jak deserialize ma sie tego domyslic ? cholera typ musi byc przekazany
      *
      * @passparam meta
-     * */
+     */
     sai_acl_field_data_t aclfield;      
     
     /* will contain enm, we would need recursivli check structs
@@ -290,6 +306,12 @@ typedef union _sai_attribute_value_t
 
 
     sai_acl_capability_t aclcapability; /* also enums, we must past meta ? to get enum  */
+
+    /**
+     * @brief Attribute valus is TLV list.
+     *
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_TLV_LIST
+     */
     sai_tlv_list_t tlvlist;
 
     /* @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_SEGMENT_LIST */
@@ -304,6 +326,8 @@ typedef union _sai_attribute_value_t
  * poniewaz bedzei cala nazwa
  *
  * @deserialize skip
+ *
+ * int sai_deserialize_attribute(const char* buffer, sai_attribute_t *attribute);
  */
 typedef struct _sai_attribute_t
 {
