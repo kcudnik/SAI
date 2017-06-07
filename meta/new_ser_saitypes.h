@@ -70,7 +70,7 @@ typedef struct _sai_acl_field_data_t
     /**
      * @brief Field match mask
      *
-     * @validonly enable == true
+     * @validonly acl_field_data->enable == true
      *
      * @condition/validonly meta->attrvaluetype (for distinct action)? ale w sai_attribute
      * moze byc kilka akcji dla acl_field/actiondata :/
