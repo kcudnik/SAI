@@ -343,6 +343,52 @@ int sai_serialize_enum(
     return sai_serialize_int32(buffer, value);
 }
 
+static int sai_deserialize_ip(
+        _In_ const char *buffer,
+        _In_ int inet,
+        _Out_ uint8_t *ip)
+{
+    /*
+     * Since we want relaxed version of deserialize, after ip6 address there
+     * may be '"' (quote), but inet_pton expects '\0' at the end, so copy at
+     * most INET6 characters to local buffer.
+     */
+
+    char local[INET6_ADDRSTRLEN];
+
+    int idx;
+
+    for (idx = 0; idx < INET6_ADDRSTRLEN - 1; idx++)
+    {
+        char c = buffer[idx];
+
+        if (isxdigit(c) || c == ':' || '.')
+        {
+            local[idx] = c;
+            continue;
+        }
+
+        break;
+    }
+
+    local[idx] = 0;
+
+    if (inet_pton(inet, local, ip) != 1)
+    {
+        /*
+         * TODO we should not warn here, since we will use this method to
+         * deserialize ip4 and ip6 and we will need to guess which one.
+         */
+
+        SAI_META_LOG_WARN("failed to deserialize '%.*s' as ip address, errno: %s",
+                INET6_ADDRSTRLEN, buffer, strerror(errno));
+
+        return SAI_SERIALIZE_ERROR;
+    }
+
+    return idx;
+}
+
 int sai_serialize_ip4(
         _Out_ char *buffer,
         _In_ sai_ip4_t ip)
@@ -356,6 +402,14 @@ int sai_serialize_ip4(
     return (int)strlen(buffer);
 }
 
+int sai_deserialize_ip4(
+        _In_ const char *buffer,
+        _Out_ sai_ip4_t *ip)
+{
+    /* TODO we may need to reverse pointer */
+    return sai_deserialize_ip(buffer, AF_INET, (uint8_t*)ip);
+}
+
 int sai_serialize_ip6(
         _Out_ char *buffer,
         _In_ const sai_ip6_t ip)
@@ -367,6 +421,13 @@ int sai_serialize_ip6(
     }
 
     return (int)strlen(buffer);
+}
+
+int sai_deserialize_ip6(
+        _In_ const char *buffer,
+        _Out_ sai_ip6_t ip)
+{
+    return sai_deserialize_ip(buffer, AF_INET6, ip);
 }
 
 int sai_serialize_ip_address(
@@ -388,6 +449,36 @@ int sai_serialize_ip_address(
             SAI_META_LOG_WARN("invalid ip address family: %d", ip_address->addr_family);
             return SAI_SERIALIZE_ERROR;
     }
+}
+
+int sai_deserialize_ip_address(
+        _In_ const char *buffer,
+        _Out_ sai_ip_address_t *ip_address)
+{
+    int res;
+
+    /* try first deserialize ip4 then ip6 */
+
+    res = sai_deserialize_ip(buffer, AF_INET, (uint8_t*)&ip_address->addr.ip4);
+
+    if (res > 0)
+    {
+        ip_address->addr_family = SAI_IP_ADDR_FAMILY_IPV4;
+        return res;
+    }
+
+    res = sai_deserialize_ip(buffer, AF_INET6, ip_address->addr.ip6);
+
+    if (res > 0)
+    {
+        ip_address->addr_family = SAI_IP_ADDR_FAMILY_IPV6;
+        return res;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as ip address",
+            INET6_ADDRSTRLEN, buffer);
+
+    return SAI_SERIALIZE_ERROR;
 }
 
 int sai_serialize_ip_prefix(
