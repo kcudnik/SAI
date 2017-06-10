@@ -20,6 +20,56 @@ int sai_serialize_bool(
     return sprintf(buffer, "%s", flag ? "true" : "false");
 }
 
+bool sai_serialize_is_allowed(
+        _In_ char c)
+{
+    /*
+     * When we will perform deserialize, we allow buffer string to be
+     * terminated not only by zero, but also with json characters like:
+     *
+     * - end of quote
+     * - comma, next item in array
+     * - end of array
+     *
+     * This will be handy when performing deserialize.
+     */
+
+    return c == 0 || c == '"' || c == ',' || c == ']';
+}
+
+#define SAI_TRUE_LENGTH 4
+#define SAI_FALSE_LENGTH 5
+
+int sai_deserialize_bool(
+        _In_ const char *buffer,
+        _Out_ bool *flag)
+{
+    if (strncmp(buffer, "true", SAI_TRUE_LENGTH) == 0 &&
+            sai_serialize_is_allowed(buffer[SAI_TRUE_LENGTH]))
+    {
+        *flag = true;
+        return SAI_TRUE_LENGTH;
+    }
+
+    if (strncmp(buffer, "false", SAI_FALSE_LENGTH) == 0 &&
+            sai_serialize_is_allowed(buffer[SAI_FALSE_LENGTH]))
+    {
+        *flag = false;
+        return SAI_FALSE_LENGTH;
+    }
+
+    /*
+     * Limit printf to maximum "false" length + 1 if there is invalid character
+     * after "false" string.
+     */
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as bool",
+            SAI_FALSE_LENGTH + 1,
+            buffer);
+
+    return SAI_SERIALIZE_ERROR;
+}
+
 int sai_serialize_chardata(
         _Out_ char *buffer,
         _In_ const char data[SAI_CHARDATA_LENGTH])
@@ -50,12 +100,82 @@ int sai_serialize_chardata(
     return idx;
 }
 
+int sai_deserialize_chardata(
+        _In_ char *buffer,
+        _Out_ char data[SAI_CHARDATA_LENGTH])
+{
+    int idx;
+
+    memset(data, 0, SAI_CHARDATA_LENGTH);
+
+    for (idx = 0; idx < SAI_CHARDATA_LENGTH; ++idx)
+    {
+        char c = buffer[idx];
+
+        if (c == 0)
+        {
+            break;
+        }
+
+        if (isprint(c) && c != '\\' && c != '"')
+        {
+            data[idx] = c;
+            continue;
+        }
+
+        if (c == '"')
+        {
+            /*
+             * We allow quote as last char since chardata will be serialized in
+             * quotes.
+             */
+
+            break;
+        }
+
+        SAI_META_LOG_WARN("invalid character 0x%x", c);
+        return SAI_SERIALIZE_ERROR;
+    }
+
+    if (sai_serialize_is_allowed(buffer[idx]))
+    {
+        return idx;
+    }
+
+    SAI_META_LOG_WARN("invalid character 0x%x", buffer[idx]);
+    return SAI_SERIALIZE_ERROR;
+}
 
 int sai_serialize_uint8(
         _Out_ char *buffer,
         _In_ uint8_t u8)
 {
     return sprintf(buffer, "%u", u8);
+}
+
+int sai_deserialize_uint_helper(
+        _In_ const char *buffer,
+        _In_ uint64_t upper_limit,
+        _Out_ uint64_t *u64)
+{
+    SAI_META_LOG_WARN("not implemented");
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_deserialize_uint8(
+        _In_ const char *buffer,
+        _Out_ uint8_t *u8)
+{
+    uint64_t u64;
+
+    int res = sai_deserialize_uint_helper(buffer, UCHAR_MAX, &u64);
+
+    if (res > 0)
+    {
+        *u8 = (uint8_t)u64;
+    }
+
+    return res;
 }
 
 int sai_serialize_int8(
@@ -72,6 +192,22 @@ int sai_serialize_uint16(
     return sprintf(buffer, "%u", u16);
 }
 
+int sai_deserialize_uint16(
+        _In_ const char *buffer,
+        _Out_ uint16_t *u16)
+{
+    uint64_t u64;
+
+    int res = sai_deserialize_uint_helper(buffer, USHRT_MAX, &u64);
+
+    if (res > 0)
+    {
+        *u16 = (uint16_t)u64;
+    }
+
+    return res;
+}
+
 int sai_serialize_int16(
         _Out_ char *buffer,
         _In_ int16_t s16)
@@ -86,6 +222,22 @@ int sai_serialize_uint32(
     return sprintf(buffer, "%u", u32);
 }
 
+int sai_deserialize_uint32(
+        _In_ const char *buffer,
+        _Out_ uint32_t *u32)
+{
+    uint64_t u64;
+
+    int res = sai_deserialize_uint_helper(buffer, USHRT_MAX, &u64);
+
+    if (res > 0)
+    {
+        *u32 = (uint32_t)u64;
+    }
+
+    return res;
+}
+
 int sai_serialize_int32(
         _Out_ char *buffer,
         _In_ int32_t s32)
@@ -98,6 +250,43 @@ int sai_serialize_uint64(
         _In_ uint64_t u64)
 {
     return sprintf(buffer, "%lu", u64);
+}
+
+int sai_deserialize_uint64(
+        _In_ const char *buffer,
+        _Out_ uint64_t *u64)
+{
+    int idx = 0;
+    uint64_t result = 0;
+
+    while (isdigit(buffer[idx]))
+    {
+        char c = (char)(buffer[idx] - '0');
+
+        /*
+         * Base is 10 we can check, that if result is greater than (2^64-1)/10)
+         * then next multiplication with 10 will cause overflow.
+         */
+
+        if (result > (ULONG_MAX/10) || ((result == ULONG_MAX/10) && (c > (char)(ULONG_MAX % 10))))
+        {
+            idx = 0;
+            break;
+        }
+
+        result = result * 10 + (uint64_t)(c);
+
+        idx++;
+    }
+
+    if (idx > 0 && sai_serialize_is_allowed(buffer[idx]))
+    {
+        *u64 = result;
+        return idx;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s...' as uint64", 21, buffer);
+    return SAI_SERIALIZE_ERROR;
 }
 
 int sai_serialize_int64(
