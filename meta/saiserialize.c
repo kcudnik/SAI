@@ -34,7 +34,7 @@ bool sai_serialize_is_allowed(
      * This will be handy when performing deserialize.
      */
 
-    return c == 0 || c == '"' || c == ',' || c == ']';
+    return c == 0 || c == '"' || c == ',' || c == ']' || c == '}';
 }
 
 #define SAI_TRUE_LENGTH 4
@@ -310,12 +310,55 @@ int sai_serialize_object_id(
     return sprintf(buffer, "oid:0x%lx", oid);
 }
 
+int sai_deserialize_object_id(
+        _In_ const char *buffer,
+        _Out_ sai_object_id_t *oid)
+{
+    int read;
+
+    int n = sscanf(buffer, "oid:0x%16lx%n", oid, &read);
+
+    if (n == 1 && sai_serialize_is_allowed(buffer[read]))
+    {
+        return read;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as oid", 25, buffer);
+    return SAI_SERIALIZE_ERROR;
+}
+
 int sai_serialize_mac(
         _Out_ char *buffer,
         _In_ const sai_mac_t mac)
 {
     return sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X",
             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+}
+
+#define SAI_MAC_ADDRESS_LENGTH 17
+
+int sai_deserialize_mac(
+        _In_ const char *buffer,
+        _Out_ sai_mac_t mac)
+{
+    int arr[6];
+    int read;
+
+    int n = sscanf(buffer, "%2x:%2x:%2x:%2x:%2x:%2x%n",
+            &arr[0], &arr[1], &arr[2], &arr[3], &arr[4], &arr[5], &read);
+
+    if (n == 6 && read == SAI_MAC_ADDRESS_LENGTH && sai_serialize_is_allowed(buffer[read]))
+    {
+        for (n = 0; n < 6; n++)
+        {
+            mac[n] = (uint8_t)arr[n];
+        }
+
+        return SAI_MAC_ADDRESS_LENGTH;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as mac address", 19, buffer);
+    return SAI_SERIALIZE_ERROR;
 }
 
 int sai_serialize_enum(
@@ -391,9 +434,9 @@ static int sai_deserialize_ip(
 
 int sai_serialize_ip4(
         _Out_ char *buffer,
-        _In_ sai_ip4_t ip)
+        _In_ sai_ip4_t ip4)
 {
-    if (inet_ntop(AF_INET, &ip, buffer, INET_ADDRSTRLEN) == NULL)
+    if (inet_ntop(AF_INET, &ip4, buffer, INET_ADDRSTRLEN) == NULL)
     {
         SAI_META_LOG_WARN("failed to convert ipv4 address, errno: %s", strerror(errno));
         return SAI_SERIALIZE_ERROR;
@@ -404,17 +447,17 @@ int sai_serialize_ip4(
 
 int sai_deserialize_ip4(
         _In_ const char *buffer,
-        _Out_ sai_ip4_t *ip)
+        _Out_ sai_ip4_t *ip4)
 {
     /* TODO we may need to reverse pointer */
-    return sai_deserialize_ip(buffer, AF_INET, (uint8_t*)ip);
+    return sai_deserialize_ip(buffer, AF_INET, (uint8_t*)ip4);
 }
 
 int sai_serialize_ip6(
         _Out_ char *buffer,
-        _In_ const sai_ip6_t ip)
+        _In_ const sai_ip6_t ip6)
 {
-    if (inet_ntop(AF_INET6, ip, buffer, INET6_ADDRSTRLEN) == NULL)
+    if (inet_ntop(AF_INET6, ip6, buffer, INET6_ADDRSTRLEN) == NULL)
     {
         SAI_META_LOG_WARN("failed to convert ipv6 address, errno: %s", strerror(errno));
         return SAI_SERIALIZE_ERROR;
@@ -425,9 +468,9 @@ int sai_serialize_ip6(
 
 int sai_deserialize_ip6(
         _In_ const char *buffer,
-        _Out_ sai_ip6_t ip)
+        _Out_ sai_ip6_t ip6)
 {
-    return sai_deserialize_ip(buffer, AF_INET6, ip);
+    return sai_deserialize_ip(buffer, AF_INET6, ip6);
 }
 
 int sai_serialize_ip_address(

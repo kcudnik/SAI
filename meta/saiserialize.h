@@ -360,6 +360,50 @@ int sai_serialize_attribute(
         _In_ const sai_attr_metadata_t *meta,
         _In_ const sai_attribute_t *attr);
 
+int sai_deserialize_bool(
+        _In_ const char *buffer,
+        _Out_ bool *flag);
+
+int sai_deserialize_chardata(
+        _In_ char *buffer,
+        _Out_ char data[SAI_CHARDATA_LENGTH]);
+
+int sai_deserialize_uint8(
+        _In_ const char *buffer,
+        _Out_ uint8_t *u8);
+
+int sai_deserialize_uint16(
+        _In_ const char *buffer,
+        _Out_ uint16_t *u16);
+
+int sai_deserialize_uint32(
+        _In_ const char *buffer,
+        _Out_ uint32_t *u32);
+
+int sai_deserialize_uint64(
+        _In_ const char *buffer,
+        _Out_ uint64_t *u64);
+
+int sai_deserialize_ip4(
+        _In_ const char *buffer,
+        _Out_ sai_ip4_t *ip4);
+
+int sai_deserialize_ip6(
+        _In_ const char *buffer,
+        _Out_ sai_ip6_t ip6);
+
+int sai_deserialize_ip_address(
+        _In_ const char *buffer,
+        _Out_ sai_ip_address_t *ip_address);
+
+int sai_deserialize_mac(
+        _In_ const char *buffer,
+        _Out_ sai_mac_t mac);
+
+int sai_deserialize_object_id(
+        _In_ const char *buffer,
+        _Out_ sai_object_id_t *object_id);
+
 /**
  * @}
  */

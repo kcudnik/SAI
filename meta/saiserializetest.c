@@ -66,6 +66,11 @@ void test_serialize_chardata()
 
     res = sai_serialize_chardata(buf, val.chardata);
     ASSERT_TRUE(res < 0, "expected negative number");
+
+    strcpy(val.chardata, "0123456789012345678912");
+
+    res = sai_serialize_chardata(buf, val.chardata);
+    ASSERT_STR_EQ(buf, "0123456789012345678912", res);
 }
 
 void test_serialize_object_id()
@@ -426,6 +431,141 @@ void test_serialize_notifications()
     ASSERT_STR_EQ(buf, ret, res);
 }
 
+void test_deserialize_bool()
+{
+    int res;
+    bool b;
+
+    const char *valid_true[] = { "true", "true,", "true\"", "true]", "true}"};
+    const char *invalid_true[] = { "truee", "tru1", "true)", "true="};
+
+    const char *valid_false[] = { "false", "false,", "false\"", "false]", "false}"};
+    const char *invalid_false[] = { "falsee", "tru1", "false)", "false="};
+
+    size_t n;
+
+    for (n = 0; n < sizeof(valid_true)/sizeof(const char*); n++)
+    {
+        b = false;
+        res = sai_deserialize_bool(valid_true[n], &b);
+        ASSERT_TRUE(b, "expected true");
+        ASSERT_TRUE(res == 4, "expected true");
+    }
+
+    for (n = 0; n < sizeof(invalid_true)/sizeof(const char*); n++)
+    {
+        b = false;
+        res = sai_deserialize_bool(invalid_true[n], &b);
+        ASSERT_TRUE(res < 0, "expected negative");
+    }
+
+    for (n = 0; n < sizeof(valid_false)/sizeof(const char*); n++)
+    {
+        b = false;
+        res = sai_deserialize_bool(valid_false[n], &b);
+        ASSERT_TRUE(!b, "expected false");
+        ASSERT_TRUE(res == 5, "expected false");
+    }
+
+    for (n = 0; n < sizeof(invalid_false)/sizeof(const char*); n++)
+    {
+        b = false;
+        res = sai_deserialize_bool(invalid_false[n], &b);
+        ASSERT_TRUE(res < 0, "expected negative");
+    }
+}
+
+void test_deserialize_mac()
+{
+    int res;
+    sai_mac_t mac;
+
+    res = sai_deserialize_mac("11:22:33:44:55:66", mac);
+    ASSERT_TRUE(res == 17, "expected 17 length");
+    ASSERT_TRUE(memcmp(mac, "\x11\x22\x33\x44\x55\x66", 6) == 0, "expected equal");
+
+    res = sai_deserialize_mac("ff:22:33:44:55:66", mac);
+    ASSERT_TRUE(res == 17, "expected 17 length");
+    ASSERT_TRUE(memcmp(mac, "\xff\x22\x33\x44\x55\x66", 6) == 0, "expected equal");
+
+    res = sai_deserialize_mac("FF:22:33:44:55:66", mac);
+    ASSERT_TRUE(res == 17, "expected 17 length");
+    ASSERT_TRUE(memcmp(mac, "\xff\x22\x33\x44\x55\x66", 6) == 0, "expected equal");
+
+    res = sai_deserialize_mac("11:22:33:44:55:66,", mac);
+    ASSERT_TRUE(res == 17, "expected 17 length");
+    ASSERT_TRUE(memcmp(mac, "\x11\x22\x33\x44\x55\x66", 6) == 0, "expected equal");
+
+    res = sai_deserialize_mac("1:2:3:4:5:f", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("011:022:33:44:55:66,", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("11:22:33:44:55:z6,", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("11:22:33:44:55:66j", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("111:22:33:44:55:66", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("11:22:33:44:55:]6", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("11:g2:33:44:55:66", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+
+    res = sai_deserialize_mac("11:22::33:44:55:66", mac);
+    ASSERT_TRUE(res < 0, "expected negative");
+}
+
+void test_deserialize_object_id()
+{
+    int res;
+    size_t n;
+    sai_object_id_t oid;
+
+    const char *valid_oids[] = {
+        "oid:0x0",
+        "oid:0x1",
+        "oid:0x0123456789abcdef",
+        "oid:0x0123456789abcdef,",
+        "oid:0x0123456789abcdef\"",
+        "oid:0x0123456789abcdef}",
+        "oid:0x0123456789abcdef]",
+        };
+
+    const char *invalid_oids[] = {
+        "oid:0x",
+        "aa",
+        "45",
+        "oid:0x0123456789abcdefv",
+        "oid:0x0123456789abcdef0",
+        "oid:0x00123456789abcdef",
+        };
+
+    for (n = 0; n < sizeof(valid_oids)/sizeof(const char*); n++)
+    {
+        res = sai_deserialize_object_id(valid_oids[n], &oid);
+        ASSERT_TRUE(res > 0 , "expected true");
+
+        sai_object_id_t ref;
+        int len;
+        sscanf(valid_oids[n], "oid:0x%lx%n", &ref, &len);
+
+        ASSERT_TRUE(res == len, "expected true");
+        ASSERT_TRUE(oid == ref, "expected true");
+    }
+
+    for (n = 0; n < sizeof(invalid_oids)/sizeof(const char*); n++)
+    {
+        res = sai_deserialize_object_id(invalid_oids[n], &oid);
+        ASSERT_TRUE(res < 0, "expected negative");
+    }
+}
+
 int main()
 {
     test_serialize_chardata();
@@ -441,6 +581,10 @@ int main()
     test_serialize_fdb_entry();
 
     test_serialize_notifications();
+
+    test_deserialize_bool();
+    test_deserialize_mac();
+    test_deserialize_object_id();
 
     return 0;
 }
