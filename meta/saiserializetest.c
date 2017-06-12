@@ -297,6 +297,111 @@ void subtest_serialize_ip_addres_v4(
     ASSERT_STR_EQ(buf, exp, res);
 }
 
+void test_serialize_enum()
+{
+    int res;
+    char buf[PRIMITIVE_BUFFER_SIZE];
+
+    sai_object_type_t ot = SAI_OBJECT_TYPE_PORT;
+
+    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_object_type_t, ot);
+
+    ASSERT_STR_EQ(buf, "SAI_OBJECT_TYPE_PORT", res);
+
+    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_object_type_t, -1);
+
+    ASSERT_STR_EQ(buf, "-1", res);
+
+    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_object_type_t, 100);
+
+    ASSERT_STR_EQ(buf, "100", res);
+
+    /* test all enums */
+
+    size_t i = 0;
+
+    for (; i < sai_metadata_all_enums_count; ++i)
+    {
+        const sai_enum_metadata_t* emd = sai_metadata_all_enums[i];
+
+        size_t j = 0;
+
+        for (; j < emd->valuescount; ++j)
+        {
+            int value = emd->values[j];
+
+            res = sai_serialize_enum(buf, emd, value);
+
+            ASSERT_STR_EQ(buf, emd->valuesnames[j], res);
+        }
+    }
+}
+
+void test_deserialize_enum()
+{
+    int res;
+    int value;
+
+    res = sai_deserialize_enum("SAI_OBJECT_TYPE_PORT", &sai_metadata_enum_sai_object_type_t, &value);
+
+    ASSERT_TRUE(res == strlen("SAI_OBJECT_TYPE_PORT"), "expected true");
+    ASSERT_TRUE(value == SAI_OBJECT_TYPE_PORT, "expected true");
+
+    res = sai_deserialize_enum("SAI_OBJECT_TYPE_PORT\"", &sai_metadata_enum_sai_object_type_t, &value);
+    ASSERT_TRUE(res == strlen("SAI_OBJECT_TYPE_PORT"), "expected true");
+    ASSERT_TRUE(value == SAI_OBJECT_TYPE_PORT, "expected true");
+
+    res = sai_deserialize_enum("SAI_OBJECT_TYPE_PORTS", &sai_metadata_enum_sai_object_type_t, &value);
+    ASSERT_TRUE(res < 0, "expected negative number");
+
+    res = sai_deserialize_enum("-1", &sai_metadata_enum_sai_object_type_t, &value);
+    ASSERT_TRUE(res == strlen("-1"), "expected true");
+    ASSERT_TRUE(value == -1, "expected true, value = %d", value);
+
+    res = sai_deserialize_enum("100", &sai_metadata_enum_sai_object_type_t, &value);
+    ASSERT_TRUE(res == strlen("100"), "expected true");
+    ASSERT_TRUE(value == 100, "expected true");
+
+    /* test all enums */
+
+    size_t i = 0;
+
+    for (; i < sai_metadata_all_enums_count; ++i)
+    {
+        const sai_enum_metadata_t* emd = sai_metadata_all_enums[i];
+
+        size_t j = 0;
+
+        for (; j < emd->valuescount; ++j)
+        {
+            res = sai_deserialize_enum(emd->valuesnames[j], emd, &value);
+
+            ASSERT_TRUE(res == (int)strlen(emd->valuesnames[j]), "expected true");
+            ASSERT_TRUE(value == emd->values[j], "expected true");
+        }
+    }
+}
+
+void test_serialize_ip4()
+{
+
+}
+
+void test_deserialize_ip4()
+{
+
+}
+
+void test_serialize_ip6()
+{
+
+}
+
+void test_deserialize_ip6()
+{
+
+}
+
 void test_serialize_ip_address()
 {
     subtest_serialize_ip_addres_v4(0x0a000015, "10.0.0.21");
@@ -352,44 +457,20 @@ void test_serialize_ip_address()
     ASSERT_STR_EQ(buf, "::1", res);
 }
 
-void test_serialize_enum()
+
+void test_deserialize_ip_address()
 {
-    int res;
-    char buf[PRIMITIVE_BUFFER_SIZE];
 
-    sai_object_type_t ot = SAI_OBJECT_TYPE_PORT;
+}
 
-    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_object_type_t, ot);
+void test_serialize_ip_prefix()
+{
 
-    ASSERT_STR_EQ(buf, "SAI_OBJECT_TYPE_PORT", res);
+}
 
-    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_object_type_t, -1);
+void test_deserialize_ip_prefix()
+{
 
-    ASSERT_STR_EQ(buf, "-1", res);
-
-    res = sai_serialize_enum(buf, &sai_metadata_enum_sai_object_type_t, 100);
-
-    ASSERT_STR_EQ(buf, "100", res);
-
-    /* test all enums */
-
-    size_t i = 0;
-
-    for (; i < sai_metadata_all_enums_count; ++i)
-    {
-        const sai_enum_metadata_t* emd = sai_metadata_all_enums[i];
-
-        size_t j = 0;
-
-        for (; j < emd->valuescount; ++j)
-        {
-            int value = emd->values[j];
-
-            res = sai_serialize_enum(buf, emd, value);
-
-            ASSERT_STR_EQ(buf, emd->valuesnames[j], res);
-        }
-    }
 }
 
 void test_serialize_ip4_mask()
@@ -432,6 +513,11 @@ void test_serialize_ip4_mask()
     ASSERT_TRUE(res < 0, "expected negative number");
 }
 
+void test_deserialize_ip4_mask()
+{
+
+}
+
 void test_serialize_ip6_mask()
 {
     int res;
@@ -470,6 +556,10 @@ void test_serialize_ip6_mask()
     }
 }
 
+void test_deserialize_ip6_mask()
+{
+
+}
 
 void test_serialize_route_entry()
 {
@@ -660,11 +750,16 @@ int main()
     sai_metadata_log = &sai_serialize_log;
 #pragma GCC diagnostic pop
 
+    ASSERT_TRUE(sizeof(sai_size_t) <= sizeof(uint64_t),
+            "sai_size_t should be less or equal to 64 bit uint");
+
     test_serialize_bool();
     test_deserialize_bool();
 
     test_serialize_chardata();
     test_deserialize_chardata();
+
+    /* TODO test int/uint serialize/deserialize */
 
     test_serialize_object_id();
     test_deserialize_object_id();

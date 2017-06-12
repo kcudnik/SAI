@@ -355,8 +355,38 @@ int sai_deserialize_int64(
         _In_ const char *buffer,
         _Out_ int64_t *s64)
 {
-    SAI_META_LOG_WARN("not implementd");
+    uint64_t result = 0;
+    bool negative = 0;
 
+    if (*buffer == '-')
+    {
+        buffer++;
+        negative = true;
+    }
+
+    int res = sai_deserialize_uint64(buffer, &result);
+
+    if (res > 0)
+    {
+        if (negative)
+        {
+            if (result <= (uint64_t)(LONG_MIN))
+            {
+                *s64 = -(int64_t)result;
+                return res + 1;
+            }
+        }
+        else
+        {
+            if (result <= LONG_MAX)
+            {
+                *s64 = (int64_t)result;
+                return res;
+            }
+        }
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as int64", MAX_CHARS_PRINT, buffer);
     return SAI_SERIALIZE_ERROR;
 }
 
@@ -365,6 +395,24 @@ int sai_serialize_size(
         _In_ sai_size_t size)
 {
     return sprintf(buffer, "%zu", size);
+}
+
+int sai_deserialize_size(
+        _In_ const char *buffer,
+        _Out_ sai_size_t *size)
+{
+    uint64_t u64;
+
+    int res = sai_deserialize_uint64(buffer, &u64);
+
+    if (res > 0)
+    {
+        *size = (sai_size_t)u64;
+        return res;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s...' as sai_size_t", MAX_CHARS_PRINT, buffer);
+    return SAI_SERIALIZE_ERROR;
 }
 
 int sai_serialize_object_id(
@@ -387,7 +435,7 @@ int sai_deserialize_object_id(
         return read;
     }
 
-    SAI_META_LOG_WARN("failed to deserialize '%.*s' as oid", 25, buffer);
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as oid", MAX_CHARS_PRINT, buffer);
     return SAI_SERIALIZE_ERROR;
 }
 
@@ -421,7 +469,7 @@ int sai_deserialize_mac(
         return SAI_MAC_ADDRESS_LENGTH;
     }
 
-    SAI_META_LOG_WARN("failed to deserialize '%.*s' as mac address", 19, buffer);
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as mac address", MAX_CHARS_PRINT, buffer);
     return SAI_SERIALIZE_ERROR;
 }
 
@@ -450,22 +498,51 @@ int sai_serialize_enum(
     return sai_serialize_int32(buffer, value);
 }
 
+int sai_deserialize_enum(
+        _In_ const char *buffer,
+        _In_ const sai_enum_metadata_t* meta,
+        _Out_ int32_t *value)
+{
+    if (meta == NULL)
+    {
+        return sai_deserialize_int32(buffer, value);
+    }
+
+    size_t idx = 0;
+
+    for (; idx < meta->valuescount; ++idx)
+    {
+        size_t len = strlen(meta->valuesnames[idx]);
+
+        if (strncmp(meta->valuesnames[idx], buffer, len) == 0 &&
+            sai_serialize_is_char_allowed(buffer[len]))
+        {
+            *value = meta->values[idx];
+            return (int)len;
+        }
+    }
+
+    SAI_META_LOG_WARN("enum value '%.*s' not found in enum %s", MAX_CHARS_PRINT, buffer, meta->name);
+
+    return sai_deserialize_int32(buffer, value);
+}
+
 static int sai_deserialize_ip(
         _In_ const char *buffer,
         _In_ int inet,
         _Out_ uint8_t *ip)
 {
     /*
-     * Since we want relaxed version of deserialize, after ip6 address there
+     * Since we want relaxed version of deserialize, after ip address there
      * may be '"' (quote), but inet_pton expects '\0' at the end, so copy at
      * most INET6 characters to local buffer.
      */
 
-    char local[INET6_ADDRSTRLEN];
+    char local[INET6_ADDRSTRLEN + 1];
 
     int idx;
 
-    for (idx = 0; idx < INET6_ADDRSTRLEN - 1; idx++)
+    for (idx = 0; idx < INET6_ADDRSTRLEN; idx++)
     {
         char c = buffer[idx];
 
@@ -483,17 +560,20 @@ static int sai_deserialize_ip(
     if (inet_pton(inet, local, ip) != 1)
     {
         /*
-         * TODO we should not warn here, since we will use this method to
+         * We should not warn here, since we will use this method to
          * deserialize ip4 and ip6 and we will need to guess which one.
          */
-
-        SAI_META_LOG_WARN("failed to deserialize '%.*s' as ip address, errno: %s",
-                INET6_ADDRSTRLEN, buffer, strerror(errno));
 
         return SAI_SERIALIZE_ERROR;
     }
 
-    return idx;
+    if (sai_serialize_is_char_allowed(buffer[idx]) || buffer[idx] == '/')
+    {
+        return idx;
+    }
+
+    SAI_META_LOG_WARN("invalid char 0x%x at end of ip address", buffer[idx]);
+    return SAI_SERIALIZE_ERROR;
 }
 
 int sai_serialize_ip4(
@@ -634,6 +714,63 @@ int sai_serialize_ip_prefix(
     return sprintf(buffer, "%s/%s", addr, mask);
 }
 
+int sai_deserialize_ip_prefix(
+    _In_ const char *buffer,
+    _Out_ sai_ip_prefix_t *ip_prefix)
+{
+    /* try first deserialize ip4 then ip6 */
+
+    int res, n;
+
+    while (true)
+    {
+        res = sai_deserialize_ip(buffer, AF_INET, (uint8_t*)&ip_prefix->addr.ip4);
+
+        if (res > 0)
+        {
+            ip_prefix->addr_family = SAI_IP_ADDR_FAMILY_IPV4;
+
+            if (buffer[res++] != '/')
+            {
+                break;
+            }
+
+            n = sai_deserialize_ip4_mask(buffer + res, &ip_prefix->addr.ip4);
+
+            if (n > 0)
+            {
+                return res + n;
+            }
+
+            break;
+        }
+
+        res = sai_deserialize_ip(buffer, AF_INET6, ip_prefix->addr.ip6);
+
+        if (res > 0)
+        {
+            if (buffer[res++] != '/')
+            {
+                break;
+            }
+
+            ip_prefix->addr_family = SAI_IP_ADDR_FAMILY_IPV6;
+
+            n = sai_deserialize_ip6_mask(buffer + res, (uint8_t*)&ip_prefix->addr.ip6);
+
+            if (n < 0)
+            {
+                return res + n;
+            }
+        }
+
+        break;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as ip prefix", MAX_CHARS_PRINT, buffer);
+    return SAI_SERIALIZE_ERROR;
+}
+
 int sai_serialize_ip4_mask(
         _Out_ char *buffer,
         _In_ sai_ip4_t mask)
@@ -651,6 +788,27 @@ int sai_serialize_ip4_mask(
     }
 
     SAI_META_LOG_WARN("ipv4 mask 0x%X has holes", htonl(mask));
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_deserialize_ip4_mask(
+        _In_ const char *buffer,
+        _Out_ sai_ip4_t *mask)
+{
+    uint32_t value;
+
+    int res = sai_deserialize_uint32(buffer, &value);
+
+    if (res > 0 && value <= 32)
+    {
+        value = 0xFFFFFFFF << (32 - value);
+
+        *mask = __builtin_bswap32(value);
+
+        return res;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as ip4 mask", MAX_CHARS_PRINT, buffer);
     return SAI_SERIALIZE_ERROR;
 }
 
@@ -691,6 +849,39 @@ int sai_serialize_ip6_mask(
     sai_serialize_ip6(buf, mask);
 
     SAI_META_LOG_WARN("ipv6 mask %s has holes", buf);
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_deserialize_ip6_mask(
+        _In_ const char *buffer,
+        _Out_ sai_ip6_t mask)
+{
+    uint64_t value;
+
+    int res = sai_deserialize_uint64(buffer, &value);
+
+    if (res > 0 && value <= 128)
+    {
+        uint64_t high = 0xFFFFFFFFFFFFFFFFUL;
+        uint64_t low  = 0xFFFFFFFFFFFFFFFFUL;
+
+        if (value >= 64)
+        {
+            low = low << (value - 64);
+        }
+        else
+        {
+            high = high << (64 - value);
+            low = 0;
+        }
+
+        *((uint64_t*)mask) = __builtin_bswap64(high);
+        *((uint64_t*)mask + 1) = __builtin_bswap64(low);
+
+        return res;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as ip6 mask", MAX_CHARS_PRINT, buffer);
     return SAI_SERIALIZE_ERROR;
 }
 
