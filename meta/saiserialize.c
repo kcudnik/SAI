@@ -907,14 +907,6 @@ int sai_deserialize_ip6_mask(
     return res;
 }
 
-int sai_serialize_hmac(
-        _Out_ char *buffer,
-        _In_ const sai_hmac_t *hmac)
-{
-    SAI_META_LOG_WARN("not implemented");
-    return SAI_SERIALIZE_ERROR;
-}
-
 int sai_serialize_tlv(
         _Out_ char *buffer,
         _In_ const sai_tlv_t *tlv)

@@ -775,6 +775,7 @@ sub CheckHeadersStyle
             next if $line =~ /^ {8}(_In|_Out|\.\.\.)/;     # function arguments
             next if $line =~ /^ {4}(sai_)/i;        # sai struct entry or SAI enum
             next if $line =~ /^ {4}\/\*/;           # doxygen start
+            next if $line =~ /^ {8}\/\*/;           # doxygen start
             next if $line =~ /^ {5}\*/;             # doxygen comment continue
             next if $line =~ /^ {8}sai_/;           # union entry
             next if $line =~ /^ {4}union/;          # union
@@ -785,7 +786,6 @@ sub CheckHeadersStyle
             next if $line =~ /^ {4}(true|false)/;   # bool definition
             next if $line =~ /^ {4}(const|size_t|else)/; # const in meta headers
             next if $line =~ /^(void|bool) /;       # function return
-
             next if $line =~ m![^\\]\\$!; # macro multiline
 
             LogWarning "Header doesn't meet style requirements (most likely ident is not 4 or 8 spaces) $header $n:$line";

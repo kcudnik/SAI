@@ -1061,7 +1061,15 @@ void test_serialize_notifications()
     memset(&data3, 0, sizeof(data3));
 
     res = sai_serialize_tam_event_notification(buf, 1, &data3);
-    ret = "{\"count\":1,\"data\":[{\"threshold_id\":\"oid:0x0\",\"is_snapshot_valid\":false,\"tam_snapshot_id\":\"oid:0x0\",\"value\":0}]}";
+    ret = "{\"count\":1,\"data\":[{\"threshold_id\":\"oid:0x0\",\"is_snapshot_valid\":false,\"value\":0}]}";
+    ASSERT_STR_EQ(buf, ret, res);
+
+    memset(&data3, 0, sizeof(data3));
+
+    data3.is_snapshot_valid = true;
+
+    res = sai_serialize_tam_event_notification(buf, 1, &data3);
+    ret = "{\"count\":1,\"data\":[{\"threshold_id\":\"oid:0x0\",\"is_snapshot_valid\":true,\"tam_snapshot_id\":\"oid:0x0\",\"value\":0}]}";
     ASSERT_STR_EQ(buf, ret, res);
 }
 

@@ -214,6 +214,13 @@ sub GetTypeInfoForSerialize
 
     $type = $1 if $type =~ /^const\s+(.+)$/;
 
+    if ($type =~ /^(sai_\w+_t)\[(\d+)\]$/)
+    {
+        $type = $1;
+        $TypeInfo{constCount} = $2;
+        $TypeInfo{ispointer} = 1;
+    }
+
     if ($type =~ /\s*\*$/)
     {
         $type =~ s!\s*\*$!!;
@@ -314,7 +321,7 @@ sub GetTypeInfoForSerialize
 
     $TypeInfo{memberName} = $memberName;
 
-    return %TypeInfo;
+    return \%TypeInfo;
 }
 
 sub ProcessMembersForSerialize
@@ -348,15 +355,59 @@ sub ProcessMembersForSerialize
 
     my $quot = "$buf += sprintf($buf, \"\\\"\")";
 
+    my %processedMembers = ();
+
     for my $name (@keys)
     {
+        $processedMembers{$name} = 1;
+
         my $type = $membersHash{$name}{type};
 
         my $comma = ($keys[0] eq $name) ? "" : ",";
 
-        WriteSource "    $buf += sprintf($buf, \"$comma\\\"$name\\\":\");";
+        my $TypeInfo = GetTypeInfoForSerialize($refHashStructInfoEx, $name);
 
-        my %TypeInfo = GetTypeInfoForSerialize($refHashStructInfoEx, $name);
+        next if not defined $TypeInfo;
+
+        my %TypeInfo = %{ $TypeInfo };
+
+        next if $TypeInfo{notsupported};
+
+        my $validonly = $membersHash{$name}{validonly};
+
+        if (defined $validonly)
+        {
+            my @conditions = @{ $validonly };
+
+            if (scalar @conditions != 1)
+            {
+                LogWarning "we support only 1 condition now for $name in $structName, FIXME";
+                next;
+            }
+
+            my $cond = shift @conditions;
+
+            $cond =~/^(\w+|\w+->\w+) == (.+)$/;
+
+            # if condition value is struct member, we need to check if it was processed previously
+            # since it could be declared later, and when deserialize we will not know his value
+
+            if (defined $membersHash{$1})
+            {
+                $cond = "$structBase->$1 == $2";
+
+                if (not defined $processedMembers{$1})
+                {
+                    LogError "validonly condition '$1' on $structName is declared after '$name', not allowed";
+                    next;
+                }
+            }
+
+            WriteSource "    if ($cond)";
+            WriteSource "    { /* validonly */";
+        }
+
+        WriteSource "    $buf += sprintf($buf, \"$comma\\\"$name\\\":\");";
 
         if (not $TypeInfo{ispointer})
         {
@@ -371,35 +422,49 @@ sub ProcessMembersForSerialize
             WriteSource "    }";
             WriteSource "    $buf += ret;";
             WriteSource "    $quot;" if $TypeInfo{needQuote};
+
+            if (defined $validonly)
+            {
+                WriteSource "    } /* validonly */";
+            }
+
             next;
         }
 
         my $countMemberName;
         my $countType;
 
-        my $count = $membersHash{$name}{count};
-
-        if (not defined $count)
+        if (defined $TypeInfo{constCount})
         {
-            LogError "count must be defined for pointer '$name' in $structName";
-            next;
+            $countMemberName = $TypeInfo{constCount};
+            $countType = "uint32_t";
         }
-
-        if (not defined $membersHash{$count})
+        else
         {
-            LogWarning "count '$count' not found in '$structName'";
-            next;
-        }
+            my $count = $membersHash{$name}{count};
 
-        $countMemberName = $membersHash{$count}{name};
-        $countType = $membersHash{$count}{type};
+            if (not defined $count)
+            {
+                LogError "count must be defined for pointer '$name' in $structName";
+                next;
+            }
 
-        $countMemberName = (defined $structInfoEx{ismethod}) ? $countMemberName: "$structBase\->$countMemberName";
+            if (not defined $membersHash{$count})
+            {
+                LogWarning "count '$count' not found in '$structName'";
+                next;
+            }
 
-        if (not $countType =~ /^(uint32_t|sai_size_t)$/)
-        {
-            LogWarning "count '$count' on '$structName' has invalid type '$countType', expected uint32_t";
-            next;
+            $countMemberName = $membersHash{$count}{name};
+            $countType = $membersHash{$count}{type};
+
+            $countMemberName = (defined $structInfoEx{ismethod}) ? $countMemberName: "$structBase\->$countMemberName";
+
+            if (not $countType =~ /^(uint32_t|sai_size_t)$/)
+            {
+                LogWarning "count '$count' on '$structName' has invalid type '$countType', expected uint32_t";
+                next;
+            }
         }
 
         WriteSource "    if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
@@ -437,6 +502,11 @@ sub ProcessMembersForSerialize
         WriteSource "        }";
         WriteSource "        $buf += sprintf($buf, \"]\");"; # end of array
         WriteSource "    }";
+
+        if (defined $validonly)
+        {
+            WriteSource "    } /* validonly */";
+        }
     }
 
     WriteSource "    $buf += sprintf($buf, \"}\");"; # end of struct
@@ -464,7 +534,6 @@ sub CreateSerializeStructs
         next if $struct eq "sai_acl_field_data_t";
         next if $struct eq "sai_attribute_t";
         next if $struct eq "sai_tlv_t";
-        next if $struct eq "sai_hmac_t";
 
         # TODO sai_acl_capability_t has enum list and it's only valid when
         # similar for sai_tam_threshold_breach_event_t
