@@ -324,6 +324,49 @@ sub GetTypeInfoForSerialize
     return \%TypeInfo;
 }
 
+sub GetCounterNameAndType
+{
+    my ($name, $membersHash, $structBase, $structName, $structInfoEx, $TypeInfo) = @_;
+
+    my $countMemberName;
+    my $countType;
+
+    if (defined $TypeInfo->{constCount})
+    {
+        $countMemberName = $TypeInfo->{constCount};
+        $countType = "uint32_t";
+
+        return ($countMemberName, $countType);
+    }
+
+    my $count = $membersHash->{$name}{count};
+
+    if (not defined $count)
+    {
+        LogError "count must be defined for pointer '$name' in $structName";
+        return ("undef", "undef");
+    }
+
+    if (not defined $membersHash->{$count})
+    {
+        LogWarning "count '$count' not found in '$structName'";
+        return ("undef", "undef");
+    }
+
+    $countMemberName = $membersHash->{$count}{name};
+    $countType = $membersHash->{$count}{type};
+
+    $countMemberName = (defined $structInfoEx->{ismethod}) ? $countMemberName: "$structBase\->$countMemberName";
+
+    if (not $countType =~ /^(uint32_t|sai_size_t)$/)
+    {
+        LogWarning "count '$count' on '$structName' has invalid type '$countType', expected uint32_t";
+        return ("undef", "undef");
+    }
+
+    return ($countMemberName, $countType);
+}
+
 sub ProcessMembersForSerialize
 {
     my $refHashStructInfoEx = shift;
@@ -431,41 +474,9 @@ sub ProcessMembersForSerialize
             next;
         }
 
-        my $countMemberName;
-        my $countType;
-
-        if (defined $TypeInfo{constCount})
-        {
-            $countMemberName = $TypeInfo{constCount};
-            $countType = "uint32_t";
-        }
-        else
-        {
-            my $count = $membersHash{$name}{count};
-
-            if (not defined $count)
-            {
-                LogError "count must be defined for pointer '$name' in $structName";
-                next;
-            }
-
-            if (not defined $membersHash{$count})
-            {
-                LogWarning "count '$count' not found in '$structName'";
-                next;
-            }
-
-            $countMemberName = $membersHash{$count}{name};
-            $countType = $membersHash{$count}{type};
-
-            $countMemberName = (defined $structInfoEx{ismethod}) ? $countMemberName: "$structBase\->$countMemberName";
-
-            if (not $countType =~ /^(uint32_t|sai_size_t)$/)
-            {
-                LogWarning "count '$count' on '$structName' has invalid type '$countType', expected uint32_t";
-                next;
-            }
-        }
+        my ($countMemberName, $countType) =
+            GetCounterNameAndType(
+                $name, \%membersHash, $structBase, $structName, $refHashStructInfoEx, \%TypeInfo);
 
         WriteSource "    if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
         WriteSource "    {";
