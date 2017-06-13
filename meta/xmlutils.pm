@@ -246,9 +246,40 @@ sub ProcessStructObjects
     return \@objectTypes;
 }
 
+sub ProcessStructValidOnly
+{
+    my ($structName, $tagValue) = @_;
+
+    my @conditions = split/\s+(?:or|and)\s+/,$tagValue;
+
+    $tagValue =~ s/\s+/ /g;
+
+    if ($tagValue =~/\bor\b.*\band\b|\band\b.*\bor\b/)
+    {
+        LogError "mixed conditions and/or is not supported: $tagValue";
+        return undef;
+    }
+
+    for my $cond (@conditions)
+    {
+        # it can be single value (struct member or param) or param pointer
+
+        if (not $cond =~/^(\w+|\w+->\w+) == (true|false|SAI_\w+|$NUMBER_REGEX)$/)
+        {
+            LogError "invalid condition tag value '$tagValue' ($cond), expected (\\w+|\\w+->\\w+) == true|false|SAI_ENUM|number";
+            return undef;
+        }
+    }
+
+    LogDebug "adding conditions @conditions on $structName";
+
+    return \@conditions;
+}
+
 my %STRUCT_TAGS = (
         "count"       , \&ProcessStructCount,
         "objects"     , \&ProcessStructObjects,
+        "validonly"   , \&ProcessStructValidOnly,
         );
 
 sub ProcessStructDescription
@@ -290,6 +321,8 @@ sub ExtractStructInfo
 sub ExtractStructInfoEx
 {
     my ($structName, $prefix) = @_;
+
+    LogDebug "processing struct/union $structName";
 
     my %Struct = (name => $structName);
 

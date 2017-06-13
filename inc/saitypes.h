@@ -568,6 +568,8 @@ typedef struct _sai_acl_capability_t
      *
      * List of actions supported per stage from the sai_acl_table_action_list_t.
      * Max action list can be obtained using the #SAI_SWITCH_ATTR_MAX_ACL_ACTION_COUNT.
+     *
+     * @validonly is_action_list_mandatory == true
      */
     sai_s32_list_t action_list;
 } sai_acl_capability_t;
@@ -605,10 +607,19 @@ typedef struct _sai_hmac_t
 typedef struct _sai_tlv_t
 {
     sai_tlv_type_t tlv_type;
+
     union _entry {
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
         sai_ip6_t ingress_node;
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
         sai_ip6_t egress_node;
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
         sai_uint32_t opaque_container[4];
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
         sai_hmac_t hmac;
     } entry;
 } sai_tlv_t;

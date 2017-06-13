@@ -370,7 +370,7 @@ sub CreateSerializeStructsTest
         next if $struct =~ /^(object_key|rev_graph_member|service_method_table|struct_member_info|object_meta_key)$/;
 
         # not implemented yet
-        next if $struct =~ /^(hmac|tlv)$/;
+        next if $struct =~ /^(tlv)$/;
 
         WriteTest "    $structname $struct;";
         WriteTest "    memset(&$struct, 0, sizeof($structname));";

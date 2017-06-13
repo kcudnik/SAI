@@ -614,36 +614,6 @@ int sai_deserialize_ip6_mask(
         _Out_ sai_ip6_t ip6_mask);
 
 /**
- * @brief Serialize HMAC.
- *
- * XXX: subject to auto serialize
- *
- * @param[out] buffer Output buffer for serialized value.
- * @param[in] hmac HMAC to be serialized.
- *
- * @return Number of characters written to buffer excluding '\0',
- * or #SAI_SERIALIZE_ERROR on error.
- */
-int sai_serialize_hmac(
-        _Out_ char *buffer,
-        _In_ const sai_hmac_t *hmac);
-
-/**
- * @brief Deserialize HMAC.
- *
- * XXX: subject to auto deserialize
- *
- * @param[in] buffer Input buffer to be examined.
- * @param[out] hmac Deserialized value.
- *
- * @return Number of characters consumed from the buffer,
- * or #SAI_SERIALIZE_ERROR on error.
- */
-int sai_deserialize_hmac(
-        _In_ const char *buffer,
-        _Out_ sai_hmac_t *hmac);
-
-/**
  * @brief Serialize TLV.
  *
  * XXX: subject to auto serialize
