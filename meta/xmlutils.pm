@@ -458,6 +458,7 @@ sub ExtractStructInfoEx
         $M{file} = $file;
         $M{name} = $name;
         $M{idx}  = $idx++;
+        $M{union} = $member->{type}[0]->{ref}[0]->{refid} if $member->{definition}[0] =~/union /;
 
         ProcessStructDescription(\%M, $desc);
 

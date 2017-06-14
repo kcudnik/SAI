@@ -61,6 +61,7 @@ dst
 egressing
 encap
 enum
+extraparam
 fprintf
 functionalities
 hmac
@@ -86,6 +87,7 @@ nexthopgroup
 objlist
 optimizations
 param
+passparam
 pkts
 policer
 rv

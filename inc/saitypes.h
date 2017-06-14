@@ -602,24 +602,6 @@ typedef struct _sai_hmac_t
 } sai_hmac_t;
 
 /**
- * @extraparam sai_tlv_type_t tlv_type
- */
-union _sai_tlv_entry_t {
-
-    /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
-    sai_ip6_t ingress_node;
-
-    /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
-    sai_ip6_t egress_node;
-
-    /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
-    sai_uint32_t opaque_container[4];
-
-    /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
-    sai_hmac_t hmac;
-} sai_tlv_entry;
-
-/**
  * @brief Segment Routing Tag Length Value entry
  */
 typedef struct _sai_tlv_t
@@ -627,9 +609,26 @@ typedef struct _sai_tlv_t
     sai_tlv_type_t tlv_type;
 
     /**
-     * @passparam tlv_type
+     * @brief TLV union entry.
+     *
+     * extra param is not needed since this is nested union
+     * and it serialization will be flattened
+     * extraparam sai_tlv_type_t tlv_type
      */
-    sai_tlv_entry_t entry;
+    union _entry {
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
+        sai_ip6_t ingress_node;
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
+        sai_ip6_t egress_node;
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
+        sai_uint32_t opaque_container[4];
+
+        /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
+        sai_hmac_t hmac;
+    } entry;
 } sai_tlv_t;
 
 /**
@@ -660,6 +659,8 @@ typedef struct _sai_segment_list_t
  * @brief Data Type
  *
  * To use enum values as attribute value is sai_int32_t s32
+ *
+ * @extraparam const sai_attr_metadata_t *meta
  */
 typedef union _sai_attribute_value_t
 {
@@ -701,9 +702,16 @@ typedef union _sai_attribute_value_t
 
 } sai_attribute_value_t;
 
+/**
+ * @extraparam const sai_attr_metadata_t *meta
+ */
 typedef struct _sai_attribute_t
 {
     sai_attr_id_t id;
+    
+    /**
+     * @passparam meta
+     */
     sai_attribute_value_t value;
 } sai_attribute_t;
 
