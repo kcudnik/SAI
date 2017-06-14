@@ -349,7 +349,7 @@ sub GetTypeInfoForSerialize
 
 sub GetCounterNameAndType
 {
-    my ($name, $membersHash, $structBase, $structName, $structInfoEx, $TypeInfo) = @_;
+    my ($name, $membersHash, $structBase, $structName, $structInfoEx, $TypeInfo, $processedMembers) = @_;
 
     my $countMemberName;
     my $countType;
@@ -385,6 +385,15 @@ sub GetCounterNameAndType
     {
         LogWarning "count '$count' on '$structName' has invalid type '$countType', expected uint32_t";
         return ("undef", "undef");
+    }
+
+    if (not defined $processedMembers->{$count})
+    {
+        # TODO check if count was declared before list, since deserialize
+        # needs to know how many items is on list to not make realoc and monitor
+        # number of elements
+
+        LogInfo "ERROR : count member '$count' on $structName is defined after '$name', not allowed";
     }
 
     return ($countMemberName, $countType);
@@ -524,7 +533,7 @@ sub ProcessMembersForSerialize
 
         my ($countMemberName, $countType) =
             GetCounterNameAndType(
-                $name, \%membersHash, $structBase, $structName, $refHashStructInfoEx, \%TypeInfo);
+                $name, \%membersHash, $structBase, $structName, $refHashStructInfoEx, \%TypeInfo, \%processedMembers);
 
         WriteSource "    if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
         WriteSource "    {";
