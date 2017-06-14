@@ -325,10 +325,18 @@ sub GetTypeInfoForSerialize
     {
         $TypeInfo{needQuote} = 1;
     }
-    elsif ($type =~ /^union _sai_\w+::_(\w+)\s*/)
+    elsif ($type =~ /^union _sai_(\w+)_t::_(\w+)\s*/)
     {
-        $TypeInfo{union} = 1;
-        $TypeInfo{suffix} = $1;
+        my $base = $1;
+        my $suffix = $2;
+
+        $suffix = $1 if $suffix =~ /^_sai_(\w+)_t$/;
+
+        $TypeInfo{suffix} = $suffix;
+
+        $base =~ s/_/__/g;
+
+        $TypeInfo{nestedunion} = $structInfoEx{membersHash}->{$name}{union};
         $TypeInfo{amp} = "&";
     }
     else
@@ -494,7 +502,7 @@ sub ProcessMembersForSerialize
 
         if (defined $TypeInfo{union})
         {
-            if (not defined $membersHash{$name}{passparam})
+            if (not defined $membersHash{$name}{passparam} and not defined $TypeInfo{nestedunion})
             {
                 LogError "member '$name' in $structName is union, \@passparam tag is required";
                 next;
@@ -507,6 +515,19 @@ sub ProcessMembersForSerialize
                 $passParams .= "$param, " if $param =~ /->/;
                 $passParams .= "$structBase->$param, " if not $param =~ /->/;
             }
+
+            LogError "union not handled yet, fixme";
+            next;
+        }
+
+        if (defined $TypeInfo{nestedunion})
+        {
+            LogError "nested union not supported $structName $name";
+
+            my %s = ExtractStructInfoEx("bla", "$TypeInfo{nestedunion}.xml");
+
+            print Dumper (\%s);
+            next;
         }
 
         if (not $TypeInfo{ispointer})
@@ -619,9 +640,11 @@ sub CreateSerializeStructs
 
 sub CreateSerializeUnions
 {
-    my %structInfoEx = ExtractStructInfoEx("_entry", "union__sai__tlv__t_1_1__entry.xml");
-
-    ProcessMembersForSerialize(\%structInfoEx);
+# only for global declared unions (non nested, so like attribute value
+#
+#    my %structInfoEx = ExtractStructInfoEx("_entry", "union__sai__tlv__t_1_1__entry.xml");
+#
+#    ProcessMembersForSerialize(\%structInfoEx);
 }
 
 sub CreateSerializeMethods

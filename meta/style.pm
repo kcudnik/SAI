@@ -757,7 +757,7 @@ sub CheckHeadersStyle
                 LogWarning "move '{' to new line in typedef $header $n:$line";
             }
 
-            if ($line =~ /^[^*]*union/ and not $line =~ /union _\w+/)
+            if ($line =~ /^[^*]*union/ and not $line =~ /union _\w+\b/)
             {
                 LogError "all unions must be named $header $n:$line";
             }
