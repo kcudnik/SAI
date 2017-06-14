@@ -158,11 +158,16 @@ sub ProcessFunctionHeaderForSerialize
 
     my @keys = @{ $structInfoEx{keys} };
 
-    WriteHeader "extern int sai_serialize_${structBase}(";
+    WriteHeader "extern int sai_serialize_$structBase(";
     WriteHeader "        _Out_ char *$buf,";
 
-    WriteSource "int sai_serialize_${structBase}(";
+    WriteSource "int sai_serialize_$structBase(";
     WriteSource "        _Out_ char *$buf,";
+
+    if (defined $structInfoEx{union} and not defined $structInfoEx{extraparam})
+    {
+        LogError "union $structName, extraparam required";
+    }
 
     if (defined $structInfoEx{ismethod})
     {
@@ -188,6 +193,17 @@ sub ProcessFunctionHeaderForSerialize
     }
     else
     {
+        if (defined $structInfoEx{extraparam})
+        {
+            my @params = @{ $structInfoEx{extraparam} };
+
+            for my $param (@params)
+            {
+                WriteHeader "        _In_ $param,";
+                WriteSource "        _In_ $param,";
+            }
+        }
+
         WriteHeader "        _In_ const $structName *$structBase);";
         WriteSource "        _In_ const $structName *$structBase)";
     }
@@ -309,8 +325,15 @@ sub GetTypeInfoForSerialize
     {
         $TypeInfo{needQuote} = 1;
     }
+    elsif ($type =~ /^union _sai_\w+::_(\w+)\s*/)
+    {
+        $TypeInfo{union} = 1;
+        $TypeInfo{suffix} = $1;
+        $TypeInfo{amp} = "&";
+    }
     else
     {
+        # TODO can be union
         LogError "not handled $type $name in $structName, FIXME";
         return undef;
     }
@@ -452,12 +475,37 @@ sub ProcessMembersForSerialize
 
         WriteSource "    $buf += sprintf($buf, \"$comma\\\"$name\\\":\");";
 
+        my $passParams = "";
+
+        if (defined $structInfoEx{union} and not defined $membersHash{$name}{validonly})
+        {
+            LogError "member '$name' in $structName require \@validonly tag";
+            next;
+        }
+
+        if (defined $TypeInfo{union})
+        {
+            if (not defined $membersHash{$name}{passparam})
+            {
+                LogError "member '$name' in $structName is union, \@passparam tag is required";
+                next;
+            }
+
+            my @params = @{ $membersHash{$name}{passparam} };
+
+            for my $param (@params)
+            {
+                $passParams .= "$param, " if $param =~ /->/;
+                $passParams .= "$structBase->$param, " if not $param =~ /->/;
+            }
+        }
+
         if (not $TypeInfo{ispointer})
         {
             # XXX we don't need to check for many types which won't fail like int/uint, object id, enums
 
             WriteSource "    $quot;" if $TypeInfo{needQuote};
-            WriteSource "    ret = sai_serialize_$TypeInfo{suffix}($buf, $TypeInfo{amp}$TypeInfo{memberName});";
+            WriteSource "    ret = sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName});";
             WriteSource "    if (ret < 0)";
             WriteSource "    {";
             WriteSource "        SAI_META_LOG_WARN(\"failed to serialize '$name'\");";
@@ -498,7 +546,7 @@ sub ProcessMembersForSerialize
         }
         else
         {
-            WriteSource "            ret = sai_serialize_$TypeInfo{suffix}($buf, $TypeInfo{amp}$TypeInfo{memberName}\[idx\]);";
+            WriteSource "            ret = sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName}\[idx\]);";
         }
 
         WriteSource "            if (ret < 0)";
@@ -519,6 +567,8 @@ sub ProcessMembersForSerialize
             WriteSource "    } /* validonly */";
         }
     }
+
+    # TODO if it's union, we must check if we serialized something
 
     WriteSource "    $buf += sprintf($buf, \"}\");"; # end of struct
     WriteSource "    return (int)($buf - start_$buf);";
@@ -544,7 +594,7 @@ sub CreateSerializeStructs
         next if $struct eq "sai_acl_action_data_t";
         next if $struct eq "sai_acl_field_data_t";
         next if $struct eq "sai_attribute_t";
-        next if $struct eq "sai_tlv_t";
+        #next if $struct eq "sai_tlv_t";
 
         # TODO sai_acl_capability_t has enum list and it's only valid when
         # similar for sai_tam_threshold_breach_event_t
@@ -558,6 +608,13 @@ sub CreateSerializeStructs
     }
 }
 
+sub CreateSerializeUnions
+{
+    my %structInfoEx = ExtractStructInfoEx("_entry", "union__sai__tlv__t_1_1__entry.xml");
+
+    ProcessMembersForSerialize(\%structInfoEx);
+}
+
 sub CreateSerializeMethods
 {
     CreateSerializeForEnums();
@@ -567,6 +624,8 @@ sub CreateSerializeMethods
     CreateSerializeStructs();
 
     CreateSerializeNotifications();
+
+    CreateSerializeUnions();
 }
 
 BEGIN

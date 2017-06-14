@@ -276,10 +276,54 @@ sub ProcessStructValidOnly
     return \@conditions;
 }
 
+sub ProcessStructExtraParam
+{
+    my ($structName, $tagValue, $previousTagValue) = @_;
+
+    my @params = ();
+
+    @params = @{ $previousTagValue } if defined $previousTagValue;
+
+    if (not $tagValue =~ /^((const\s+)?\w+(\s+|\s*\*\s*)\w+)$/)
+    {
+        LogError "unable to parse extraparam '$tagValue' on $structName";
+        return undef;
+    }
+
+    push @params, $1;
+
+    LogDebug "adding extraparam '$1' on $structName";
+
+    return \@params;
+}
+
+sub ProcessStructPassParam
+{
+    my ($structName, $tagValue, $previousTagValue) = @_;
+
+    my @params = ();
+
+    @params = @{ $previousTagValue } if defined $previousTagValue;
+
+    if (not $tagValue =~ /^(\w+|\w+->\w+)$/)
+    {
+        LogError "unable to parse passparam '$tagValue' on $structName";
+        return undef;
+    }
+
+    push @params, $1;
+
+    LogDebug "adding passparam '$1' on $structName";
+
+    return \@params;
+}
+
 my %STRUCT_TAGS = (
         "count"       , \&ProcessStructCount,
         "objects"     , \&ProcessStructObjects,
         "validonly"   , \&ProcessStructValidOnly,
+        "passparam"   , \&ProcessStructPassParam,
+        "extraparam"  , \&ProcessStructExtraParam,
         );
 
 sub ProcessStructDescription
@@ -322,7 +366,7 @@ sub ExtractStructInfoEx
 {
     my ($structName, $prefix) = @_;
 
-    LogDebug "processing struct/union $structName";
+    LogDebug "processing struct/union $structName: prefix: $prefix";
 
     my %Struct = (name => $structName);
 
@@ -333,6 +377,11 @@ sub ExtractStructInfoEx
     $filename = $prefix if -e "$main::XMLDIR/$prefix" and $prefix =~ /\.xml$/;
 
     my $file = "$main::XMLDIR/$filename"; # example: xml/struct__sai__fdb__entry__t.xml
+
+    if (not -e $file)
+    {
+        $file =~ s/struct_/union_/;
+    }
 
     # read xml, we need to get each struct field and it's type and description
 
@@ -420,7 +469,9 @@ sub ExtractStructInfoEx
 
     $Struct{members} = \@StructMembers;
     $Struct{keys} = \@keys;
-    $Struct{baseName} = $1 if $structName =~/^sai_(\w+)_t$/;
+    $Struct{baseName} = ($structName =~/^sai_(\w+)_t$/) ? $1 : $structName;
+    $Struct{baseName} =~ s/^_//;
+    $Struct{union} = 1 if $ref->{compounddef}[0]->{kind} eq "union";
 
     return %Struct;
 }
