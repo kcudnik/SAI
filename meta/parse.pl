@@ -2944,6 +2944,29 @@ sub CreateObjectTypeMap
 # MAIN
 #
 
+=cut
+    if ($type =~ /^union (\w+)::(\w+)\s*$/)
+    {
+        # union is special, but now since all unions are named
+        # then members are not flattened anyway, and we need to examine
+        # entries from union xml
+        # XXX may require revisit if union names will be complicated
+
+        my $unionStructName = $1;
+        my $unionName = $2;
+
+        $unionStructName =~ s/_/__/g;
+        $unionName =~ s/_/__/g;
+
+        my $filename = "union${unionStructName}_1_1$unionName.xml";
+
+        %S = ExtractStructInfo($unionStructName, $filename);
+=cut
+
+#my %s = ExtractStructInfoEx("_entry", "union__sai__tlv__t_1_1__entry.xml");
+#print Dumper (\%s);
+#exit 0;
+
 CheckHeadersStyle() if not defined $optionDisableStyleCheck;
 
 ExtractApiToObjectMap();

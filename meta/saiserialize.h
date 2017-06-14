@@ -614,36 +614,6 @@ int sai_deserialize_ip6_mask(
         _Out_ sai_ip6_t ip6_mask);
 
 /**
- * @brief Serialize TLV.
- *
- * XXX: subject to auto serialize
- *
- * @param[out] buffer Output buffer for serialized value.
- * @param[in] tlv TLV to be serialized.
- *
- * @return Number of characters written to buffer excluding '\0',
- * or #SAI_SERIALIZE_ERROR on error.
- */
-int sai_serialize_tlv(
-        _Out_ char *buffer,
-        _In_ const sai_tlv_t *tlv);
-
-/**
- * @brief Deserialize TLV.
- *
- * XXX: subject to auto deserialize
- *
- * @param[in] buffer Input buffer to be examined.
- * @param[out] tlv Deserialized value.
- *
- * @return Number of characters consumed from the buffer,
- * or #SAI_SERIALIZE_ERROR on error.
- */
-int sai_deserialize_tlv(
-        _In_ const char *buffer,
-        _Out_ sai_tlv_t *tlv);
-
-/**
  * @brief Serialize SAI attribute.
  *
  * @param[out] buffer Output buffer for serialized value.

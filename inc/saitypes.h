@@ -602,26 +602,34 @@ typedef struct _sai_hmac_t
 } sai_hmac_t;
 
 /**
+ * @extraparam sai_tlv_type_t tlv_type
+ */
+union _sai_tlv_entry_t {
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
+    sai_ip6_t ingress_node;
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
+    sai_ip6_t egress_node;
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
+    sai_uint32_t opaque_container[4];
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
+    sai_hmac_t hmac;
+} sai_tlv_entry;
+
+/**
  * @brief Segment Routing Tag Length Value entry
  */
 typedef struct _sai_tlv_t
 {
     sai_tlv_type_t tlv_type;
 
-    union _entry {
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
-        sai_ip6_t ingress_node;
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
-        sai_ip6_t egress_node;
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
-        sai_uint32_t opaque_container[4];
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
-        sai_hmac_t hmac;
-    } entry;
+    /**
+     * @passparam tlv_type
+     */
+    sai_tlv_entry_t entry;
 } sai_tlv_t;
 
 /**
