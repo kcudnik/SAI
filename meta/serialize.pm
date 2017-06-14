@@ -490,8 +490,6 @@ sub ProcessMembersForSerialize
             WriteSource "    { /* validonly */";
         }
 
-        WriteSource "    $buf += sprintf($buf, \"$comma\\\"$name\\\":\");";
-
         my $passParams = "";
 
         if (defined $structInfoEx{union} and not defined $membersHash{$name}{validonly})
@@ -529,6 +527,8 @@ sub ProcessMembersForSerialize
             print Dumper (\%s);
             next;
         }
+
+        WriteSource "    $buf += sprintf($buf, \"$comma\\\"$name\\\":\");";
 
         if (not $TypeInfo{ispointer})
         {
