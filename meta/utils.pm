@@ -49,24 +49,32 @@ sub WriteSectionComment
 
 sub LogDebug
 {
-    print color('bright_blue') . "@_" . color('reset') . "\n" if $main::optionPrintDebug;
+    my ($package, $filename, $line, $sub) = caller(1);
+
+    print color('bright_blue') . "$sub($line): @_" . color('reset') . "\n" if $main::optionPrintDebug;
 }
 
 sub LogInfo
 {
-    print color('bright_green') . "@_" . color('reset') . "\n";
+    my ($package, $filename, $line, $sub) = caller(1);
+
+    print color('bright_green') . "$sub($line): @_" . color('reset') . "\n";
 }
 
 sub LogWarning
 {
+    my ($package, $filename, $line, $sub) = caller(1);
+
     $warnings++;
-    print color('bright_yellow') . "@_" . color('reset') . "\n";
+    print color('bright_yellow') . "$sub($line): @_" . color('reset') . "\n";
 }
 
 sub LogError
 {
+    my ($package, $filename, $line, $sub) = caller(1);
+
     $errors++;
-    print color('bright_red') . "@_" . color('reset') . "\n";
+    print color('bright_red') . "$sub($line): @_" . color('reset') . "\n";
 }
 
 sub WriteFile
@@ -108,7 +116,7 @@ sub ReadHeaderFile
 
     # first search file in meta directory
 
-    $filename = "$main::INCLUDE_DIR/$filename" if not -e $filename;
+    $filename = "$main::INCLUDE_DIR/$filename" if not -f $filename;
 
     open FILE, $filename or die "Couldn't open file $filename: $!";
 

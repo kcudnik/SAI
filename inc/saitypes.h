@@ -553,7 +553,7 @@ typedef struct _sai_acl_action_data_t
      * @validonly enable == true
      * @passparam meta
      */
-     sai_acl_action_parameter_t parameter;
+    sai_acl_action_parameter_t parameter;
 
 } sai_acl_action_data_t;
 
@@ -769,6 +769,10 @@ typedef union _sai_tlv_entry_t {
 typedef struct _sai_tlv_t
 {
     sai_tlv_type_t tlv_type;
+
+    /**
+     * @passparam tlv_type
+     */
     sai_tlv_entry_t entry;
 } sai_tlv_t;
 
