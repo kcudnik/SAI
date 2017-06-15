@@ -670,6 +670,24 @@ BEGIN
 
 1;
 
+# sample serializations with unions
+#
+# for Id - > we coudl have sai_serialize_attr() and this will serialize string (metadat is needed)
+# on deserialize metadata is not needed 
+#
+# {"id":"SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE","value":{"s32":"SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW"}}
+# SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE=SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW
+# SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE={"s32":"SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW"}
+#
+# {"id":"SAI_ACL_TABLE_ATTR_ACL_BIND_POINT_TYPE_LIST","value":{"aclfield":{"enbled":true,"mask":{"u16":255},"data":{"u16":4567}}}
+# SAI_ACL_TABLE_ATTR_ACL_BIND_POINT_TYPE_LIST={"enbled":true,"mask":{"u16":255},"data":{"u16":4567}}
+# SAI_ACL_TABLE_ATTR_ACL_BIND_POINT_TYPE_LIST={"mask":{"u16":255},"data":{"u16":4567}}
+#
+# {"id":"SAI_ACL_ENTRY_ATTR_FIELD_ACL_RANGE_TYPE","value":{"aclfield":{"enbled":true,"mask":{},"data":{"objlist":{"count":1,"list":["0x1234"]}}}}}
+# SAI_ACL_ENTRY_ATTR_FIELD_ACL_RANGE_TYPE={"mask":{},"data":{"objlist":{"count":1,"list":["0x1234"]}}}
+# SAI_ACL_ENTRY_ATTR_FIELD_ACL_RANGE_TYPE={"enbled":true,"mask":{},"data":{"objlist":{"count":1,"list":["0x1234"]}}}
+
+
 # we could also generate deserialize and call notifation where notification
 # struct would be passed and notification would be called and then free itself
 # (but on exception there will be memory leak)
