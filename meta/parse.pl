@@ -3113,6 +3113,10 @@ sub ExtractUnionsInfo
         $SAI_UNIONS{$name}{name}    = $name;
         $SAI_UNIONS{$name}{def}     = $def;
         $SAI_UNIONS{$name}{nested}  = 1 if $def =~/::/;
+
+        my %s = ExtractStructInfoEx($name, $file);
+
+        print Dumper(\%s);
     }
 
     print Dumper(\%SAI_UNIONS);

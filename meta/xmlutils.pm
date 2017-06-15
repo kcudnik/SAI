@@ -427,7 +427,7 @@ sub ExtractStructInfoEx
 
     ProcessStructDescription(\%Struct, $desc);
 
-    $Struct{$desc} = $desc;
+    $Struct{desc} = $desc;
 
     my $idx = 0;
 
