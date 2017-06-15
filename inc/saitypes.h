@@ -309,27 +309,144 @@ typedef enum _sai_ip_addr_family_t
 
 } sai_ip_addr_family_t;
 
+/**
+ * @extraparam sai_ip_addr_family_t addr_family
+ */
+union _sai_ip_addr_t {
+
+    /**
+     * @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV4
+     */
+    sai_ip4_t ip4;
+
+    /**
+     * @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV6
+     */
+    sai_ip6_t ip6;
+} sai_ip_addr_t;
+
 typedef struct _sai_ip_address_t
 {
     sai_ip_addr_family_t addr_family;
-    union _ip_addr {
-        sai_ip4_t ip4;
-        sai_ip6_t ip6;
-    } addr;
+
+    /**
+     * @passparam addr_family
+     */
+    sai_ip_addr_t addr;
 } sai_ip_address_t;
 
 typedef struct _sai_ip_prefix_t
 {
     sai_ip_addr_family_t addr_family;
-    union _ip_prefix_addr {
-        sai_ip4_t ip4;
-        sai_ip6_t ip6;
-    } addr;
-    union _ip_prefix_mask {
-        sai_ip4_t ip4;
-        sai_ip6_t ip6;
-    } mask;
+
+    /**
+     * @passparam addr_family
+     */
+    sai_ip_addr_t addr;
+
+    /**
+     * @passparam addr_family
+     */
+    sai_ip_addr_t mask;
 } sai_ip_prefix_t;
+
+/**
+ * @brief Field match mask
+ * @extraparam const sai_attr_metadata_t *meta
+ */
+union _sai_acl_field_mask_t {
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_FIELD_UINT8 */
+    sai_uint8_t u8;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_FIELD_INT8 */
+    sai_int8_t s8;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_UINT16 */
+    sai_uint16_t u16;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_INT16 */
+    sai_int16_t s16;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_UINT32 */
+    sai_uint32_t u32;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_INT32 */
+    sai_int32_t s32;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_MAC */
+    sai_mac_t mac;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_IPV4 */
+    sai_ip4_t ip4;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_IPV6 */
+    sai_ip6_t ip6;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_U8_LIST */
+    sai_u8_list_t u8list;
+} sai_acl_field_mask;
+
+/**
+ * @extraparam const sai_attr_metadata_t *meta
+ */
+union _sai_acl_field_data_t {
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_FIELD_BOOL */
+    bool booldata;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_FIELD_UINT8 */
+    sai_uint8_t u8;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_FIELD_INT8 */
+    sai_int8_t s8;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_UINT16 */
+    sai_uint16_t u16;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_INT16 */
+    sai_int16_t s16;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_UINT32 */
+    sai_uint32_t u32;
+
+    /*
+     * TODO this will pass param to serialize method
+     *
+     * TODO enum
+     *
+     * @methodsuffix enum -> sai_serialize_int32 -> sai_serialize_enum( meta->enummetadata).
+     * @passparam meta->enummetadata
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_INT32
+     */
+    sai_int32_t s32;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_MAC */
+    sai_mac_t mac;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_IPV4 */
+    sai_ip4_t ip4;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_IPV6 */
+    sai_ip6_t ip6;
+
+    /**
+     * @validonly sai_attr_value_type_t == SAI_ATTR_VALUT_TYPE_ACL_FIELD_OBJECT_ID
+     *
+     * @objects meta->allowedobjecttypes TODO length this is for validation only
+     */
+    sai_object_id_t oid;
+
+    /**
+     * @validonly sai_attr_value_type_t == SAI_ATTR_VALUT_TYPE_ACL_FIELD_OBJECT_LIST
+     *
+     * @objects meta->allowedobjecttypes TODO length this is for validation only
+     */
+    sai_object_list_t objlist;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_U8_LIST */
+    sai_u8_list_t u8list;
+} sai_acl_field_data_t
 
 /**
  * @brief Defines a single ACL filter
@@ -345,40 +462,76 @@ typedef struct _sai_acl_field_data_t
 
     /**
      * @brief Field match mask
+     *
+     * @validonly enable == true
+     * @passparam meta
      */
-    union _mask {
-        sai_uint8_t u8;
-        sai_int8_t s8;
-        sai_uint16_t u16;
-        sai_int16_t s16;
-        sai_uint32_t u32;
-        sai_int32_t s32;
-        sai_mac_t mac;
-        sai_ip4_t ip4;
-        sai_ip6_t ip6;
-        sai_u8_list_t u8list;
-    } mask;
+    sai_acl_field_mask_t mask;
 
     /**
      * @brief Expected AND result using match mask above with packet field
      * value where applicable.
+     *
+     * @validonly enable == true
+     * @passparam meta
      */
-    union _data {
-        bool booldata;
-        sai_uint8_t u8;
-        sai_int8_t s8;
-        sai_uint16_t u16;
-        sai_int16_t s16;
-        sai_uint32_t u32;
-        sai_int32_t s32;
-        sai_mac_t mac;
-        sai_ip4_t ip4;
-        sai_ip6_t ip6;
-        sai_object_id_t oid;
-        sai_object_list_t objlist;
-        sai_u8_list_t u8list;
-    } data;
+    sai_acl_field_data_t data;
 } sai_acl_field_data_t;
+
+/**
+ * @extraparam const sai_attr_metadata_t *meta
+ */
+union _sai_acl_action_parameter_t {
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_ACTION_UINT8 */
+    sai_uint8_t u8;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUT_TYPE_ACL_ACTION_INT8 */
+    sai_int8_t s8;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_UINT16 */
+    sai_uint16_t u16;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_INT16 */
+    sai_int16_t s16;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_UINT32 */
+    sai_uint32_t u32;
+
+    /*
+     * TODO this will pass param to serialize method
+     *
+     * TODO enum
+     *
+     * @methodsuffix enum
+     * @extraparam meta->enummetadata
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_INT32
+     */
+    sai_int32_t s32;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_MAC */
+    sai_mac_t mac;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_IPV4 */
+    sai_ip4_t ip4;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_IPV6 */
+    sai_ip6_t ip6;
+
+    /**
+     * @validonly sai_attr_value_type_t == SAI_ATTR_VALUT_TYPE_ACL_ACTION_OBJECT_ID
+     *
+     * @objects meta->allowedobjecttypes TODO length this is for validation only
+     */
+    sai_object_id_t oid;
+
+    /**
+     * @validonly sai_attr_value_type_t == SAI_ATTR_VALUT_TYPE_ACL_ACTION_OBJECT_LIST
+     *
+     * @objects meta->allowedobjecttypes TODO length this is for validation only
+     */
+    sai_object_list_t objlist;
+} sai_acl_action_parameter_t;
 
 /**
  * @brief Defines a single ACL action
@@ -394,20 +547,11 @@ typedef struct _sai_acl_action_data_t
 
     /**
      * @brief Action parameter
+     *
+     * @validonly enable == true
+     * @passparam meta
      */
-    union _parameter {
-        sai_uint8_t u8;
-        sai_int8_t s8;
-        sai_uint16_t u16;
-        sai_int16_t s16;
-        sai_uint32_t u32;
-        sai_int32_t s32;
-        sai_mac_t mac;
-        sai_ip4_t ip4;
-        sai_ip6_t ip6;
-        sai_object_id_t oid;
-        sai_object_list_t objlist;
-    } parameter;
+     sai_acl_action_parameter_t parameter;
 
 } sai_acl_action_data_t;
 
@@ -602,33 +746,30 @@ typedef struct _sai_hmac_t
 } sai_hmac_t;
 
 /**
+ * @extraparam sai_tlv_type_t tlv_type
+ */
+union _sai_tlv_entry_t {
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
+    sai_ip6_t ingress_node;
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
+    sai_ip6_t egress_node;
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
+    sai_uint32_t opaque_container[4];
+
+    /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
+    sai_hmac_t hmac;
+} sai_tlv_entry_t;
+
+/**
  * @brief Segment Routing Tag Length Value entry
  */
 typedef struct _sai_tlv_t
 {
     sai_tlv_type_t tlv_type;
-
-    /**
-     * @brief TLV union entry.
-     *
-     * extra param is not needed since this is nested union
-     * and it serialization will be flattened
-     * extraparam sai_tlv_type_t tlv_type
-     */
-    union _entry {
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
-        sai_ip6_t ingress_node;
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_EGRESS */
-        sai_ip6_t egress_node;
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_OPAQUE */
-        sai_uint32_t opaque_container[4];
-
-        /** @validonly tlv_type == SAI_TLV_TYPE_HMAC */
-        sai_hmac_t hmac;
-    } entry;
+    sai_tlv_entry_t entry;
 } sai_tlv_t;
 
 /**
