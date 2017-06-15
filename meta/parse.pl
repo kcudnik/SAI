@@ -17,6 +17,7 @@ our $XMLDIR = "xml";
 our $INCLUDE_DIR = "../inc/";
 
 our %SAI_ENUMS = ();
+our %SAI_UNIONS = ();
 our %METADATA = ();
 our %NON_OBJECT_ID_STRUCTS = ();
 our %NOTIFICATIONS = ();
@@ -2495,6 +2496,8 @@ sub ProcessSingleNonObjectId
 
     my $structname = "sai_${rawname}_t";
 
+    LogDebug "ProcessSingleNonObjectId: processing $structname";
+
     my $ot = "SAI_OBJECT_TYPE_" .uc(${rawname});
 
     if (not grep(/$ot/,@types))
@@ -3020,7 +3023,7 @@ sub WriteHeaderFotter
 
 sub ProcessXmlFiles
 {
-    for my $file (GetXmlFiles($XMLDIR))
+    for my $file (GetSaiXmlFiles($XMLDIR))
     {
         LogInfo "Processing $file";
 
@@ -3077,6 +3080,44 @@ sub CreateObjectTypeMap
     map { $OBJECT_TYPE_MAP{$_} = $_ } @{ $SAI_ENUMS{sai_object_type_t}{values} };
 }
 
+sub ExtractUnionsInfo
+{
+    my @files = GetXmlUnionFiles($XMLDIR);
+
+    for my $file (@files)
+    {
+        my $ref = ReadXml $file;
+
+        my $kind = $ref->{compounddef}[0]->{kind};
+
+        if ($kind ne "union")
+        {
+            LogError "expected '$file' to contain union but kind is '$kind'";
+            next;
+        }
+
+        my $def = $ref->{compounddef}[0]->{compoundname}[0];
+
+        if (not $def =~ /^(_sai_\w+::)*_(\w+)$/)
+        {
+            LogWarning "union name '$def' not match pattern: (_sai_\\w+::)*(_\\w+)";
+            next;
+        }
+
+        my $name = $2;
+
+        # TODO force name to be in format sai_\w+_t
+        # TODO extract strict info ex ?
+
+        $SAI_UNIONS{$name}{file}    = $file;
+        $SAI_UNIONS{$name}{name}    = $name;
+        $SAI_UNIONS{$name}{def}     = $def;
+        $SAI_UNIONS{$name}{nested}  = 1 if $def =~/::/;
+    }
+
+    print Dumper(\%SAI_UNIONS);
+}
+
 #
 # MAIN
 #
@@ -3107,6 +3148,8 @@ sub CreateObjectTypeMap
 CheckHeadersStyle() if not defined $optionDisableStyleCheck;
 
 ExtractApiToObjectMap();
+
+ExtractUnionsInfo();
 
 GetStructLists();
 

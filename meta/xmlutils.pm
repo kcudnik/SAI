@@ -127,6 +127,8 @@ sub ReadXml
 {
     my $filename = shift;
 
+    $filename = "$main::XMLDIR/$filename" if not -f $filename;
+
     if (defined $main::optionUseXmlSimple)
     {
         my $xs = XML::Simple->new();
@@ -184,7 +186,7 @@ sub GetXmlFiles
 
     while (readdir $dh)
     {
-        next if not /^sai\w*_8h\.xml$/i;
+        next if not /^\w+\.xml$/i or not -f "$dir/$_";
 
         push @files,$_;
     }
@@ -192,6 +194,24 @@ sub GetXmlFiles
     closedir $dh;
 
     return sort @files;
+}
+
+sub GetSaiXmlFiles
+{
+    my $dir = shift;
+
+    my @files = GetXmlFiles($dir);
+
+    return grep { /^^sai\w*_8h\.xml$/ } @files;
+}
+
+sub GetXmlUnionFiles
+{
+    my $dir = shift;
+
+    my @files = GetXmlFiles($dir);
+
+    return grep { /^union_\w*\.xml$/ } @files;
 }
 
 sub ProcessStructCount
@@ -544,7 +564,7 @@ BEGIN
 {
     our @ISA    = qw(Exporter);
     our @EXPORT = qw/
-    ReadXml UnescapeXml GetXmlFiles
+    ReadXml UnescapeXml GetSaiXmlFiles GetXmlUnionFiles
     ExtractDescription ExtractStructInfo ExtractStructInfoEx
     /;
 }

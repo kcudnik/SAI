@@ -339,6 +339,12 @@ sub GetTypeInfoForSerialize
         $TypeInfo{nestedunion} = $structInfoEx{membersHash}->{$name}{union};
         $TypeInfo{amp} = "&";
     }
+    elsif (defined $main::SAI_UNIONS{$type} and $type =~ /^sai_(\w+)_t$/)
+    {
+        $TypeInfo{union} = 1;
+
+        # we need extract type to see if it needs quotes!
+    }
     else
     {
         # TODO can be union
@@ -624,7 +630,7 @@ sub CreateSerializeStructs
         next if $struct eq "sai_acl_action_data_t";
         next if $struct eq "sai_acl_field_data_t";
         next if $struct eq "sai_attribute_t";
-        next if $struct eq "sai_tlv_t";
+        #next if $struct eq "sai_tlv_t";
 
         # TODO sai_acl_capability_t has enum list and it's only valid when
         # similar for sai_tam_threshold_breach_event_t
@@ -673,7 +679,7 @@ BEGIN
 # sample serializations with unions
 #
 # for Id - > we coudl have sai_serialize_attr() and this will serialize string (metadat is needed)
-# on deserialize metadata is not needed 
+# on deserialize metadata is not needed
 #
 # {"id":"SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE","value":{"s32":"SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW"}}
 # SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE=SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW
