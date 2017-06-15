@@ -3063,11 +3063,11 @@ sub PopulateValueTypes
 
     ProcessValues(\%Union, \%VALUE_TYPES, \%VALUE_TYPES_TO_VT);
 
-    %Union = ExtractStructInfo("sai_acl_action_data_t", "union__sai__acl__action__data__t_1_1__parameter.xml");
+    %Union = ExtractStructInfo("sai_acl_action_data_t", "union__sai__acl__action__parameter__t.xml");
 
     ProcessValues(\%Union, \%ACL_ACTION_TYPES, \%ACL_ACTION_TYPES_TO_VT);
 
-    %Union = ExtractStructInfo("sai_acl_field_data_t", "union__sai__acl__field__data__t_1_1__data.xml");
+    %Union = ExtractStructInfo("sai_acl_field_data_t", "union__sai__acl__field__data__t.xml");
 
     ProcessValues(\%Union, \%ACL_FIELD_TYPES, \%ACL_FIELD_TYPES_TO_VT);
 }
