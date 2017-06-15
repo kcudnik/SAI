@@ -2930,7 +2930,7 @@ sub PopulateValueTypes
 
     ProcessValues(\%Union, \%ACL_ACTION_TYPES, \%ACL_ACTION_TYPES_TO_VT);
 
-    %Union = ExtractStructInfo("sai_acl_field_data_t", "union__sai__acl__field__data__t.xml");
+    %Union = ExtractStructInfo("sai_acl_field_data_t", "union__sai__acl__field__data__data__t.xml");
 
     ProcessValues(\%Union, \%ACL_FIELD_TYPES, \%ACL_FIELD_TYPES_TO_VT);
 }
