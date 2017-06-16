@@ -577,6 +577,7 @@ sub ProcessNotifications
     }
 
     # second pass is needed if count param is defined after data pointer
+    # TODO fix this
 
     for my $param (@params)
     {
@@ -638,9 +639,9 @@ sub ProcessXmlFile
 
     for my $section (@sections)
     {
-        ProcessEnumSection($section) if ($section->{kind} eq "enum");
+        ProcessEnumSection($section) if $section->{kind} eq "enum";
 
-        ProcessTypedefSection($section) if ($section->{kind} eq "typedef");
+        ProcessTypedefSection($section) if $section->{kind} eq "typedef";
     }
 }
 
@@ -2875,11 +2876,11 @@ sub PopulateValueTypes
 
     ProcessValues(\%Union, \%VALUE_TYPES, \%VALUE_TYPES_TO_VT);
 
-    %Union = ExtractStructInfo("sai_acl_action_data_t", "union__sai__acl__action__parameter__t.xml");
+    %Union = ExtractStructInfo("sai_acl_action_parameter_t", "union_");
 
     ProcessValues(\%Union, \%ACL_ACTION_TYPES, \%ACL_ACTION_TYPES_TO_VT);
 
-    %Union = ExtractStructInfo("sai_acl_field_data_t", "union__sai__acl__field__data__data__t.xml");
+    %Union = ExtractStructInfo("sai_acl_field_data_data_t", "union_");
 
     ProcessValues(\%Union, \%ACL_FIELD_TYPES, \%ACL_FIELD_TYPES_TO_VT);
 }
