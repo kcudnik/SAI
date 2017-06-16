@@ -345,10 +345,7 @@ sub CreateStructListTest
 
 sub CreateSerializeStructsTest
 {
-    #
     # make sure that all structs can be serialized fine
-
-    my %StructLists = GetStructLists();
 
     DefineTestName "serialize_structs";
 
@@ -363,20 +360,41 @@ sub CreateSerializeStructsTest
 
         my $struct = $1 if $structname =~ /^sai_(\w+)_t$/;
 
-        next if $struct =~ /^acl_action_data$/;
-        next if $struct =~ /^acl_field_data$/;
         next if $struct =~ /^attribute$/;
         next if $struct =~ /^(attr_condition|attr_metadata|enum_metadata|object_key|object_type_info)$/;
         next if $struct =~ /^(object_key|rev_graph_member|service_method_table|struct_member_info|object_meta_key)$/;
-
-        # not implemented yet
-        next if $struct =~ /^(tlv)$/;
 
         WriteTest "    $structname $struct;";
         WriteTest "    memset(&$struct, 0, sizeof($structname));";
         WriteTest "    ret = sai_serialize_$struct(buf, &$struct);";
         WriteTest "    TEST_ASSERT_TRUE(ret > 0, \"failed to serialize $structname\");";
         WriteTest "    printf(\"serialized $structname: %s\\n\", buf);";
+    }
+
+    WriteTest "}";
+}
+
+sub CreateSerializeUnionsTest
+{
+    # make sure that all unions can be serialized fine
+
+    DefineTestName "serialize_unions";
+
+    WriteTest "{";
+    WriteTest "    char buf[0x4000];";
+    WriteTest "    int ret;";
+
+    for my $unionTypeName (sort keys %main::SAI_UNIONS)
+    {
+        next if not $unionTypeName =~ /^sai_(\w+)_t$/;
+
+        my $union = $1;
+
+        WriteTest "    $unionTypeName $union;";
+        WriteTest "    memset(&$union, 0, sizeof($unionTypeName));";
+        WriteTest "    ret = sai_serialize_$union(buf, &$union);";
+        WriteTest "    TEST_ASSERT_TRUE(ret > 0, \"failed to serialize $unionTypeName\");";
+        WriteTest "    printf(\"serialized $unionTypeName: %s\\n\", buf);";
     }
 
     WriteTest "}";
@@ -442,7 +460,10 @@ sub CreateTests
 
     CreateStructListTest();
 
-    CreateSerializeStructsTest();
+    # TODO we need to examine extra params
+    #CreateSerializeStructsTest();
+
+    #CreateSerializeUnionsTest();
 
     WriteTestMain();
 }

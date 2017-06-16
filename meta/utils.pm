@@ -47,34 +47,47 @@ sub WriteSectionComment
     WriteSource "\n/* $content */\n";
 }
 
-sub LogDebug
+sub GetCallerInfo
 {
+    return "" if not defined $main::optionShowLogCaller;
+
     my ($package, $filename, $line, $sub) = caller(1);
 
-    print color('bright_blue') . "$sub($line): @_" . color('reset') . "\n" if $main::optionPrintDebug;
+    my $logLine = $line;
+
+    ($package, $filename, $line, $sub) = caller(2);
+
+    return "$sub($logLine): ";
+}
+
+sub LogDebug
+{
+    my $sub = GetCallerInfo();
+
+    print color('bright_blue') . "$sub@_" . color('reset') . "\n" if $main::optionPrintDebug;
 }
 
 sub LogInfo
 {
-    my ($package, $filename, $line, $sub) = caller(1);
+    my $sub = GetCallerInfo();
 
-    print color('bright_green') . "$sub($line): @_" . color('reset') . "\n";
+    print color('bright_green') . "$sub@_" . color('reset') . "\n";
 }
 
 sub LogWarning
 {
-    my ($package, $filename, $line, $sub) = caller(1);
+    my $sub = GetCallerInfo();
 
     $warnings++;
-    print color('bright_yellow') . "$sub($line): @_" . color('reset') . "\n";
+    print color('bright_yellow') . "$sub@_" . color('reset') . "\n";
 }
 
 sub LogError
 {
-    my ($package, $filename, $line, $sub) = caller(1);
+    my $sub = GetCallerInfo();
 
     $errors++;
-    print color('bright_red') . "$sub($line): @_" . color('reset') . "\n";
+    print color('bright_red') . "$sub@_" . color('reset') . "\n";
 }
 
 sub WriteFile

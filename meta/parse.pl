@@ -44,12 +44,13 @@ my %TAGS = (
         );
 
 my %options = ();
-getopts("dsAS", \%options);
+getopts("dsASl", \%options);
 
 our $optionPrintDebug        = 1 if defined $options{d};
 our $optionDisableAspell     = 1 if defined $options{A};
 our $optionUseXmlSimple      = 1 if defined $options{s};
 our $optionDisableStyleCheck = 1 if defined $options{S};
+our $optionShowLogCaller     = 1 if defined $options{l};
 
 # LOGGING FUNCTIONS HELPERS
 
@@ -2979,10 +2980,13 @@ sub ExtractUnionsInfo
 
         my %s = ExtractStructInfoEx($name, $file);
 
-        print Dumper(\%s);
+        # TODO check validonly on each ember
+        # TODO extraparam on description main
+
+        #print Dumper(\%s);
     }
 
-    print Dumper(\%SAI_UNIONS);
+    #print Dumper(\%SAI_UNIONS);
 }
 
 #
