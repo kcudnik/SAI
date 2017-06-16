@@ -445,7 +445,7 @@ sub ProcessMembersForSerialize
     ProcessFunctionHeaderForSerialize($refHashStructInfoEx, $buf);
 
     WriteSource "{";
-    WriteSource "    char *start_$buf = $buf;";
+    WriteSource "    char *begin_$buf = $buf;";
     WriteSource "    int ret;";
     WriteSource "    $buf += sprintf($buf, \"{\");";
 
@@ -622,7 +622,7 @@ sub ProcessMembersForSerialize
     # TODO if it's union, we must check if we serialized something
 
     WriteSource "    $buf += sprintf($buf, \"}\");"; # end of struct
-    WriteSource "    return (int)($buf - start_$buf);";
+    WriteSource "    return (int)($buf - begin_$buf);";
     WriteSource "}";
 }
 

@@ -25,6 +25,7 @@ our %OBJTOAPIMAP = ();
 our %APITOOBJMAP = ();
 our %ALL_STRUCTS = ();
 our %OBJECT_TYPE_MAP = ();
+our %REVGRAPH = ();
 
 my $FLAGS = "MANDATORY_ON_CREATE|CREATE_ONLY|CREATE_AND_SET|READ_ONLY|KEY|DYNAMIC|SPECIAL";
 
@@ -72,42 +73,17 @@ sub ProcessTagType
 {
     my ($type, $value, $val) = @_;
 
-    if ($val =~/^sai_s32_list_t sai_\w+_t$/)
-    {
-        return $val;
-    }
+    return $val if $val =~ /^sai_s32_list_t sai_\w+_t$/;
 
-    if ($val =~/^sai_acl_field_data_t (sai_\w+_t|bool)$/)
-    {
-        return $val;
-    }
+    return $val if $val =~ /^sai_acl_field_data_t (sai_\w+_t|bool)$/;
 
-    if ($val =~/^sai_acl_action_data_t (sai_\w+_t|bool)$/)
-    {
-        return $val;
-    }
+    return $val if $val =~ /^sai_acl_action_data_t (sai_\w+_t|bool)$/;
 
-    if ($val =~ /^(bool|char)$/)
-    {
-        return $val;
-    }
+    return $val if $val =~ /^(bool|char)$/;
 
-    if ($val =~/^sai_\w+_t$/ and not $val =~ /_attr_t/)
-    {
-        return $val;
-    }
+    return $val if $val =~ /^sai_\w+_t$/ and not $val =~ /_attr_t$/;
 
-    if ($val =~/^sai_pointer_t (sai_\w+_fn)$/)
-    {
-        my $pointerfn = $1;
-
-        if (not $pointerfn =~ /^sai_\w+_(callback|notification)_fn$/)
-        {
-            LogWarning "function name $pointerfn should be in format sai_\\w+_(callback|notification)_fn";
-        }
-
-        return $val;
-    }
+    return $val if $val =~ /^sai_pointer_t sai_\w+_notification_fn$/;
 
     LogError "invalid type tag value '$val' expected sai type or enum";
 
@@ -158,13 +134,10 @@ sub ProcessTagAllowNull
 {
     my ($type, $value, $val) = @_;
 
-    if (not $val =~/^(true|false)$/i)
-    {
-        LogError "allownull tag value '$val', expected true/false";
-        return undef;
-    }
+    return $val if $val =~ /^(true|false)$/;
 
-    return $val;
+    LogError "allownull tag value '$val', expected true/false";
+    return undef;
 }
 
 sub ProcessTagCondition
@@ -201,32 +174,15 @@ sub ProcessTagDefault
 {
     my ($type, $value, $val) = @_;
 
-    if ($val =~/^(empty|internal|vendor|const)/)
-    {
-        return $val;
-    }
+    return $val if $val =~/^(empty|internal|vendor|const)/;
 
-    if ($val =~/^(attrvalue) SAI_\w+_ATTR_\w+$/)
-    {
-        return $val;
-    }
+    return $val if $val =~/^(attrvalue) SAI_\w+_ATTR_\w+$/;
 
-    if ($val =~/^(true|false|NULL|SAI_\w+|$NUMBER_REGEX)$/ and not $val =~ /_ATTR_|OBJECT_TYPE/)
-    {
-        return $val;
-    }
+    return $val if $val =~/^(true|false|NULL|SAI_\w+|$NUMBER_REGEX)$/ and not $val =~ /_ATTR_|OBJECT_TYPE/;
 
-    if ($val =~/^0\.0\.0\.0$/)
-    {
-        # currently we only support default ip address
-        return $val;
-    }
+    return $val if $val =~/^0\.0\.0\.0$/;
 
-    if ($val eq "disabled")
-    {
-        # for aclfield and aclaction
-        return $val;
-    }
+    return $val if $val eq "disabled";
 
     LogError "invalid default tag value '$val' on $type $value";
     return undef;
@@ -234,7 +190,7 @@ sub ProcessTagDefault
 
 sub ProcessTagIgnore
 {
-    my ($type, $value, $val) = @_;
+    # just return true if tag is defined
 
     return "true";
 }
@@ -264,9 +220,7 @@ sub ProcessDescription
 
         push @order,$tag;
 
-        $val =~ s/\s+/ /g;
-        $val =~ s/^\s*//;
-        $val =~ s/\s*$//;
+        $val = Trim $val;
 
         if (not defined $TAGS{$tag})
         {
@@ -281,14 +235,11 @@ sub ProcessDescription
         $METADATA{$type}{$value}{attrid}        = $value;
     }
 
-    $brief =~ s/^\s*//;
-    $brief =~ s/\s*$//;
+    $brief = Trim $brief;
 
     $METADATA{$type}{$value}{brief} = $brief if $brief ne "";
 
-    my $count = @order;
-
-    return if $count == 0;
+    return if scalar@order == 0;
 
     my $order = join(":",@order);
 
@@ -375,11 +326,11 @@ sub ProcessEnumSection
                 next;
             }
 
-            my $last = $values[$#values];
+            my $last = $values[-1];
 
             if ($last eq uc("$1_MAX"))
             {
-                $last =  pop @values;
+                pop @values;
                 LogInfo "Removing last element $last";
             }
         }
@@ -387,6 +338,8 @@ sub ProcessEnumSection
         $SAI_ENUMS{$enumtypename}{values} = \@values;
 
         next if not $enumtypename =~ /^(sai_(\w+)_attr_)t$/;
+
+        # TODO put to SAI_ATTR_ENUMS
 
         my $prefix = uc$1;
 
@@ -808,10 +761,7 @@ sub CreateMetadataHeaderAndSource
 
     for my $key (sort keys %SAI_ENUMS)
     {
-        if (not $key =~ /^(sai_\w+_attr_t)$/)
-        {
-            next;
-        }
+        next if not $key =~ /^(sai_\w+_attr_t)$/;
 
         my $typedef = $1;
 
@@ -1966,18 +1916,11 @@ sub ProcessRevGraph
 
 sub ProcessRevGraphCount
 {
-    my %REVGRAPH = GetReverseDependencyGraph();
-
     my $objectType = shift;
 
-    if (not defined $REVGRAPH{$objectType})
-    {
-        return 0;
-    }
+    return 0 if not defined $REVGRAPH{$objectType};
 
-    my $count = @{ $REVGRAPH{$objectType} };
-
-    return $count;
+    return scalar @{ $REVGRAPH{$objectType} };
 }
 
 sub CreateStructNonObjectId
@@ -2239,6 +2182,8 @@ sub CreateApisQuery
 sub CreateObjectInfo
 {
     WriteSectionComment "Object info metadata";
+
+    %REVGRAPH = GetReverseDependencyGraph();
 
     my @objects = @{ $SAI_ENUMS{sai_object_type_t}{values} };
 

@@ -18,6 +18,9 @@ our $HEADER_CONTENT = "";
 our $SOURCE_CONTENT = "";
 our $TEST_CONTENT = "";
 
+# TODO do auto ident on counting { }
+# warn theyr mey be multiple {} in line
+
 sub WriteHeader
 {
     my $content = shift;
