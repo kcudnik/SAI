@@ -413,12 +413,8 @@ typedef union _sai_acl_field_data_data_t {
     sai_uint32_t u32;
 
     /**
-     * TODO this will pass param to serialize method
-     *
-     * TODO enum
-     *
-     *  methodsuffix enum -> sai_serialize_int32 -> sai_serialize_enum( meta->enummetadata).
-     * passparam meta->enummetadata
+     * @suffix enum
+     * @passparam meta->enummetadata
      * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_INT32
      */
     sai_int32_t s32;
@@ -439,9 +435,8 @@ typedef union _sai_acl_field_data_data_t {
     sai_object_id_t oid;
 
     /**
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_LIST
-     *
      * objects meta->allowedobjecttypes TODO length this is for validation only
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_LIST
      */
     sai_object_list_t objlist;
 
@@ -465,6 +460,9 @@ typedef struct _sai_acl_field_data_t {
 
     /**
      * @brief Field match mask
+     *
+     * @note Nothing can be serialized if mask is not needed for data items
+     * like oid.
      *
      * @validonly enable == true
      * @passparam meta
@@ -502,12 +500,8 @@ typedef union _sai_acl_action_parameter_t {
     sai_uint32_t u32;
 
     /**
-     * TODO this will pass param to serialize method
-     *
-     * TODO enum
-     *
-     *   methodsuffix enum
-     * passparam meta->enummetadata
+     * @suffix enum
+     * @passparam meta->enummetadata
      * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_INT32
      */
     sai_int32_t s32;
@@ -522,16 +516,16 @@ typedef union _sai_acl_action_parameter_t {
     sai_ip6_t ip6;
 
     /**
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_ID
-     *
      * objects meta->allowedobjecttypes TODO length this is for validation only
+     *
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_ID
      */
     sai_object_id_t oid;
 
     /**
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_LIST
-     *
      * objects meta->allowedobjecttypes TODO length this is for validation only
+     *
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_LIST
      */
     sai_object_list_t objlist;
 } sai_acl_action_parameter_t;
@@ -804,6 +798,9 @@ typedef struct _sai_segment_list_t
 } sai_segment_list_t;
 
 /**
+ * TODO we nedd version with "RAW" value, so no {s32:"xxx"} will be added
+ * just raw value will be added, and same for deserialize
+ *
  * @brief Data Type
  *
  * To use enum values as attribute value is sai_int32_t s32
@@ -833,9 +830,11 @@ typedef union _sai_attribute_value_t
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_UINT32 */
     sai_uint32_t u32;
 
-    /* TODO enum meta->enummetadata */
-
-    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_INT32 */
+    /**
+     * @suffix enum
+     * @passparam meta->enummetadata
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_INT32
+     */
     sai_int32_t s32;
 
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_UINT64 */
@@ -883,9 +882,11 @@ typedef union _sai_attribute_value_t
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_UINT32_LIST */
     sai_u32_list_t u32list;
 
-    /* TODO enum */
-
-    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_INT32_LIST */
+    /**
+     * suffix enum_list TODO we need quotes on this since s32 is serialized without quotes :/
+     * passparam meta->enummetadata
+     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_INT32_LIST
+     */
     sai_s32_list_t s32list;
 
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_UINT32_RANGE */
@@ -905,6 +906,8 @@ typedef union _sai_attribute_value_t
 
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_TUNNEL_MAP_LIST */
     sai_tunnel_map_list_t tunnelmap;
+
+    /* TODO udf also we need flag for udf */
 
     /**
      * @passparam meta
@@ -929,9 +932,15 @@ typedef union _sai_attribute_value_t
 
 } sai_attribute_value_t;
 
+/**
+ * @extraparam const sai_metadata_t *meta
+ */
 typedef struct _sai_attribute_t
 {
+    /** @passparam meta */
     sai_attr_id_t id;
+
+    /** @passparam meta */
     sai_attribute_value_t value;
 } sai_attribute_t;
 

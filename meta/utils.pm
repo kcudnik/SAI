@@ -18,28 +18,43 @@ our $HEADER_CONTENT = "";
 our $SOURCE_CONTENT = "";
 our $TEST_CONTENT = "";
 
-# TODO do auto ident on counting { }
-# warn theyr mey be multiple {} in line
+my $identLevel = 0;
+
+sub GetIdent
+{
+    my $content = shift;
+
+    return "    " if $content =~ /^\s*_(In|Out)/;
+    return "    " x --$identLevel if $content =~ /^\s*}/;
+    return "    " x $identLevel++ if $content =~ /{$/;
+    return "    " x $identLevel;
+}
 
 sub WriteHeader
 {
     my $content = shift;
 
-    $HEADER_CONTENT .= $content . "\n";
+    my $ident = GetIdent($content);
+
+    $HEADER_CONTENT .= $ident . $content . "\n";
 }
 
 sub WriteSource
 {
     my $content = shift;
 
-    $SOURCE_CONTENT .= $content . "\n";
+    my $ident = GetIdent($content);
+
+    $SOURCE_CONTENT .= $ident . $content . "\n";
 }
 
 sub WriteTest
 {
     my $content = shift;
 
-    $TEST_CONTENT .= $content . "\n";
+    my $ident = GetIdent($content);
+
+    $TEST_CONTENT .= $ident . $content . "\n";
 }
 
 sub WriteSectionComment
@@ -195,9 +210,9 @@ sub GetStructLists
 
 sub IsSpecialObject
 {
-    my $ot = shift;
+    my $objectType = shift;
 
-    return ($ot eq "SAI_OBJECT_TYPE_FDB_FLUSH" or $ot eq "SAI_OBJECT_TYPE_HOSTIF_PACKET");
+    return ($objectType eq "SAI_OBJECT_TYPE_FDB_FLUSH" or $objectType eq "SAI_OBJECT_TYPE_HOSTIF_PACKET");
 }
 
 sub SanityCheckContent
@@ -269,13 +284,23 @@ sub Trim
     return $value;
 }
 
+sub ExitOnErrors
+{
+    return if $errors == 0;
+
+    LogError "please corret all $errors error(s) before continue";
+
+    exit 1;
+}
+
 BEGIN
 {
     our @ISA    = qw(Exporter);
     our @EXPORT = qw/
     LogDebug LogInfo LogWarning LogError
     WriteFile GetHeaderFiles GetMetaHeaderFiles ReadHeaderFile
-    GetNonObjectIdStructNames IsSpecialObject GetStructLists GetStructKeysInOrder Trim
+    GetNonObjectIdStructNames IsSpecialObject GetStructLists GetStructKeysInOrder
+    Trim ExitOnErrors
     WriteHeader WriteSource WriteTest WriteMetaDataFiles WriteSectionComment
     $errors $warnings $NUMBER_REGEX
     $HEADER_CONTENT $SOURCE_CONTENT $TEST_CONTENT

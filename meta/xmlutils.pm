@@ -338,12 +338,28 @@ sub ProcessStructPassParam
     return \@params;
 }
 
+sub ProcessStructSuffix
+{
+    my ($structName, $tagValue) = @_;
+
+    if (not $tagValue =~ /^(\w+)/)
+    {
+        LogError "unable to parse suffix '$tagValue' on $structName";
+        return undef;
+    }
+
+    LogDebug "adding suffix '$1' on $structName";
+
+    return $1;
+}
+
 my %STRUCT_TAGS = (
         "count"       , \&ProcessStructCount,
         "objects"     , \&ProcessStructObjects,
         "validonly"   , \&ProcessStructValidOnly,
         "passparam"   , \&ProcessStructPassParam,
         "extraparam"  , \&ProcessStructExtraParam,
+        "suffix"      , \&ProcessStructSuffix,
         );
 
 sub ProcessStructDescription

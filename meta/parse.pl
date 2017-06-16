@@ -791,10 +791,10 @@ sub ProcessSingleEnum
 
         LogWarning "Value $value of $typedef is not prefixed as $prefix" if not $value =~ /^$prefix/;
 
-        WriteSource "    $value,";
+        WriteSource "$value,";
     }
 
-    WriteSource "    -1"; # guard
+    WriteSource "-1"; # guard
 
     WriteSource "};";
 
@@ -802,10 +802,10 @@ sub ProcessSingleEnum
 
     for my $value (@values)
     {
-        WriteSource "    \"$value\",";
+        WriteSource "\"$value\",";
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     WriteSource "const char* const sai_metadata_${typedef}_enum_values_short_names[] = {";
@@ -814,10 +814,10 @@ sub ProcessSingleEnum
     {
         $value =~ s/^${prefix}//;
 
-        WriteSource "    \"$value\",";
+        WriteSource "\"$value\",";
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     my $count = @values;
@@ -825,12 +825,12 @@ sub ProcessSingleEnum
     WriteHeader "extern const sai_enum_metadata_t sai_metadata_enum_$typedef;";
 
     WriteSource "const sai_enum_metadata_t sai_metadata_enum_$typedef = {";
-    WriteSource "    .name              = \"${typedef}\",";
-    WriteSource "    .valuescount       = $count,";
-    WriteSource "    .values            = (const int*)sai_metadata_${typedef}_enum_values,";
-    WriteSource "    .valuesnames       = sai_metadata_${typedef}_enum_values_names,";
-    WriteSource "    .valuesshortnames  = sai_metadata_${typedef}_enum_values_short_names,";
-    WriteSource "    .containsflags     = $flags,";
+    WriteSource ".name              = \"${typedef}\",";
+    WriteSource ".valuescount       = $count,";
+    WriteSource ".values            = (const int*)sai_metadata_${typedef}_enum_values,";
+    WriteSource ".valuesnames       = sai_metadata_${typedef}_enum_values_names,";
+    WriteSource ".valuesshortnames  = sai_metadata_${typedef}_enum_values_short_names,";
+    WriteSource ".containsflags     = $flags,";
     WriteSource "};";
 
     return $count;
@@ -879,10 +879,10 @@ sub CreateMetadataHeaderAndSource
 
         my $typedef = $1;
 
-        WriteSource "    &sai_metadata_enum_$typedef,";
+        WriteSource "&sai_metadata_enum_$typedef,";
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     my $count = keys %SAI_ENUMS;
@@ -901,12 +901,12 @@ sub CreateMetadataHeaderAndSource
 
         my $typedef = $1;
 
-        WriteSource "    &sai_metadata_enum_$typedef,";
+        WriteSource "&sai_metadata_enum_$typedef,";
 
         $count++;
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     WriteHeader "extern const size_t sai_metadata_attr_enums_count;";
@@ -926,7 +926,7 @@ sub CreateMetadataHeaderAndSource
         my $typedef = $1;
         my $objtype = $2;
 
-        WriteSource "    SAI_OBJECT_TYPE_" . uc($objtype). ",";
+        WriteSource "SAI_OBJECT_TYPE_" . uc($objtype). ",";
     }
 
     WriteSource "};";
@@ -1063,7 +1063,7 @@ sub ProcessObjects
             return "";
         }
 
-        WriteSource "    $obj,";
+        WriteSource "$obj,";
     }
 
     WriteSource "};";
@@ -1326,21 +1326,21 @@ sub ProcessConditionsGeneric
 
         if ($val eq "true" or $val eq "false")
         {
-            WriteSource "    .attrid = $attrid,";
-            WriteSource "    .condition = { .booldata = $val }";
+            WriteSource ".attrid = $attrid,";
+            WriteSource ".condition = { .booldata = $val }";
         }
         elsif ($val =~ /^SAI_/)
         {
-            WriteSource "    .attrid = $attrid,";
-            WriteSource "    .condition = { .s32 = $val }";
+            WriteSource ".attrid = $attrid,";
+            WriteSource ".condition = { .s32 = $val }";
         }
         elsif ($val =~ /^$NUMBER_REGEX$/ and $enumtype =~ /^sai_u?int(\d+)_t$/)
         {
             my $n = $1;
             my $item = ($enumtype =~ /uint/) ? "u$n" : "s$n";
 
-            WriteSource "    .attrid = $attrid,";
-            WriteSource "    .condition = { .$item = $val }";
+            WriteSource ".attrid = $attrid,";
+            WriteSource ".condition = { .$item = $val }";
         }
         else
         {
@@ -1359,12 +1359,12 @@ sub ProcessConditionsGeneric
 
     for my $cond (@conditions)
     {
-        WriteSource "    &sai_metadata_${name}_${attr}_$count,";
+        WriteSource "&sai_metadata_${name}_${attr}_$count,";
 
         $count++;
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
 
     WriteSource "};";
 
@@ -1560,45 +1560,45 @@ sub ProcessSingleObjectType
 
         WriteSource "const sai_attr_metadata_t sai_metadata_attr_$attr = {";
 
-        WriteSource "    .objecttype                    = $objecttype,";
-        WriteSource "    .attrid                        = $attr,";
-        WriteSource "    .attridname                    = $attrname,";
-        WriteSource "    .brief                         = $brief,";
-        WriteSource "    .attrvaluetype                 = $type,";
-        WriteSource "    .flags                         = $flags,";
-        WriteSource "    .allowedobjecttypes            = $objects,";
-        WriteSource "    .allowedobjecttypeslength      = $objectslen,";
-        WriteSource "    .allowrepetitiononlist         = $allowrepeat,";
-        WriteSource "    .allowmixedobjecttypes         = $allowmixed,";
-        WriteSource "    .allowemptylist                = $allowempty,";
-        WriteSource "    .allownullobjectid             = $allownull,";
-        WriteSource "    .isoidattribute                = ($objectslen > 0),";
-        WriteSource "    .defaultvaluetype              = $defvaltype,";
-        WriteSource "    .defaultvalue                  = $defval,";
-        WriteSource "    .defaultvalueobjecttype        = $defvalot,";
-        WriteSource "    .defaultvalueattrid            = $defvalattrid,";
-        WriteSource "    .storedefaultvalue             = $storedefaultval,";
-        WriteSource "    .isenum                        = $isenum,";
-        WriteSource "    .isenumlist                    = $isenumlist,";
-        WriteSource "    .enummetadata                  = $enummetadata,";
-        WriteSource "    .conditiontype                 = $conditiontype,";
-        WriteSource "    .conditions                    = $conditions,";
-        WriteSource "    .conditionslength              = $conditionslen,";
-        WriteSource "    .isconditional                 = ($conditionslen != 0),";
-        WriteSource "    .validonlytype                 = $validonlytype,";
-        WriteSource "    .validonly                     = $validonly,";
-        WriteSource "    .validonlylength               = $validonlylen,";
-        WriteSource "    .isvalidonly                   = ($validonlylen != 0),";
-        WriteSource "    .getsave                       = $getsave,";
-        WriteSource "    .isvlan                        = $isvlan,";
-        WriteSource "    .isaclfield                    = $isaclfield,";
-        WriteSource "    .isaclaction                   = $isaclaction,";
-        WriteSource "    .ismandatoryoncreate           = $ismandatoryoncreate,";
-        WriteSource "    .iscreateonly                  = $iscreateonly,";
-        WriteSource "    .iscreateandset                = $iscreateandset,";
-        WriteSource "    .isreadonly                    = $isreadonly,";
-        WriteSource "    .iskey                         = $iskey,";
-        WriteSource "    .isprimitive                   = $isprimitive,";
+        WriteSource ".objecttype                    = $objecttype,";
+        WriteSource ".attrid                        = $attr,";
+        WriteSource ".attridname                    = $attrname,";
+        WriteSource ".brief                         = $brief,";
+        WriteSource ".attrvaluetype                 = $type,";
+        WriteSource ".flags                         = $flags,";
+        WriteSource ".allowedobjecttypes            = $objects,";
+        WriteSource ".allowedobjecttypeslength      = $objectslen,";
+        WriteSource ".allowrepetitiononlist         = $allowrepeat,";
+        WriteSource ".allowmixedobjecttypes         = $allowmixed,";
+        WriteSource ".allowemptylist                = $allowempty,";
+        WriteSource ".allownullobjectid             = $allownull,";
+        WriteSource ".isoidattribute                = ($objectslen > 0),";
+        WriteSource ".defaultvaluetype              = $defvaltype,";
+        WriteSource ".defaultvalue                  = $defval,";
+        WriteSource ".defaultvalueobjecttype        = $defvalot,";
+        WriteSource ".defaultvalueattrid            = $defvalattrid,";
+        WriteSource ".storedefaultvalue             = $storedefaultval,";
+        WriteSource ".isenum                        = $isenum,";
+        WriteSource ".isenumlist                    = $isenumlist,";
+        WriteSource ".enummetadata                  = $enummetadata,";
+        WriteSource ".conditiontype                 = $conditiontype,";
+        WriteSource ".conditions                    = $conditions,";
+        WriteSource ".conditionslength              = $conditionslen,";
+        WriteSource ".isconditional                 = ($conditionslen != 0),";
+        WriteSource ".validonlytype                 = $validonlytype,";
+        WriteSource ".validonly                     = $validonly,";
+        WriteSource ".validonlylength               = $validonlylen,";
+        WriteSource ".isvalidonly                   = ($validonlylen != 0),";
+        WriteSource ".getsave                       = $getsave,";
+        WriteSource ".isvlan                        = $isvlan,";
+        WriteSource ".isaclfield                    = $isaclfield,";
+        WriteSource ".isaclaction                   = $isaclaction,";
+        WriteSource ".ismandatoryoncreate           = $ismandatoryoncreate,";
+        WriteSource ".iscreateonly                  = $iscreateonly,";
+        WriteSource ".iscreateandset                = $iscreateandset,";
+        WriteSource ".isreadonly                    = $isreadonly,";
+        WriteSource ".iskey                         = $iskey,";
+        WriteSource ".isprimitive                   = $isprimitive,";
 
         WriteSource "};";
 
@@ -1716,10 +1716,10 @@ sub CreateMetadataForAttributes
         {
             next if defined $METADATA{$type}{$value}{ignore};
 
-            WriteSource "    &sai_metadata_attr_$value,";
+            WriteSource "&sai_metadata_attr_$value,";
         }
 
-        WriteSource "    NULL";
+        WriteSource "NULL";
         WriteSource "};";
     }
 
@@ -1736,10 +1736,10 @@ sub CreateMetadataForAttributes
 
         my $type = "sai_" . lc($1) . "_attr_t";
 
-        WriteSource "    sai_metadata_object_type_$type,";
+        WriteSource "sai_metadata_object_type_$type,";
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     my $count = @objects;
@@ -1755,13 +1755,13 @@ sub CreateEnumHelperMethod
     return if not $key =~ /^sai_(\w+)_t/;
 
     WriteSource "const char* sai_metadata_get_$1_name(";
-    WriteSource "        _In_ $key value)";
+    WriteSource "_In_ $key value)";
     WriteSource "{";
-    WriteSource "    return sai_metadata_get_enum_value_name(&sai_metadata_enum_$key, value);";
+    WriteSource "return sai_metadata_get_enum_value_name(&sai_metadata_enum_$key, value);";
     WriteSource "}";
 
     WriteHeader "extern const char* sai_metadata_get_$1_name(";
-    WriteHeader "        _In_ $key value);";
+    WriteHeader "_In_ $key value);";
 }
 
 sub CreateEnumHelperMethods
@@ -1824,7 +1824,7 @@ sub ProcessStructObjects
 
     for my $obj (@{ $objects })
     {
-        WriteSource "    $obj,";
+        WriteSource "$obj,";
     }
 
     WriteSource "};";
@@ -1874,9 +1874,9 @@ sub ProcessStructGetOid
     my $fname = "sai_metadata_struct_member_get_sai_${rawname}_t_${key}";
 
     WriteSource "sai_object_id_t $fname(";
-    WriteSource "        _In_ const sai_object_meta_key_t *object_meta_key)";
+    WriteSource "_In_ const sai_object_meta_key_t *object_meta_key)";
     WriteSource "{";
-    WriteSource "    return object_meta_key->objectkey.key.${rawname}.${key};";
+    WriteSource "return object_meta_key->objectkey.key.${rawname}.${key};";
     WriteSource "}";
 
     return $fname;
@@ -1891,10 +1891,10 @@ sub ProcessStructSetOid
     my $fname = "sai_metadata_struct_member_set_sai_${rawname}_t_${key}";
 
     WriteSource "void $fname(";
-    WriteSource "        _Inout_ sai_object_meta_key_t *object_meta_key,";
-    WriteSource "        _In_ sai_object_id_t oid)";
+    WriteSource "_Inout_ sai_object_meta_key_t *object_meta_key,";
+    WriteSource "_In_ sai_object_id_t oid)";
     WriteSource "{";
-    WriteSource "    object_meta_key->objectkey.key.${rawname}.${key} = oid;";
+    WriteSource "object_meta_key->objectkey.key.${rawname}.${key} = oid;";
     WriteSource "}";
 
     return $fname;
@@ -1926,15 +1926,15 @@ sub ProcessStructMembers
 
         WriteSource "const sai_struct_member_info_t sai_metadata_struct_member_sai_${rawname}_t_$key = {";
 
-        WriteSource "    .membervaluetype           = $valuetype,";
-        WriteSource "    .membername                = \"$key\",";
-        WriteSource "    .isvlan                    = $isvlan,";
-        WriteSource "    .allowedobjecttypes        = $objects,";
-        WriteSource "    .allowedobjecttypeslength  = $objectlen,";
-        WriteSource "    .isenum                    = $isenum,";
-        WriteSource "    .enummetadata              = $enumdata,";
-        WriteSource "    .getoid                    = $getoid,";
-        WriteSource "    .setoid                    = $setoid,";
+        WriteSource ".membervaluetype           = $valuetype,";
+        WriteSource ".membername                = \"$key\",";
+        WriteSource ".isvlan                    = $isvlan,";
+        WriteSource ".allowedobjecttypes        = $objects,";
+        WriteSource ".allowedobjecttypeslength  = $objectlen,";
+        WriteSource ".isenum                    = $isenum,";
+        WriteSource ".enummetadata              = $enumdata,";
+        WriteSource ".getoid                    = $getoid,";
+        WriteSource ".setoid                    = $setoid,";
 
         # TODO allow null
 
@@ -1950,10 +1950,10 @@ sub ProcessStructMembers
 
     for my $key (@keys)
     {
-        WriteSource "    &sai_metadata_struct_member_sai_${rawname}_t_$key,";
+        WriteSource "&sai_metadata_struct_member_sai_${rawname}_t_$key,";
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     return "sai_metadata_struct_members_sai_${rawname}_t";
@@ -2013,15 +2013,15 @@ sub ProcessRevGraph
 
         WriteSource "const sai_rev_graph_member_t $membername = {";
 
-        WriteSource "    .objecttype          = $objectType,";
-        WriteSource "    .depobjecttype       = $depObjectType,";
+        WriteSource ".objecttype          = $objectType,";
+        WriteSource ".depobjecttype       = $depObjectType,";
 
         if ($attrId =~ /^SAI_\w+_ATTR_\w+/)
         {
             # this is attribute
 
-            WriteSource "    .attrmetadata        = &sai_metadata_attr_$attrId,";
-            WriteSource "    .structmember        = NULL,";
+            WriteSource ".attrmetadata        = &sai_metadata_attr_$attrId,";
+            WriteSource ".structmember        = NULL,";
         }
         else
         {
@@ -2029,8 +2029,8 @@ sub ProcessRevGraph
 
             my $DEPOT = lc ($1) if $depObjectType =~ /SAI_OBJECT_TYPE_(\w+)/;
 
-            WriteSource "    .attrmetadata        = NULL,";
-            WriteSource "    .structmember        = &sai_metadata_struct_member_sai_${DEPOT}_t_$attrId,";
+            WriteSource ".attrmetadata        = NULL,";
+            WriteSource ".structmember        = &sai_metadata_struct_member_sai_${DEPOT}_t_$attrId,";
         }
 
         WriteSource "};";
@@ -2042,10 +2042,10 @@ sub ProcessRevGraph
 
     for my $mn (@membernames)
     {
-        WriteSource "    &$mn,";
+        WriteSource "&$mn,";
     }
 
-    WriteSource "    NULL,";
+    WriteSource "NULL,";
 
     WriteSource "};";
 
@@ -2104,30 +2104,30 @@ sub ProcessCreate
     my $api = $OBJTOAPIMAP{$ot};
 
     WriteSource "sai_status_t sai_metadata_generic_create_$ot(";
-    WriteSource "        _Inout_ sai_object_meta_key_t *meta_key,";
-    WriteSource "        _In_ sai_object_id_t switch_id,";
-    WriteSource "        _In_ uint32_t attr_count,";
-    WriteSource "        _In_ const sai_attribute_t *attr_list)";
+    WriteSource "_Inout_ sai_object_meta_key_t *meta_key,";
+    WriteSource "_In_ sai_object_id_t switch_id,";
+    WriteSource "_In_ uint32_t attr_count,";
+    WriteSource "_In_ const sai_attribute_t *attr_list)";
     WriteSource "{";
 
     if (IsSpecialObject($ot))
     {
-        WriteSource "    return SAI_STATUS_NOT_IMPLEMENTED;";
+        WriteSource "return SAI_STATUS_NOT_IMPLEMENTED;";
     }
     elsif (not defined $struct)
     {
         if ($small eq "switch")
         {
-            WriteSource "    return sai_metadata_sai_${api}_api->create_$small(&meta_key->objectkey.key.object_id, attr_count, attr_list);";
+            WriteSource "return sai_metadata_sai_${api}_api->create_$small(&meta_key->objectkey.key.object_id, attr_count, attr_list);";
         }
         else
         {
-            WriteSource "    return sai_metadata_sai_${api}_api->create_$small(&meta_key->objectkey.key.object_id, switch_id, attr_count, attr_list);";
+            WriteSource "return sai_metadata_sai_${api}_api->create_$small(&meta_key->objectkey.key.object_id, switch_id, attr_count, attr_list);";
         }
     }
     else
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->create_$small(&meta_key->objectkey.key.$small, attr_count, attr_list);";
+        WriteSource "return sai_metadata_sai_${api}_api->create_$small(&meta_key->objectkey.key.$small, attr_count, attr_list);";
     }
 
     WriteSource "}";
@@ -2145,20 +2145,20 @@ sub ProcessRemove
     my $api = $OBJTOAPIMAP{$ot};
 
     WriteSource "sai_status_t sai_metadata_generic_remove_$ot(";
-    WriteSource "        _In_ const sai_object_meta_key_t *meta_key)";
+    WriteSource "_In_ const sai_object_meta_key_t *meta_key)";
     WriteSource "{";
 
     if (IsSpecialObject($ot))
     {
-        WriteSource "    return SAI_STATUS_NOT_IMPLEMENTED;";
+        WriteSource "return SAI_STATUS_NOT_IMPLEMENTED;";
     }
     elsif (not defined $struct)
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->remove_$small(meta_key->objectkey.key.object_id);";
+        WriteSource "return sai_metadata_sai_${api}_api->remove_$small(meta_key->objectkey.key.object_id);";
     }
     else
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->remove_$small(&meta_key->objectkey.key.$small);";
+        WriteSource "return sai_metadata_sai_${api}_api->remove_$small(&meta_key->objectkey.key.$small);";
     }
 
     WriteSource "}";
@@ -2176,21 +2176,21 @@ sub ProcessSet
     my $api = $OBJTOAPIMAP{$ot};
 
     WriteSource "sai_status_t sai_metadata_generic_set_$ot(";
-    WriteSource "        _In_ const sai_object_meta_key_t *meta_key,";
-    WriteSource "        _In_ const sai_attribute_t *attr)";
+    WriteSource "_In_ const sai_object_meta_key_t *meta_key,";
+    WriteSource "_In_ const sai_attribute_t *attr)";
     WriteSource "{";
 
     if (IsSpecialObject($ot))
     {
-        WriteSource "    return SAI_STATUS_NOT_IMPLEMENTED;";
+        WriteSource "return SAI_STATUS_NOT_IMPLEMENTED;";
     }
     elsif (not defined $struct)
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->set_${small}_attribute(meta_key->objectkey.key.object_id, attr);";
+        WriteSource "return sai_metadata_sai_${api}_api->set_${small}_attribute(meta_key->objectkey.key.object_id, attr);";
     }
     else
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->set_${small}_attribute(&meta_key->objectkey.key.$small, attr);";
+        WriteSource "return sai_metadata_sai_${api}_api->set_${small}_attribute(&meta_key->objectkey.key.$small, attr);";
     }
 
     WriteSource "}";
@@ -2208,22 +2208,22 @@ sub ProcessGet
     my $api = $OBJTOAPIMAP{$ot};
 
     WriteSource "sai_status_t sai_metadata_generic_get_$ot(";
-    WriteSource "        _In_ const sai_object_meta_key_t *meta_key,";
-    WriteSource "        _In_ uint32_t attr_count,";
-    WriteSource "        _Inout_ sai_attribute_t *attr_list)";
+    WriteSource "_In_ const sai_object_meta_key_t *meta_key,";
+    WriteSource "_In_ uint32_t attr_count,";
+    WriteSource "_Inout_ sai_attribute_t *attr_list)";
     WriteSource "{";
 
     if (IsSpecialObject($ot))
     {
-        WriteSource "    return SAI_STATUS_NOT_IMPLEMENTED;";
+        WriteSource "return SAI_STATUS_NOT_IMPLEMENTED;";
     }
     elsif (not defined $struct)
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->get_${small}_attribute(meta_key->objectkey.key.object_id, attr_count, attr_list);";
+        WriteSource "return sai_metadata_sai_${api}_api->get_${small}_attribute(meta_key->objectkey.key.object_id, attr_count, attr_list);";
     }
     else
     {
-        WriteSource "    return sai_metadata_sai_${api}_api->get_${small}_attribute(&meta_key->objectkey.key.$small, attr_count, attr_list);";
+        WriteSource "return sai_metadata_sai_${api}_api->get_${small}_attribute(&meta_key->objectkey.key.$small, attr_count, attr_list);";
     }
 
     WriteSource "}";
@@ -2258,7 +2258,7 @@ sub CreateApisStruct
 
         next if $api =~/unspecified/;
 
-        WriteHeader "    sai_${api}_api_t* ${api}_api;";
+        WriteHeader "sai_${api}_api_t* ${api}_api;";
     }
 
     WriteHeader "} sai_apis_t;";
@@ -2269,52 +2269,52 @@ sub CreateApisQuery
     WriteSectionComment "SAI API query";
 
     WriteHeader "typedef sai_status_t (*sai_api_query_fn)(";
-    WriteHeader "        _In_ sai_api_t sai_api_id,";
-    WriteHeader "        _Out_ void** api_method_table);";
+    WriteHeader "_In_ sai_api_t sai_api_id,";
+    WriteHeader "_Out_ void** api_method_table);";
 
     # for switch we need to generate wrapper, for others we can use pointers
     # so we don't need to use meta key then
 
     WriteSource "int sai_metadata_apis_query(";
-    WriteSource "        _In_ const sai_api_query_fn api_query,";
-    WriteSource "        _Inout_ sai_apis_t *apis)";
+    WriteSource "_In_ const sai_api_query_fn api_query,";
+    WriteSource "_Inout_ sai_apis_t *apis)";
     WriteSource "{";
-    WriteSource "    sai_status_t status = SAI_STATUS_SUCCESS;";
-    WriteSource "    int count = 0;";
+    WriteSource "sai_status_t status = SAI_STATUS_SUCCESS;";
+    WriteSource "int count = 0;";
 
-    WriteSource "    if (api_query == NULL)";
-    WriteSource "    {";
+    WriteSource "if (api_query == NULL)";
+    WriteSource "{";
 
     for my $key (sort keys %APITOOBJMAP)
     {
-        WriteSource "        sai_metadata_sai_${key}_api = NULL;";
-        WriteSource "        apis->${key}_api = NULL;";
+        WriteSource "sai_metadata_sai_${key}_api = NULL;";
+        WriteSource "apis->${key}_api = NULL;";
     }
 
-    WriteSource "        return count;";
-    WriteSource "    }";
+    WriteSource "return count;";
+    WriteSource "}";
 
     for my $key (sort keys %APITOOBJMAP)
     {
         my $api = uc("SAI_API_${key}");
 
-        WriteSource "    status = api_query($api, (void**)&sai_metadata_sai_${key}_api);";
-        WriteSource "    apis->${key}_api = sai_metadata_sai_${key}_api;";
-        WriteSource "    if (status != SAI_STATUS_SUCCESS)";
-        WriteSource "    {";
-        WriteSource "        count++;";
-        WriteSource "        const char *name = sai_metadata_get_enum_value_name(&sai_metadata_enum_sai_status_t, status);";
-        WriteSource "        SAI_META_LOG_WARN(\"failed to query api $api: %s (%d)\", name, status);";
-        WriteSource "    }";
+        WriteSource "status = api_query($api, (void**)&sai_metadata_sai_${key}_api);";
+        WriteSource "apis->${key}_api = sai_metadata_sai_${key}_api;";
+        WriteSource "if (status != SAI_STATUS_SUCCESS)";
+        WriteSource "{";
+        WriteSource "count++;";
+        WriteSource "const char *name = sai_metadata_get_enum_value_name(&sai_metadata_enum_sai_status_t, status);";
+        WriteSource "SAI_META_LOG_WARN(\"failed to query api $api: %s (%d)\", name, status);";
+        WriteSource "}";
     }
 
-    WriteSource "    return count; /* number of unsuccesfull apis */";
+    WriteSource "return count; /* number of unsuccesfull apis */";
 
     WriteSource "}";
 
     WriteHeader "extern int sai_metadata_apis_query(";
-    WriteHeader "        _In_ const sai_api_query_fn api_query,";
-    WriteHeader "        _Inout_ sai_apis_t *apis);";
+    WriteHeader "_In_ const sai_api_query_fn api_query,";
+    WriteHeader "_Inout_ sai_apis_t *apis);";
 }
 
 sub CreateObjectInfo
@@ -2365,23 +2365,23 @@ sub CreateObjectInfo
         WriteHeader "extern const sai_object_type_info_t sai_metadata_object_type_info_$ot;";
 
         WriteSource "const sai_object_type_info_t sai_metadata_object_type_info_$ot = {";
-        WriteSource "    .objecttype           = $ot,";
-        WriteSource "    .objecttypename       = \"$ot\",";
-        WriteSource "    .attridstart          = $start,";
-        WriteSource "    .attridend            = $end,";
-        WriteSource "    .enummetadata         = $enum,";
-        WriteSource "    .attrmetadata         = sai_metadata_object_type_$type,";
-        WriteSource "    .attrmetadatalength   = $attrmetalength,";
-        WriteSource "    .isnonobjectid        = $isnonobjectid,";
-        WriteSource "    .isobjectid           = !$isnonobjectid,";
-        WriteSource "    .structmembers        = $structmembers,";
-        WriteSource "    .structmemberscount   = $structmemberscount,";
-        WriteSource "    .revgraphmembers      = $revgraph,";
-        WriteSource "    .revgraphmemberscount = $revgraphcount,";
-        WriteSource "    .create               = $create,";
-        WriteSource "    .remove               = $remove,";
-        WriteSource "    .set                  = $set,";
-        WriteSource "    .get                  = $get,";
+        WriteSource ".objecttype           = $ot,";
+        WriteSource ".objecttypename       = \"$ot\",";
+        WriteSource ".attridstart          = $start,";
+        WriteSource ".attridend            = $end,";
+        WriteSource ".enummetadata         = $enum,";
+        WriteSource ".attrmetadata         = sai_metadata_object_type_$type,";
+        WriteSource ".attrmetadatalength   = $attrmetalength,";
+        WriteSource ".isnonobjectid        = $isnonobjectid,";
+        WriteSource ".isobjectid           = !$isnonobjectid,";
+        WriteSource ".structmembers        = $structmembers,";
+        WriteSource ".structmemberscount   = $structmemberscount,";
+        WriteSource ".revgraphmembers      = $revgraph,";
+        WriteSource ".revgraphmemberscount = $revgraphcount,";
+        WriteSource ".create               = $create,";
+        WriteSource ".remove               = $remove,";
+        WriteSource ".set                  = $set,";
+        WriteSource ".get                  = $get,";
         WriteSource "};";
     }
 
@@ -2401,14 +2401,14 @@ sub CreateObjectInfo
 
         if ($1 eq "NULL" or $1 eq "MAX")
         {
-            WriteSource "    NULL,";
+            WriteSource "NULL,";
             next;
         }
 
-        WriteSource "    &sai_metadata_object_type_info_$ot,";
+        WriteSource "&sai_metadata_object_type_info_$ot,";
     }
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 }
 
@@ -2541,12 +2541,12 @@ sub CreateListOfAllAttributes
 
     for my $attr (@keys)
     {
-        WriteSource "    &sai_metadata_attr_$attr,";
+        WriteSource "&sai_metadata_attr_$attr,";
     }
 
     my $count = @keys;
 
-    WriteSource "    NULL";
+    WriteSource "NULL";
     WriteSource "};";
 
     WriteSource "const size_t sai_metadata_attr_sorted_by_id_name_count = $count;";
@@ -2784,6 +2784,8 @@ sub WriteLoggerVariables
     # but now seems to be unnecessary
     #
 
+    WriteSectionComment "Loglevel variables";
+
     WriteSource "volatile sai_log_level_t sai_metadata_log_level = SAI_LOG_LEVEL_NOTICE;";
     WriteSource "volatile sai_metadata_log_fn sai_metadata_log = NULL;";
 }
@@ -2896,7 +2898,7 @@ sub CreateNotificationStruct
             next;
         }
 
-        WriteHeader "    $name on_$1;";
+        WriteHeader "$name on_$1;";
     }
 
     WriteHeader "} sai_switch_notifications_t;";
@@ -2931,7 +2933,7 @@ sub CreateNotificationEnum
 
         $name = uc $1;
 
-        WriteHeader "    ${prefix}$name,";
+        WriteHeader "${prefix}$name,";
 
         push @values, "${prefix}$name";
     }
@@ -2988,10 +2990,10 @@ sub ProcessValues
     {
         my $type = $refUnion->{$key}->{type};
 
+        next if $type eq "char[32]" or $type eq "bool";
+
         if (not $type =~ /^sai_(\w+)_t$/)
         {
-            next if $type eq "char[32]" or $type eq "bool";
-
             LogWarning "skipping type $type, FIXME";
             next;
         }
@@ -3070,6 +3072,8 @@ sub ExtractUnionsInfo
     }
 
     #print Dumper(\%SAI_UNIONS);
+
+    # TODO check if typedef union matches _X X with end name
 }
 
 #
