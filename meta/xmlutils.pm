@@ -202,7 +202,7 @@ sub GetSaiXmlFiles
 
     my @files = GetXmlFiles($dir);
 
-    return grep { /^^sai\w*_8h\.xml$/ } @files;
+    return grep { /^sai\w*_8h\.xml$/ } @files;
 }
 
 sub GetXmlUnionFiles
