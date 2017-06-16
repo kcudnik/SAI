@@ -614,6 +614,32 @@ int sai_deserialize_ip6_mask(
         _Out_ sai_ip6_t ip6_mask);
 
 /**
+ * @brief Serialize pointer.
+ *
+ * @param[out] buffer Output buffer for serialized value.
+ * @param[in] pointer Pointer to be serialized.
+ *
+ * @return Number of characters written to buffer excluding '\0',
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_serialize_pointer(
+        _Out_ char *buffer,
+        _In_ sai_pointer_t pointer);
+
+/**
+ * @brief Deserialize pointer.
+ *
+ * @param[in] buffer Input buffer to be examined.
+ * @param[out] pointer Deserialized value.
+ *
+ * @return Number of characters consumed from the buffer,
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_deserialize_pointer(
+        _In_ const char *buffer,
+        _Out_ sai_pointer_t *pointer);
+
+/**
  * @brief Serialize SAI attribute.
  *
  * @param[out] buffer Output buffer for serialized value.

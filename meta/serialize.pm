@@ -315,16 +315,6 @@ sub GetTypeInfoForSerialize
             return undef;
         }
     }
-    elsif (defined $main::ALL_STRUCTS{$type} and $type =~ /^sai_(\w+)_t$/)
-    {
-        $TypeInfo{amp} = "&";
-
-        # sai_s32_list_t enum !
-    }
-    elsif (defined $main::SAI_ENUMS{$type} and $type =~ /^sai_(\w+)_t$/)
-    {
-        $TypeInfo{needQuote} = 1;
-    }
     elsif ($type =~ /^union _sai_(\w+)_t::_(\w+)\s*/)
     {
         my $base = $1;
@@ -339,15 +329,32 @@ sub GetTypeInfoForSerialize
         $TypeInfo{nestedunion} = $structInfoEx{membersHash}->{$name}{union};
         $TypeInfo{amp} = "&";
     }
+    elsif (defined $main::ALL_STRUCTS{$type} and $type =~ /^sai_(\w+)_t$/)
+    {
+        $TypeInfo{amp} = "&";
+
+        # sai_s32_list_t enum !
+    }
+    elsif (defined $main::SAI_ENUMS{$type} and $type =~ /^sai_(\w+)_t$/)
+    {
+        $TypeInfo{needQuote} = 1;
+    }
     elsif (defined $main::SAI_UNIONS{$type} and $type =~ /^sai_(\w+)_t$/)
     {
         $TypeInfo{union} = 1;
-
-        # we need extract type to see if it needs quotes!
+        $TypeInfo{amp} = "&";
+    }
+    elsif ($type =~ /^sai_pointer_t$/)
+    {
+        $TypeInfo{suffix} = "pointer";
+    }
+    elsif ($type eq "char[32]")
+    {
+        $TypeInfo{needQuote} = 1;
+        $TypeInfo{suffix} = "chardata";
     }
     else
     {
-        # TODO can be union
         LogError "not handled $type $name in $structName, FIXME";
         return undef;
     }
@@ -504,24 +511,32 @@ sub ProcessMembersForSerialize
             next;
         }
 
-        if (defined $TypeInfo{union})
+        if (defined $TypeInfo{union} and not defined $membersHash{$name}{passparam} and not defined $TypeInfo{nestedunion})
         {
-            if (not defined $membersHash{$name}{passparam} and not defined $TypeInfo{nestedunion})
-            {
-                LogError "member '$name' in $structName is union, \@passparam tag is required";
-                next;
-            }
+            LogError "member '$name' in $structName is union, \@passparam tag is required";
+            next;
+        }
+
+        if (defined $membersHash{$name}{passparam})
+        {
 
             my @params = @{ $membersHash{$name}{passparam} };
 
+            # bad - should see if param exists in members
             for my $param (@params)
             {
-                $passParams .= "$param, " if $param =~ /->/;
-                $passParams .= "$structBase->$param, " if not $param =~ /->/;
+                if (not $param =~ /->/ and defined $membersHash{$param})
+                {
+                    $passParams .= "$structBase->$param, ";
+                }
+                else
+                {
+                    $passParams .= "$param, ";
+                }
             }
 
-            LogError "union not handled yet, fixme";
-            next;
+            #LogError "union not handled yet, fixme";
+            #next;
         }
 
         if (defined $TypeInfo{nestedunion})
@@ -572,6 +587,8 @@ sub ProcessMembersForSerialize
         WriteSource "        $countType idx;";
         WriteSource "        for (idx = 0; idx < $countMemberName; idx++)";
         WriteSource "        {";
+        WriteSource "            if (idx != 0)";
+        WriteSource "               $buf += sprintf($buf, \",\");";
         WriteSource "            $quot;" if $TypeInfo{needQuote};
 
         if ($TypeInfo{isattribute})
@@ -592,8 +609,6 @@ sub ProcessMembersForSerialize
         WriteSource "            }";
         WriteSource "            $buf += ret;";
         WriteSource "            $quot;" if $TypeInfo{needQuote};
-        WriteSource "            if (idx != $countMemberName - 1)";
-        WriteSource "               $buf += sprintf($buf, \",\");";
         WriteSource "        }";
         WriteSource "        $buf += sprintf($buf, \"]\");"; # end of array
         WriteSource "    }";
@@ -627,13 +642,8 @@ sub CreateSerializeStructs
         # user defined serialization
         next if $struct eq "sai_ip_address_t";
         next if $struct eq "sai_ip_prefix_t";
-        next if $struct eq "sai_acl_action_data_t";
-        next if $struct eq "sai_acl_field_data_t";
         next if $struct eq "sai_attribute_t";
         #next if $struct eq "sai_tlv_t";
-
-        # TODO sai_acl_capability_t has enum list and it's only valid when
-        # similar for sai_tam_threshold_breach_event_t
 
         # non serializable
         next if $struct eq "sai_service_method_table_t";
@@ -646,11 +656,16 @@ sub CreateSerializeStructs
 
 sub CreateSerializeUnions
 {
-# only for global declared unions (non nested, so like attribute value
-#
-#    my %structInfoEx = ExtractStructInfoEx("_entry", "union__sai__tlv__t_1_1__entry.xml");
-#
-#    ProcessMembersForSerialize(\%structInfoEx);
+    WriteSectionComment "Serialize unions";
+
+    for my $unionTypeName (sort keys %main::SAI_UNIONS)
+    {
+        next if not $unionTypeName =~ /^sai_(\w+)_t$/;
+
+        my %structInfoEx = ExtractStructInfoEx($unionTypeName, "union_");
+
+        ProcessMembersForSerialize(\%structInfoEx);
+    }
 }
 
 sub CreateSerializeMethods
@@ -681,7 +696,7 @@ BEGIN
 # for Id - > we coudl have sai_serialize_attr() and this will serialize string (metadat is needed)
 # on deserialize metadata is not needed
 #
-# {"id":"SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE","value":{"s32":"SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW"}}
+# {"id":"SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE","value":{"s33":"SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW"}}
 # SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE=SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW
 # SAI_BRIDGE_PORT_ATTR_FDB_LEARNING_MODE={"s32":"SAI_BRIDGE_PORT_FDB_LEARNING_MODE_HW"}
 #

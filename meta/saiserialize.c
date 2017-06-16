@@ -907,9 +907,17 @@ int sai_deserialize_ip6_mask(
     return res;
 }
 
-int sai_serialize_tlv(
+int sai_serialize_pointer(
         _Out_ char *buffer,
-        _In_ const sai_tlv_t *tlv)
+        _In_ sai_pointer_t pointer)
+{
+    SAI_META_LOG_WARN("not implemented");
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_deserialize_pointer(
+        _In_ const char *buffer,
+        _Out_ sai_pointer_t *pointer)
 {
     SAI_META_LOG_WARN("not implemented");
     return SAI_SERIALIZE_ERROR;
