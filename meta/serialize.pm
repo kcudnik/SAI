@@ -158,11 +158,11 @@ sub IsMetadataStruct
 
 # TODO on s32/s32_list in struct we could declare enum type
 
-sub ProcessFunctionHeaderForSerialize
+sub EmitSerializeFunctionHeader
 {
-    my ($refHashStructInfoEx, $buf) = @_;
+    my $refStructInfoEx = shift;
 
-    my %structInfoEx = %{ $refHashStructInfoEx };
+    my %structInfoEx = %{ $refStructInfoEx };
 
     my $structName = $structInfoEx{name};
     my $structBase = $structInfoEx{baseName};
@@ -171,14 +171,15 @@ sub ProcessFunctionHeaderForSerialize
     my @keys = @{ $structInfoEx{keys} };
 
     WriteHeader "extern int sai_serialize_$structBase(";
-    WriteHeader "_Out_ char *$buf,";
+    WriteHeader "_Out_ char *buf,";
 
     WriteSource "int sai_serialize_$structBase(";
-    WriteSource "_Out_ char *$buf,";
+    WriteSource "_Out_ char *buf,";
 
     if (defined $structInfoEx{union} and not defined $structInfoEx{extraparam})
     {
         LogError "union $structName, extraparam required";
+        return;
     }
 
     if (defined $structInfoEx{ismethod})
@@ -223,9 +224,9 @@ sub ProcessFunctionHeaderForSerialize
 
 sub GetTypeInfoForSerialize
 {
-    my ($refHashStructInfoEx, $name) = @_;
+    my ($refStructInfoEx, $name) = @_;
 
-    my %structInfoEx = %{ $refHashStructInfoEx };
+    my %structInfoEx = %{ $refStructInfoEx };
 
     my $structName = $structInfoEx{name};
     my $structBase = $structInfoEx{baseName};
@@ -233,6 +234,7 @@ sub GetTypeInfoForSerialize
     my $type = $structInfoEx{membersHash}->{$name}{type};
 
     my %TypeInfo = (
+            name => $name,
             needQuote => 0,
             ispointer => 0,
             isattribute => 0,
@@ -257,11 +259,9 @@ sub GetTypeInfoForSerialize
 
     $TypeInfo{suffix} = ($type =~ /sai_(\w+)_t/) ? $1 : $type;
 
-    if ($type eq "bool")
+    if ($type =~ /^(bool|sai_size_t|sai_pointer_t)$/)
     {
-    }
-    elsif ($type eq "sai_size_t")
-    {
+        # ok
     }
     elsif ($type eq "void")
     {
@@ -323,20 +323,20 @@ sub GetTypeInfoForSerialize
             return undef;
         }
     }
-    elsif ($type =~ /^union _sai_(\w+)_t::_(\w+)\s*/)
-    {
-        my $base = $1;
-        my $suffix = $2;
-
-        $suffix = $1 if $suffix =~ /^_sai_(\w+)_t$/;
-
-        $TypeInfo{suffix} = $suffix;
-
-        $base =~ s/_/__/g;
-
-        $TypeInfo{nestedunion} = $structInfoEx{membersHash}->{$name}{union};
-        $TypeInfo{amp} = "&";
-    }
+#    elsif ($type =~ /^union _sai_(\w+)_t::_(\w+)\s*/)
+#    {
+#        my $base = $1;
+#        my $suffix = $2;
+#
+#        $suffix = $1 if $suffix =~ /^_sai_(\w+)_t$/;
+#
+#        $TypeInfo{suffix} = $suffix;
+#
+#        $base =~ s/_/__/g;
+#
+#        $TypeInfo{nestedunion} = $structInfoEx{membersHash}->{$name}{union};
+#        $TypeInfo{amp} = "&";
+#    }
     elsif (defined $main::ALL_STRUCTS{$type} and $type =~ /^sai_(\w+)_t$/)
     {
         $TypeInfo{amp} = "&";
@@ -351,10 +351,6 @@ sub GetTypeInfoForSerialize
     {
         $TypeInfo{union} = 1;
         $TypeInfo{amp} = "&";
-    }
-    elsif ($type =~ /^sai_pointer_t$/)
-    {
-        $TypeInfo{suffix} = "pointer";
     }
     elsif ($type eq "char[32]")
     {
@@ -429,14 +425,175 @@ sub GetCounterNameAndType
     return ($countMemberName, $countType);
 }
 
+sub EmitSerializeHeader
+{
+    WriteSource "{";
+    WriteSource "char *begin_buf = buf;";
+    WriteSource "int ret;\n";
+    WriteSource "EMIT(\"{\");\n";
+}
+
+sub EmitSerializeFooter
+{
+    WriteSource "EMIT(\"}\");\n";
+    WriteSource "return (int)(buf - begin_buf);";
+    WriteSource "}";
+}
+
+sub GetEmitMacroName
+{
+    my $refTypeInfo = shift;
+
+    return "EMIT_QUOTE_CHECK" if $refTypeInfo->{needQuote};
+
+    return "EMIT_CHECK";
+}
+
+sub GetPassParamsForSerialize
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my $name = $refTypeInfo->{name};
+
+    my $refMembersHash = $refStructInfoEx->{membersHash};
+
+    return "" if not defined $refMembersHash->{$name}{passparam};
+
+    my $structBase = $refStructInfoEx->{baseName};
+
+    my @params = @{ $refMembersHash->{$name}{passparam} };
+
+    my $passParams = "";
+
+    for my $param (@params)
+    {
+        if (not $param =~ /->/ and defined $refMembersHash->{$param})
+        {
+            $passParams .= "$structBase->$param, ";
+        }
+        else
+        {
+            $passParams .= "$param, ";
+        }
+    }
+
+    return $passParams;
+}
+
+sub EmitSerializePrimitive
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my $suffix = $refTypeInfo->{suffix};
+
+    my $emitMacro = GetEmitMacroName($refTypeInfo);
+
+    my $passParams = GetPassParamsForSerialize($refStructInfoEx, $refTypeInfo);
+
+    my $serializeCall = "sai_serialize_$suffix(buf, $passParams$refTypeInfo->{amp}$refTypeInfo->{memberName})";
+
+    WriteSource "$emitMacro($serializeCall, $suffix);";
+}
+
+sub EmitSerializeValidOnlyFooter
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my $refMembersHash = $refStructInfoEx->{membersHash};
+
+    my $footer = "";
+
+    $footer = "}\n" if defined $refMembersHash->{ $refTypeInfo->{name} }->{validonly};
+
+    WriteSource $footer;
+}
+
+sub GetEmitKeyMacroName
+{
+    my ($refStructInfoEx, $name) = @_;
+
+    my $firstKey = $refStructInfoEx->{keys}->[0];
+
+    return "EMIT_KEY" if ($firstKey eq $name) or defined $refStructInfoEx->{union};
+
+    return "EMIT_NEXT_KEY";
+}
+
+sub EmitSerializeMemberKey
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my $name = $refTypeInfo->{name};
+
+    my $emitKeyMacro = GetEmitKeyMacroName($refStructInfoEx, $name);
+
+    WriteSource "$emitKeyMacro(\"$name\");\n";
+}
+
+sub GetConditionForSerialize
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my $name = $refTypeInfo->{name};
+
+    my $structName = $refStructInfoEx->{name};
+    my $structBase = $refStructInfoEx->{baseName};
+
+    my $refMembersHash = $refStructInfoEx->{membersHash};
+
+    my @conditions = @{ $refMembersHash->{ $refTypeInfo->{name} }->{validonly} };
+
+    if (scalar @conditions != 1)
+    {
+        LogWarning "only 1 condition is supported for '$name' in '$structName', FIXME";
+        return "";
+    }
+
+    # if condition value is struct member, we need to check
+    # if it was processed previously, since it could be declared
+    # after current member, and then deserialize will fail
+
+    my $condition = shift @conditions;
+
+    if (not $condition =~/^(\w+|\w+->\w+) == (.+)$/)
+    {
+        LogWarning "invalid condition '$condition' on '$name' in '$structName'";
+        return "";
+    }
+
+    if (defined $refMembersHash->{$1})
+    {
+        $condition = "$structBase->$1 == $2";
+
+        if (not defined $refStructInfoEx->{processed}->{$1})
+        {
+            LogError "validonly condition '$1' on $structName is declared after '$name', not allowed";
+            return "";
+        }
+    }
+
+    return $condition;
+}
+
+sub EmitSerializeValidOnlyHeader
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    return if not defined $refStructInfoEx->{membersHash}{$refTypeInfo->{name}}->{validonly};
+
+    my $condition = GetConditionForSerialize($refStructInfoEx, $refTypeInfo);
+
+    WriteSource "if ($condition)";
+    WriteSource "{"
+}
+
 sub ProcessMembersForSerialize
 {
-    my $refHashStructInfoEx = shift;
+    my $refStructInfoEx = shift;
 
-    my %structInfoEx = %{ $refHashStructInfoEx };
+    my %structInfoEx = %{ $refStructInfoEx };
 
     my $structName = $structInfoEx{name};
-
     my $structBase = $structInfoEx{baseName};
 
     # don't create serialize methods for metadata structs
@@ -451,26 +608,21 @@ sub ProcessMembersForSerialize
 
     my @keys = @{ $structInfoEx{keys} };
 
-    ProcessFunctionHeaderForSerialize($refHashStructInfoEx, $buf);
+    EmitSerializeFunctionHeader($refStructInfoEx);
 
-    WriteSource "{";
-    WriteSource "char *begin_$buf = $buf;";
-    WriteSource "int ret;\n";
-    WriteSource "EMIT(\"{\");\n";
+    EmitSerializeHeader;
 
     my %processedMembers = ();
 
+    $refStructInfoEx->{processed} = \%processedMembers;
+
     for my $name (@keys)
     {
-        $processedMembers{$name} = 1;
+        $refStructInfoEx->{processed}{$name} = 1;
 
         my $type = $membersHash{$name}{type};
 
         my $validonly = $membersHash{$name}{validonly};
-
-        my $nextKey = ($keys[0] eq $name) ? "" : "NEXT_";
-
-        $nextKey = "" if defined $structInfoEx{union};
 
         if ($keys[0] eq $name and defined $validonly and not defined $structInfoEx{union})
         {
@@ -479,47 +631,13 @@ sub ProcessMembersForSerialize
             next;
         }
 
-        my $TypeInfo = GetTypeInfoForSerialize($refHashStructInfoEx, $name);
+        my $TypeInfo = GetTypeInfoForSerialize($refStructInfoEx, $name);
 
         next if not defined $TypeInfo;
 
         my %TypeInfo = %{ $TypeInfo };
 
-        next if $TypeInfo{notsupported};
-
-        if (defined $validonly)
-        {
-            my @conditions = @{ $validonly };
-
-            if (scalar @conditions != 1)
-            {
-                LogWarning "we support only 1 condition now for $name in $structName, FIXME";
-                next;
-            }
-
-            my $cond = shift @conditions;
-
-            $cond =~/^(\w+|\w+->\w+) == (.+)$/;
-
-            # if condition value is struct member, we need to check if it was processed previously
-            # since it could be declared later, and when deserialize we will not know his value
-
-            if (defined $membersHash{$1})
-            {
-                $cond = "$structBase->$1 == $2";
-
-                if (not defined $processedMembers{$1})
-                {
-                    LogError "validonly condition '$1' on $structName is declared after '$name', not allowed";
-                    next;
-                }
-            }
-
-            WriteSource "if ($cond)";
-            WriteSource "{"
-        }
-
-        my $passParams = "";
+        EmitSerializeValidOnlyHeader($refStructInfoEx, \%TypeInfo);
 
         if (defined $structInfoEx{union} and not defined $membersHash{$name}{validonly})
         {
@@ -533,27 +651,6 @@ sub ProcessMembersForSerialize
             next;
         }
 
-        if (defined $membersHash{$name}{passparam})
-        {
-
-            my @params = @{ $membersHash{$name}{passparam} };
-
-            for my $param (@params)
-            {
-                if (not $param =~ /->/ and defined $membersHash{$param})
-                {
-                    $passParams .= "$structBase->$param, ";
-                }
-                else
-                {
-                    $passParams .= "$param, ";
-                }
-            }
-
-            #LogError "union not handled yet, fixme";
-            #next;
-        }
-
         if (defined $TypeInfo{nestedunion})
         {
             LogError "nested union not supported $structName $name";
@@ -564,80 +661,69 @@ sub ProcessMembersForSerialize
             next;
         }
 
-        my $quote = $TypeInfo{needQuote} ? "QUOTE_" : "";
+        EmitSerializeMemberKey($refStructInfoEx, \%TypeInfo);
 
-        WriteSource "EMIT_${nextKey}KEY(\"$name\");\n";
-
-        if (not $TypeInfo{ispointer})
+        if ($TypeInfo{ispointer})
         {
-            # XXX we don't need to check for many types which won't fail like int/uint, object id, enums
+#    EmitSerializeArray($refStructInfoEx, \%TypeInfo);
 
-            my $check = "sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName})";
-        
-            WriteSource "EMIT_${quote}CHECK($check, $TypeInfo{suffix});";
+            my ($countMemberName, $countType) =
+                GetCounterNameAndType(
+                    $name, \%membersHash, $structBase, $structName, $refStructInfoEx, \%TypeInfo, \%processedMembers);
 
-            if (defined $validonly)
+            WriteSource "if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
+            WriteSource "{";
+            WriteSource "EMIT(\"null\");";
+            WriteSource "}";
+            WriteSource "else";
+            WriteSource "{";
+            WriteSource "EMIT(\"[\");\n";
+            WriteSource "$countType idx;\n";
+            WriteSource "for (idx = 0; idx < $countMemberName; idx++)";
+            WriteSource "{";
+            WriteSource "if (idx != 0)";
+            WriteSource "{";
+            WriteSource "EMIT(\",\");";
+            WriteSource "}\n";
+
+            my $check = "";
+
+            my $passParams = GetPassParamsForSerialize($refStructInfoEx, \%TypeInfo);
+
+            if ($TypeInfo{isattribute})
             {
-                WriteSource "}\n";
+                WriteSource "const sai_attr_metadata_t *meta =";
+                WriteSource "sai_metadata_get_attr_metadata($TypeInfo{objectType}, $TypeInfo{memberName}\[idx\].id);";
+
+                $check = "sai_serialize_$TypeInfo{suffix}(buf, meta, $TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
             }
             else
             {
-                WriteSource "";
+
+                $check = "sai_serialize_$TypeInfo{suffix}(buf, $passParams$TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
             }
 
-            next;
-        }
+            my $quote = $TypeInfo{needQuote} ? "QUOTE_" : "";
 
-        my ($countMemberName, $countType) =
-            GetCounterNameAndType(
-                $name, \%membersHash, $structBase, $structName, $refHashStructInfoEx, \%TypeInfo, \%processedMembers);
+            WriteSource "EMIT_${quote}CHECK($check, $TypeInfo{suffix});";
 
-        WriteSource "if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
-        WriteSource "{";
-        WriteSource "EMIT(\"null\");";
-        WriteSource "}";
-        WriteSource "else";
-        WriteSource "{";
-        WriteSource "EMIT(\"[\");\n";
-        WriteSource "$countType idx;\n";
-        WriteSource "for (idx = 0; idx < $countMemberName; idx++)";
-        WriteSource "{";
-        WriteSource "if (idx != 0)";
-        WriteSource "{";
-        WriteSource "EMIT(\",\");";
-        WriteSource "}\n";
 
-        my $check = "";
-        if ($TypeInfo{isattribute})
-        {
-            WriteSource "const sai_attr_metadata_t *meta =";
-            WriteSource "sai_metadata_get_attr_metadata($TypeInfo{objectType}, $TypeInfo{memberName}\[idx\].id);";
-
-            $check = "sai_serialize_$TypeInfo{suffix}($buf, meta, $TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
+            WriteSource "}\n";
+            WriteSource "EMIT(\"]\");";
+            WriteSource "}";
         }
         else
         {
-            $check = "sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
+            EmitSerializePrimitive($refStructInfoEx, \%TypeInfo);
         }
 
-        WriteSource "EMIT_${quote}CHECK($check, $TypeInfo{suffix});";
-
-
-        WriteSource "}\n";
-        WriteSource "EMIT(\"]\");";
-        WriteSource "}";
-
-        if (defined $validonly)
-        {
-            WriteSource "}\n";
-        }
+        EmitSerializeValidOnlyFooter($refStructInfoEx, \%TypeInfo);
     }
 
-    # TODO if it's union, we must check if we serialized something
+# TODO if it's union, we must check if we serialized something
+# (not always true for acl mask)
 
-    WriteSource "EMIT(\"}\");\n";
-    WriteSource "return (int)($buf - begin_$buf);";
-    WriteSource "}";
+    EmitSerializeFooter;
 }
 
 sub CreateSerializeStructs
