@@ -24,9 +24,10 @@ sub GetIdent
 {
     my $content = shift;
 
-    return "    " if $content =~ /^\s*_(In|Out)/;
-    return "    " x --$identLevel if $content =~ /^\s*}/;
-    return "    " x $identLevel++ if $content =~ /{$/;
+    return ""                       if $content =~ /\\$/;
+    return "    "                   if $content =~ /^\s*_(In|Out)/;
+    return "    " x --$identLevel   if $content =~ /^\s*}/;
+    return "    " x $identLevel++   if $content =~ /{$/;
     return "    " x $identLevel;
 }
 

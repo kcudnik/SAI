@@ -314,14 +314,10 @@ typedef enum _sai_ip_addr_family_t
  */
 typedef union _sai_ip_addr_t {
 
-    /**
-     * @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV4
-     */
+    /** @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV4 */
     sai_ip4_t ip4;
 
-    /**
-     * @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV6
-     */
+    /** @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV6 */
     sai_ip6_t ip6;
 } sai_ip_addr_t;
 
@@ -329,9 +325,7 @@ typedef struct _sai_ip_address_t
 {
     sai_ip_addr_family_t addr_family;
 
-    /**
-     * @passparam addr_family
-     */
+    /** @passparam addr_family */
     sai_ip_addr_t addr;
 } sai_ip_address_t;
 
@@ -339,14 +333,10 @@ typedef struct _sai_ip_prefix_t
 {
     sai_ip_addr_family_t addr_family;
 
-    /**
-     * @passparam addr_family
-     */
+    /** @passparam addr_family */
     sai_ip_addr_t addr;
 
-    /**
-     * @passparam addr_family
-     */
+    /** @passparam addr_family */
     sai_ip_addr_t mask;
 } sai_ip_prefix_t;
 
@@ -739,6 +729,7 @@ typedef enum _sai_tlv_type_t
 typedef struct _sai_hmac_t
 {
     sai_uint32_t key_id;
+
     sai_uint32_t hmac[8];
 } sai_hmac_t;
 
