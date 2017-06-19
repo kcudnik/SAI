@@ -455,8 +455,8 @@ sub ProcessMembersForSerialize
 
     WriteSource "{";
     WriteSource "char *begin_$buf = $buf;";
-    WriteSource "int ret;";
-    WriteSource 'EMIT("{");';
+    WriteSource "int ret;\n";
+    WriteSource "EMIT(\"{\");\n";
 
     my %processedMembers = ();
 
@@ -466,7 +466,18 @@ sub ProcessMembersForSerialize
 
         my $type = $membersHash{$name}{type};
 
-        my $comma = ($keys[0] eq $name) ? "" : ","; # TODO in union we no need comma since we will serialize only 1 var
+        my $validonly = $membersHash{$name}{validonly};
+
+        my $nextKey = ($keys[0] eq $name) ? "" : "NEXT_";
+
+        $nextKey = "" if defined $structInfoEx{union};
+
+        if ($keys[0] eq $name and defined $validonly and not defined $structInfoEx{union})
+        {
+            # since we don't know if put comma before next key
+            LogError "first key '$name' on '$structName' can't be validonly";
+            next;
+        }
 
         my $TypeInfo = GetTypeInfoForSerialize($refHashStructInfoEx, $name);
 
@@ -475,8 +486,6 @@ sub ProcessMembersForSerialize
         my %TypeInfo = %{ $TypeInfo };
 
         next if $TypeInfo{notsupported};
-
-        my $validonly = $membersHash{$name}{validonly};
 
         if (defined $validonly)
         {
@@ -555,28 +564,25 @@ sub ProcessMembersForSerialize
             next;
         }
 
+        my $quote = $TypeInfo{needQuote} ? "QUOTE_" : "";
 
-        WriteSource "EMIT(\",\");" if $comma eq ",";
-
-        WriteSource "EMIT_KEY(\"$name\");";
+        WriteSource "EMIT_${nextKey}KEY(\"$name\");\n";
 
         if (not $TypeInfo{ispointer})
         {
             # XXX we don't need to check for many types which won't fail like int/uint, object id, enums
 
-            WriteSource "EMIT_QUOTE;" if $TypeInfo{needQuote};
-            WriteSource "ret = sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName});";
-            WriteSource "if (ret < 0)";
-            WriteSource "{";
-            WriteSource "SAI_META_LOG_WARN(\"failed to serialize '$name'\");";
-            WriteSource "return SAI_SERIALIZE_ERROR;";
-            WriteSource "}";
-            WriteSource "$buf += ret;";
-            WriteSource "EMIT_QUOTE;" if $TypeInfo{needQuote};
+            my $check = "sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName})";
+        
+            WriteSource "EMIT_${quote}CHECK($check, $TypeInfo{suffix});";
 
             if (defined $validonly)
             {
-                WriteSource "}";
+                WriteSource "}\n";
+            }
+            else
+            {
+                WriteSource "";
             }
 
             next;
@@ -588,7 +594,7 @@ sub ProcessMembersForSerialize
 
         WriteSource "if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
         WriteSource "{";
-        WriteSource "EMIT(\"null\");\n";
+        WriteSource "EMIT(\"null\");";
         WriteSource "}";
         WriteSource "else";
         WriteSource "{";
@@ -599,41 +605,37 @@ sub ProcessMembersForSerialize
         WriteSource "if (idx != 0)";
         WriteSource "{";
         WriteSource "EMIT(\",\");";
-        WriteSource "}";
-        WriteSource "";
-        WriteSource "EMIT_QUOTE;" if $TypeInfo{needQuote};
+        WriteSource "}\n";
 
+        my $check = "";
         if ($TypeInfo{isattribute})
         {
             WriteSource "const sai_attr_metadata_t *meta =";
             WriteSource "sai_metadata_get_attr_metadata($TypeInfo{objectType}, $TypeInfo{memberName}\[idx\].id);";
-            WriteSource "ret = sai_serialize_$TypeInfo{suffix}($buf, meta, $TypeInfo{amp}$TypeInfo{memberName}\[idx\]);";
+
+            $check = "sai_serialize_$TypeInfo{suffix}($buf, meta, $TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
         }
         else
         {
-            WriteSource "ret = sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName}\[idx\]);";
+            $check = "sai_serialize_$TypeInfo{suffix}($buf, $passParams$TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
         }
 
-        WriteSource "if (ret < 0)";
-        WriteSource "{";
-        WriteSource "SAI_META_LOG_WARN(\"failed to serialize '$name' at index %u\", (uint32_t)idx);";
-        WriteSource "return SAI_SERIALIZE_ERROR;";
-        WriteSource "}";
-        WriteSource "$buf += ret;";
-        WriteSource "EMIT_QUOTE;" if $TypeInfo{needQuote};
-        WriteSource "}";
+        WriteSource "EMIT_${quote}CHECK($check, $TypeInfo{suffix});";
+
+
+        WriteSource "}\n";
         WriteSource "EMIT(\"]\");";
         WriteSource "}";
 
         if (defined $validonly)
         {
-            WriteSource "}";
+            WriteSource "}\n";
         }
     }
 
     # TODO if it's union, we must check if we serialized something
 
-    WriteSource 'EMIT("}");';
+    WriteSource "EMIT(\"}\");\n";
     WriteSource "return (int)($buf - begin_$buf);";
     WriteSource "}";
 }
@@ -679,21 +681,24 @@ sub CreateSerializeEmitMacros
     WriteSource "#define EMIT(x)        buf += sprintf(buf, x)";
     WriteSource "#define EMIT_QUOTE     buf += sprintf(buf, \"\\\"\")";
     WriteSource "#define EMIT_KEY(k)    buf += sprintf(buf, \"\\\"\" k \"\\\":\")";
-
-#        WriteSource "{";
-#        WriteSource "SAI_META_LOG_WARN(\"failed to serialize '$name' at index %u\", (uint32_t)idx);";
-#        WriteSource "return SAI_SERIALIZE_ERROR;";
-#        WriteSource "}";
-
+    WriteSource "#define EMIT_NEXT_KEY(k) { EMIT(\",\"); EMIT_KEY(k); }";
+    WriteSource "#define EMIT_CHECK(expr, suffix) {                                 \\";
+    WriteSource "    ret = (expr);                                                  \\";
+    WriteSource "    if (ret < 0) {                                                 \\";
+    WriteSource "        SAI_META_LOG_WARN(\"failed to serialize \" #suffix \"\");      \\";
+    WriteSource "        return SAI_SERIALIZE_ERROR; }                              \\";
+    WriteSource "    buf += ret; } ";
+    WriteSource "#define EMIT_QUOTE_CHECK(expr, suffix) {\\";
+    WriteSource "    EMIT_QUOTE; EMIT_CHECK(expr, suffix); EMIT_QUOTE; }";
 }
 
 sub CreateSerializeMethods
 {
-    CreateSerializeEmitMacros();
-
     CreateSerializeForEnums();
 
     CreateSerializeMetaKey();
+
+    CreateSerializeEmitMacros();
 
     CreateSerializeStructs();
 

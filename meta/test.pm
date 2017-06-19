@@ -460,10 +460,12 @@ sub CreateTests
 
     CreateStructListTest();
 
-    # TODO we need to examine extra params
-    #CreateSerializeStructsTest();
+    # TODO tests for notifications
 
-    #CreateSerializeUnionsTest();
+    # TODO we need to examine extra params
+#CreateSerializeStructsTest();
+
+#   CreateSerializeUnionsTest();
 
     WriteTestMain();
 }
