@@ -292,6 +292,27 @@ sub GetTypeInfoForSerialize
         $TypeInfo{needQuote} = 1;
         $TypeInfo{amp} = "&";
     }
+    elsif ($type =~ m/^sai_object_list_t$/)
+    {
+        $TypeInfo{amp} = "&";
+
+        if (not defined $structInfoEx{membersHash}->{$name}{objects})
+        {
+            LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
+            return undef;
+        }
+    }
+    elsif ($type =~ m/^sai_object_id_t$/)
+    {
+        # TODO object_list check if object is defined
+        $TypeInfo{needQuote} = 1;
+
+        if (not defined $structInfoEx{membersHash}->{$name}{objects})
+        {
+            LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
+            return undef;
+        }
+    }
     elsif ($type =~ m/^sai_(object_id|mac)_t$/)
     {
         $TypeInfo{needQuote} = 1;
@@ -815,3 +836,31 @@ BEGIN
 # each struct that is using object id should have @objects on object id
 # members, then we should generate all struct infos to get all functions for
 # oid extraction etc
+#
+#
+# - TODO validate union name _sai.._t -> sai_.._t
+# - TODO validate if "validonly" param is not validonly struct/union and in union
+# validonly must be param not any union member
+# - object_id - inside objectg key -> last and must be last (for other use "else if")
+#
+# - support enum_list 32 - un unions and acl capability list
+#   force to add @type wheter enum or int32 / int32_list for those types
+#
+# - generate deserialize
+# - generate validate - object types and enums, also objecttype in union passed from params
+#   must be forced to add, in sai_list32_oid - any add special case?
+# - generate transfer
+#
+# - generate versions with only count 
+#
+# - force unions to serialize something + add exception of serialize for mask @flags serialize:allowempty
+#
+#    EMIT("}");
+#
+#    ret = (int)(buf - begin_buf);
+#
+#    if (ret == 2)
+#    {
+#       log warn nothing serialized
+#       return ERROR;
+#    }
