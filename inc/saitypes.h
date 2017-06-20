@@ -142,10 +142,6 @@ typedef void *sai_pointer_t;
 typedef struct _sai_object_list_t
 {
     uint32_t count;
-
-    /**
-     * @objects ANY
-     */
     sai_object_id_t *list;
 } sai_object_list_t;
 

@@ -911,15 +911,23 @@ int sai_serialize_pointer(
         _Out_ char *buffer,
         _In_ sai_pointer_t pointer)
 {
-    SAI_META_LOG_WARN("not implemented");
-    return SAI_SERIALIZE_ERROR;
+    return sprintf(buffer, "ptr:0x%p", pointer);
 }
 
 int sai_deserialize_pointer(
         _In_ const char *buffer,
         _Out_ sai_pointer_t *pointer)
 {
-    SAI_META_LOG_WARN("not implemented");
+    int read;
+
+    int n = sscanf(buffer, "ptr:0x%16p%n", pointer, &read);
+
+    if (n == 1 && sai_serialize_is_char_allowed(buffer[read]))
+    {
+        return read;
+    }
+
+    SAI_META_LOG_WARN("failed to deserialize '%.*s' as pointer", MAX_CHARS_PRINT, buffer);
     return SAI_SERIALIZE_ERROR;
 }
 
