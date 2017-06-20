@@ -1571,6 +1571,8 @@ typedef enum _sai_switch_attr_t
  * Adapter DLL may request a shutdown due to an unrecoverable failure
  * or a maintenance operation
  *
+ * @objects switch_id SAI_OBJECT_TYPE_SWITCH
+ *
  * @param[in] switch_id Switch Id
  */
 typedef void (*sai_switch_shutdown_request_notification_fn)(
@@ -1578,6 +1580,8 @@ typedef void (*sai_switch_shutdown_request_notification_fn)(
 
 /**
  * @brief Switch operational state change notification
+ *
+ * @objects switch_id SAI_OBJECT_TYPE_SWITCH
  *
  * @param[in] switch_id Switch Id
  * @param[in] switch_oper_status New switch operational state

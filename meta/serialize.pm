@@ -292,27 +292,30 @@ sub GetTypeInfoForSerialize
         $TypeInfo{needQuote} = 1;
         $TypeInfo{amp} = "&";
     }
-    elsif ($type =~ m/^sai_object_list_t$/)
-    {
-        $TypeInfo{amp} = "&";
 
-        if (not defined $structInfoEx{membersHash}->{$name}{objects})
-        {
-            LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
-            return undef;
-        }
-    }
-    elsif ($type =~ m/^sai_object_id_t$/)
-    {
-        # TODO object_list check if object is defined
-        $TypeInfo{needQuote} = 1;
+# ultimately - incoporate that
+#    elsif ($type =~ m/^sai_object_list_t$/)
+#    {
+#        $TypeInfo{amp} = "&";
+#
+#        if (not defined $structInfoEx{membersHash}->{$name}{objects})
+#        {
+#            LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
+#            return undef;
+#        }
+#    }
+#    elsif ($type =~ m/^sai_object_id_t$/)
+#    {
+#        # TODO object_list check if object is defined
+#        $TypeInfo{needQuote} = 1;
+#
+#        if (not defined $structInfoEx{membersHash}->{$name}{objects})
+#        {
+#            LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
+#            return undef;
+#        }
+#    }
 
-        if (not defined $structInfoEx{membersHash}->{$name}{objects})
-        {
-            LogError "param '$name' is '$type' on '$structName' and requires object type specified in \@objects";
-            return undef;
-        }
-    }
     elsif ($type =~ m/^sai_(object_id|mac)_t$/)
     {
         $TypeInfo{needQuote} = 1;
