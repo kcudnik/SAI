@@ -375,20 +375,24 @@ sub GetTypeInfoForSerialize
 
 sub GetCounterNameAndType
 {
-    my ($name, $membersHash, $structBase, $structName, $structInfoEx, $TypeInfo, $processedMembers) = @_;
+    my ($refStructInfoEx, $refTypeInfo) = @_;
 
-    my $countMemberName;
-    my $countType;
+    my $refMembersHash = $refStructInfoEx->{membersHash};
 
-    if (defined $TypeInfo->{constCount})
+    my $name = $refTypeInfo->{name};
+
+    my $structName = $refStructInfoEx->{name};
+    my $structBase = $refStructInfoEx->{baseName};
+
+    if (defined $refTypeInfo->{constCount})
     {
-        $countMemberName = $TypeInfo->{constCount};
-        $countType = "uint32_t";
+        my $countMemberName = $refTypeInfo->{constCount};
+        my $countType = "uint32_t";
 
         return ($countMemberName, $countType);
     }
 
-    my $count = $membersHash->{$name}{count};
+    my $count = $refMembersHash->{$name}{count};
 
     if (not defined $count)
     {
@@ -396,16 +400,16 @@ sub GetCounterNameAndType
         return ("undef", "undef");
     }
 
-    if (not defined $membersHash->{$count})
+    if (not defined $refMembersHash->{$count})
     {
         LogWarning "count '$count' not found in '$structName'";
         return ("undef", "undef");
     }
 
-    $countMemberName = $membersHash->{$count}{name};
-    $countType = $membersHash->{$count}{type};
+    my $countMemberName = $refMembersHash->{$count}{name};
+    my $countType = $refMembersHash->{$count}{type};
 
-    $countMemberName = (defined $structInfoEx->{ismethod}) ? $countMemberName: "$structBase\->$countMemberName";
+    $countMemberName = (defined $refStructInfoEx->{ismethod}) ? $countMemberName: "$structBase\->$countMemberName";
 
     if (not $countType =~ /^(uint32_t|sai_size_t)$/)
     {
@@ -413,7 +417,7 @@ sub GetCounterNameAndType
         return ("undef", "undef");
     }
 
-    if (not defined $processedMembers->{$count})
+    if (not defined $refStructInfoEx->{processed}->{$count})
     {
         # TODO check if count was declared before list, since deserialize
         # needs to know how many items is on list to not make realoc and monitor
@@ -469,7 +473,7 @@ sub GetPassParamsForSerialize
     {
         if (not $param =~ /->/ and defined $refMembersHash->{$param})
         {
-            $passParams .= "$structBase->$param, ";
+            $passParams .= "$structBase\->$param, ";
         }
         else
         {
@@ -587,6 +591,50 @@ sub EmitSerializeValidOnlyHeader
     WriteSource "{"
 }
 
+sub EmitSerializeArray
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my ($countMemberName, $countType) = GetCounterNameAndType($refStructInfoEx, $refTypeInfo);
+
+    WriteSource "if ($refTypeInfo->{memberName} == NULL || $countMemberName == 0)";
+    WriteSource "{";
+    WriteSource "EMIT(\"null\");";
+    WriteSource "}";
+    WriteSource "else";
+    WriteSource "{";
+    WriteSource "EMIT(\"[\");\n";
+    WriteSource "$countType idx;\n";
+    WriteSource "for (idx = 0; idx < $countMemberName; idx++)";
+    WriteSource "{";
+    WriteSource "if (idx != 0)";
+    WriteSource "{";
+    WriteSource "EMIT(\",\");";
+    WriteSource "}\n";
+
+    my $passParams = GetPassParamsForSerialize($refStructInfoEx, $refTypeInfo);
+
+    if ($refTypeInfo->{isattribute})
+    {
+        WriteSource "const sai_attr_metadata_t *meta =";
+        WriteSource "    sai_metadata_get_attr_metadata($refTypeInfo->{objectType}, $refTypeInfo->{memberName}\[idx\].id);\n";
+
+        $passParams = "meta, $passParams";
+    }
+
+    my $suffix = $refTypeInfo->{suffix};
+
+    my $serializeCall = "sai_serialize_$suffix(buf, $passParams$refTypeInfo->{amp}$refTypeInfo->{memberName}\[idx\])";
+
+    my $emitMacro = GetEmitMacroName($refTypeInfo);
+
+    WriteSource "$emitMacro($serializeCall, $suffix);";
+
+    WriteSource "}\n";
+    WriteSource "EMIT(\"]\");";
+    WriteSource "}";
+}
+
 sub ProcessMembersForSerialize
 {
     my $refStructInfoEx = shift;
@@ -598,11 +646,9 @@ sub ProcessMembersForSerialize
 
     # don't create serialize methods for metadata structs
 
-    return if IsMetadataStruct(\%structInfoEx);
+    return if IsMetadataStruct($refStructInfoEx);
 
     LogInfo "Creating serialzie for $structName";
-
-    my $buf = "buf"; # can be changed if there will be name conflict
 
     my %membersHash = %{ $structInfoEx{membersHash} };
 
@@ -623,6 +669,8 @@ sub ProcessMembersForSerialize
         my $type = $membersHash{$name}{type};
 
         my $validonly = $membersHash{$name}{validonly};
+
+# TODO move ths and leter stuff to Validate function ValidateStructMember
 
         if ($keys[0] eq $name and defined $validonly and not defined $structInfoEx{union})
         {
@@ -665,52 +713,7 @@ sub ProcessMembersForSerialize
 
         if ($TypeInfo{ispointer})
         {
-#    EmitSerializeArray($refStructInfoEx, \%TypeInfo);
-
-            my ($countMemberName, $countType) =
-                GetCounterNameAndType(
-                    $name, \%membersHash, $structBase, $structName, $refStructInfoEx, \%TypeInfo, \%processedMembers);
-
-            WriteSource "if ($TypeInfo{memberName} == NULL || $countMemberName == 0)";
-            WriteSource "{";
-            WriteSource "EMIT(\"null\");";
-            WriteSource "}";
-            WriteSource "else";
-            WriteSource "{";
-            WriteSource "EMIT(\"[\");\n";
-            WriteSource "$countType idx;\n";
-            WriteSource "for (idx = 0; idx < $countMemberName; idx++)";
-            WriteSource "{";
-            WriteSource "if (idx != 0)";
-            WriteSource "{";
-            WriteSource "EMIT(\",\");";
-            WriteSource "}\n";
-
-            my $check = "";
-
-            my $passParams = GetPassParamsForSerialize($refStructInfoEx, \%TypeInfo);
-
-            if ($TypeInfo{isattribute})
-            {
-                WriteSource "const sai_attr_metadata_t *meta =";
-                WriteSource "sai_metadata_get_attr_metadata($TypeInfo{objectType}, $TypeInfo{memberName}\[idx\].id);";
-
-                $check = "sai_serialize_$TypeInfo{suffix}(buf, meta, $TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
-            }
-            else
-            {
-
-                $check = "sai_serialize_$TypeInfo{suffix}(buf, $passParams$TypeInfo{amp}$TypeInfo{memberName}\[idx\])";
-            }
-
-            my $quote = $TypeInfo{needQuote} ? "QUOTE_" : "";
-
-            WriteSource "EMIT_${quote}CHECK($check, $TypeInfo{suffix});";
-
-
-            WriteSource "}\n";
-            WriteSource "EMIT(\"]\");";
-            WriteSource "}";
+            EmitSerializeArray($refStructInfoEx, \%TypeInfo);
         }
         else
         {

@@ -29,7 +29,7 @@ our %SAI_DEFINES = ();
 our %EXTRA_RANGE_DEFINES = ();
 our %REVGRAPH = ();
 
-my $FLAGS = "MANDATORY_ON_CREATE|CREATE_ONLY|CREATE_AND_SET|READ_ONLY|KEY|DYNAMIC|SPECIAL";
+my $FLAGS = "MANDATORY_ON_CREATE|CREATE_ONLY|CREATE_AND_SET|READ_ONLY|KEY";
 
 # TAGS HANDLERS
 
@@ -2534,8 +2534,8 @@ sub CreateListOfAllAttributes
         }
     }
 
-    WriteSource "const sai_attr_metadata_t* const sai_metadata_attr_sorted_by_id_name[] = {";
     WriteHeader "extern const sai_attr_metadata_t* const sai_metadata_attr_sorted_by_id_name[];";
+    WriteSource "const sai_attr_metadata_t* const sai_metadata_attr_sorted_by_id_name[] = {";
 
     my @keys = sort keys %ATTRIBUTES;
 
