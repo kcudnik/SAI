@@ -851,6 +851,10 @@ BEGIN
 #   must be forced to add, in sai_list32_oid - any add special case?
 # - generate transfer
 #
+# - since we need object type for validation on notification params, then maybe we
+# need notifications metadata? is object_id, allowed object types, is attribute ?
+# is pointer? etc double pointer ?
+#
 # - generate versions with only count 
 #
 # - force unions to serialize something + add exception of serialize for mask @flags serialize:allowempty
