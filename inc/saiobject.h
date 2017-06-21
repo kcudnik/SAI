@@ -40,6 +40,9 @@
  */
 
 /**
+ * TODO maybe add sai_attr_metadata ? then we will be sure that
+ * obejct type is correct
+ *
  * @extraparam sai_object_type_t object_type
  */
 typedef union _sai_object_key_entry_t {
@@ -72,9 +75,12 @@ typedef union _sai_object_key_entry_t {
  * @brief Structure for bulk retrieval of object ids, attribute and values for
  * each object-type. Key will be used in case of object-types not having
  * object-ids.
+ *
+ * @extraparam sai_object_type_t object_type
  */
 typedef struct _sai_object_key_t
 {
+    /** @passparam object_type */
     sai_object_key_entry_t key;
 
 } sai_object_key_t;
