@@ -640,6 +640,24 @@ int sai_deserialize_pointer(
         _Out_ sai_pointer_t *pointer);
 
 /**
+ * @brief Serialize enum list.
+ *
+ * If enum metadata is null, then list is serialized using
+ * sai_serialize_s32_list and it will not contain quotes.
+ *
+ * @param[out] buffer Output buffer for serialized value.
+ * @param[in] meta Enum metadata used to serialize.
+ * @param[in] list List of enum values to be serialized.
+ *
+ * @return Number of characters written to buffer excluding '\0',
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_serialize_enum_list(
+        _Out_ char *buffer,
+        _In_ const sai_enum_metadata_t* meta,
+        _In_ const sai_s32_list_t *list);
+
+/**
  * @brief Serialize SAI attribute.
  *
  * @param[out] buffer Output buffer for serialized value.

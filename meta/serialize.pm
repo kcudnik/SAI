@@ -716,8 +716,6 @@ sub ProcessMembersForSerialize
 
         my %TypeInfo = %{ $TypeInfo };
 
-        EmitSerializeValidOnlyHeader($refStructInfoEx, \%TypeInfo);
-
         if (defined $structInfoEx{union} and not defined $membersHash{$name}{validonly})
         {
             LogError "member '$name' in $structName require \@validonly tag";
@@ -739,6 +737,8 @@ sub ProcessMembersForSerialize
             print Dumper (\%s);
             next;
         }
+
+        EmitSerializeValidOnlyHeader($refStructInfoEx, \%TypeInfo);
 
         EmitSerializeMemberKey($refStructInfoEx, \%TypeInfo);
 
@@ -876,3 +876,8 @@ BEGIN
 #       log warn nothing serialized
 #       return ERROR;
 #    }
+#
+#   TODO figureout object_key_ object_id condition
+#   if we would use metadata there, we could use ->is
+#
+#   validate if count is not pointer
