@@ -504,6 +504,7 @@ sub ExtractStructInfoEx
         push @keys, $name;
 
         $Struct{ismetadatastruct} = 1 if $file =~ m!meta/sai\w+.h$!;
+        $Struct{containsfnpointer} = 1 if $type =~ /^sai_\w+_fn$/;
     }
 
     $Struct{members} = \@StructMembers;
