@@ -939,3 +939,58 @@ int sai_serialize_attribute(
     SAI_META_LOG_WARN("not implemented");
     return SAI_SERIALIZE_ERROR;
 }
+
+int sai_serialize_enum_list(
+        _Out_ char *buf,
+        _In_ const sai_enum_metadata_t* meta,
+        _In_ const sai_s32_list_t *list)
+{
+    if (meta == NULL)
+    {
+        return sai_serialize_s32_list(buf, list);
+    }
+
+    char *begin_buf = buf;
+    int ret;
+
+    buf += sprintf(buf, "{");
+
+    buf += sprintf(buf, "\"count\":");
+
+    if (list->list == NULL || list->count == 0)
+    {
+        buf += sprintf(buf, "null");
+    }
+    else
+    {
+        buf += sprintf(buf, "[");
+
+        uint32_t idx;
+
+        for (idx = 0; idx < list->count; idx++)
+        {
+            if (idx != 0)
+            {
+                buf += sprintf(buf, ",");
+            }
+
+            buf += sprintf(buf, "\"");
+
+            ret = sai_serialize_enum(buf, meta, list->list[idx]);
+
+            if (ret < 0)
+            {
+                SAI_META_LOG_WARN("failed to serialize enum_list");
+                return SAI_SERIALIZE_ERROR;
+            }
+
+            buf += sprintf(buf, "\"");
+        }
+
+        buf += sprintf(buf, "]");
+    }
+
+    buf += sprintf(buf, "}");
+
+    return (int)(buf - begin_buf);
+}
