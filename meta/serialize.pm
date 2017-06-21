@@ -126,15 +126,6 @@ sub CreateSerializeNotifications
     }
 }
 
-sub CreateSerializeSingleStruct
-{
-    my $structName = shift;
-
-    my %structInfoEx = ExtractStructInfoEx($structName, "struct_");
-
-    ProcessMembersForSerialize(\%structInfoEx);
-}
-
 # TODO for lists we need countOnly param, as separate version?
 # * @param[in] only_count Flag specifies whether on *_list_t only
 # * list count should be serialized, this is handy when serializing
@@ -666,6 +657,49 @@ sub EmitSerializeArray
     WriteSource "}";
 }
 
+sub IsTypeInfoValid
+{
+    my ($refStructInfoEx, $refTypeInfo) = @_;
+
+    my $name = $refTypeInfo->{name};
+
+    my $structName = $refStructInfoEx->{name};
+
+    my $refMembersHash = $refStructInfoEx->{membersHash};
+
+    my $validonly = $refMembersHash->{$name}{validonly};
+
+    if ($refStructInfoEx->{keys}[0] eq $name and defined $validonly and
+            not defined $refStructInfoEx->{union})
+    {
+        # since we don't know if put comma before next key
+        LogError "first key '$name' on '$structName' can't be validonly";
+        return undef;
+    }
+
+    if (defined $refStructInfoEx->{union} and not defined $validonly)
+    {
+        LogError "member '$name' in $structName require \@validonly tag";
+        return undef;
+    }
+
+    if (defined $refTypeInfo->{union} and
+            not defined $refMembersHash->{$name}{passparam} and
+            not defined $refTypeInfo->{nestedunion})
+    {
+        LogError "member '$name' in $structName is union, \@passparam tag is required";
+        return undef;
+    }
+
+    if (defined $refTypeInfo->{nestedunion})
+    {
+        LogError "nested union not supported $structName $name";
+        return undef;
+    }
+
+    return 1;
+}
+
 sub ProcessMembersForSerialize
 {
     my $refStructInfoEx = shift;
@@ -695,63 +729,28 @@ sub ProcessMembersForSerialize
 
     for my $name (@keys)
     {
-        $refStructInfoEx->{processed}{$name} = 1;
+        my $refTypeInfo = GetTypeInfoForSerialize($refStructInfoEx, $name);
 
-        my $type = $membersHash{$name}{type};
+        next if not defined $refTypeInfo;
 
-        my $validonly = $membersHash{$name}{validonly};
+        next if not IsTypeInfoValid($refStructInfoEx, $refTypeInfo);
 
-# TODO move ths and leter stuff to Validate function ValidateStructMember
+        EmitSerializeValidOnlyHeader($refStructInfoEx, $refTypeInfo);
 
-        if ($keys[0] eq $name and defined $validonly and not defined $structInfoEx{union})
+        EmitSerializeMemberKey($refStructInfoEx, $refTypeInfo);
+
+        if ($refTypeInfo->{ispointer})
         {
-            # since we don't know if put comma before next key
-            LogError "first key '$name' on '$structName' can't be validonly";
-            next;
-        }
-
-        my $TypeInfo = GetTypeInfoForSerialize($refStructInfoEx, $name);
-
-        next if not defined $TypeInfo;
-
-        my %TypeInfo = %{ $TypeInfo };
-
-        if (defined $structInfoEx{union} and not defined $membersHash{$name}{validonly})
-        {
-            LogError "member '$name' in $structName require \@validonly tag";
-            next;
-        }
-
-        if (defined $TypeInfo{union} and not defined $membersHash{$name}{passparam} and not defined $TypeInfo{nestedunion})
-        {
-            LogError "member '$name' in $structName is union, \@passparam tag is required";
-            next;
-        }
-
-        if (defined $TypeInfo{nestedunion})
-        {
-            LogError "nested union not supported $structName $name";
-
-            my %s = ExtractStructInfoEx("bla", "$TypeInfo{nestedunion}.xml");
-
-            print Dumper (\%s);
-            next;
-        }
-
-        EmitSerializeValidOnlyHeader($refStructInfoEx, \%TypeInfo);
-
-        EmitSerializeMemberKey($refStructInfoEx, \%TypeInfo);
-
-        if ($TypeInfo{ispointer})
-        {
-            EmitSerializeArray($refStructInfoEx, \%TypeInfo);
+            EmitSerializeArray($refStructInfoEx, $refTypeInfo);
         }
         else
         {
-            EmitSerializePrimitive($refStructInfoEx, \%TypeInfo);
+            EmitSerializePrimitive($refStructInfoEx, $refTypeInfo);
         }
 
-        EmitSerializeValidOnlyFooter($refStructInfoEx, \%TypeInfo);
+        EmitSerializeValidOnlyFooter($refStructInfoEx, $refTypeInfo);
+
+        $refStructInfoEx->{processed}{$name} = 1;
     }
 
     EmitSerializeFooter($refStructInfoEx);
@@ -764,15 +763,16 @@ sub CreateSerializeStructs
     for my $struct (sort keys %main::ALL_STRUCTS)
     {
         # user defined serialization
+
         next if $struct eq "sai_ip_address_t";
         next if $struct eq "sai_ip_prefix_t";
         next if $struct eq "sai_attribute_t";
 
-        # non serializable
-        next if $struct eq "sai_service_method_table_t";
-        next if $struct =~ /^sai_\w+_api_t$/;
+        my %structInfoEx = ExtractStructInfoEx($struct, "struct_");
 
-        CreateSerializeSingleStruct($struct);
+        next if defined $structInfoEx{containsfnpointer};
+
+        ProcessMembersForSerialize(\%structInfoEx);
     }
 }
 
@@ -782,8 +782,6 @@ sub CreateSerializeUnions
 
     for my $unionTypeName (sort keys %main::SAI_UNIONS)
     {
-        next if not $unionTypeName =~ /^sai_(\w+)_t$/;
-
         my %unionInfoEx = ExtractStructInfoEx($unionTypeName, "union_");
 
         ProcessMembersForSerialize(\%unionInfoEx);
@@ -842,7 +840,7 @@ BEGIN
 # each struct that is using object id should have @objects on object id
 # members, then we should generate all struct infos to get all functions for
 # oid extraction etc
-# 
+#
 # TODO auto generate tests for serialize, and push params too
 #
 #
@@ -863,7 +861,7 @@ BEGIN
 # need notifications metadata? is object_id, allowed object types, is attribute ?
 # is pointer? etc double pointer ?
 #
-# - generate versions with only count 
+# - generate versions with only count
 #
 # - force unions to serialize something + add exception of serialize for mask @flags serialize:allowempty
 #

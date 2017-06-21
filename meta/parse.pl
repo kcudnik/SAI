@@ -2423,9 +2423,7 @@ sub ExtractObjectsFromDesc
         my $tag = $1;
         my $val = $2;
 
-        $val =~ s/\s+/ /g;
-        $val =~ s/^\s*//;
-        $val =~ s/\s*$//;
+        $val = Trim $val;
 
         next if not $tag eq "objects";
 
@@ -2573,7 +2571,7 @@ sub CheckApiStructNames
             next;
         }
 
-        my $api = lc($1);
+        my $api = lc $1;
 
         my $structName = "sai_${api}_api_t";
 
@@ -2706,7 +2704,7 @@ sub GetReverseDependencyGraph
 
         my $otname = $1;
 
-        my $typedef = lc("sai_${otname}_attr_t");
+        my $typedef = lc "sai_${otname}_attr_t";
 
         next if $ot =~ /^SAI_OBJECT_TYPE_(MAX|NULL)$/;
 
@@ -2736,10 +2734,12 @@ sub GetReverseDependencyGraph
                 if (not defined $REVGRAPH{$usedot})
                 {
                     my @arr = ();
+
                     $REVGRAPH{$usedot} = \@arr;
                 }
 
                 my $ref = $REVGRAPH{$usedot};
+
                 push@$ref,"$ot,$attrid";
             }
         }
@@ -2761,10 +2761,12 @@ sub GetReverseDependencyGraph
                 if (not defined $REVGRAPH{$usedot})
                 {
                     my @arr = ();
+
                     $REVGRAPH{$usedot} = \@arr;
                 }
 
                 my $ref = $REVGRAPH{$usedot};
+
                 push@$ref,"$ot,$key";
             }
         }
@@ -2794,7 +2796,7 @@ my %ProcessedItems = ();
 
 sub ProcessStructItem
 {
-    my ($type, $struct, $allowPointers) = @_;
+    my ($type, $struct) = @_;
 
     $type = $1 if $struct =~ /^sai_(\w+)_list_t$/ and $type =~/^(\w+)\*$/;
 
@@ -2875,7 +2877,7 @@ sub CheckAttributeValueUnion
 
         next if grep(/^$type$/, @primitives);
 
-        ProcessStructItem($type, "sai_attribute_value_t", 1);
+        ProcessStructItem($type, "sai_attribute_value_t");
     }
 }
 
@@ -2978,8 +2980,6 @@ sub ProcessXmlFiles
 
         ProcessXmlFile("$XMLDIR/$file");
     }
-
-    #print Dumper %SAI_ENUMS;
 }
 
 sub ProcessValues
@@ -3055,8 +3055,7 @@ sub ExtractUnionsInfo
 
         my $name = $2;
 
-        # TODO force name to be in format sai_\w+_t
-        # TODO extract strict info ex ?
+        # TODO force name to be in format sai_\w+_t and _sai .. sai
 
         $SAI_UNIONS{$name}{file}    = $file;
         $SAI_UNIONS{$name}{name}    = $name;
@@ -3067,41 +3066,12 @@ sub ExtractUnionsInfo
 
         # TODO check validonly on each ember
         # TODO extraparam on description main
-
-        #print Dumper(\%s);
     }
-
-    #print Dumper(\%SAI_UNIONS);
-
-    # TODO check if typedef union matches _X X with end name
 }
 
 #
 # MAIN
 #
-
-=cut
-    if ($type =~ /^union (\w+)::(\w+)\s*$/)
-    {
-        # union is special, but now since all unions are named
-        # then members are not flattened anyway, and we need to examine
-        # entries from union xml
-        # XXX may require revisit if union names will be complicated
-
-        my $unionStructName = $1;
-        my $unionName = $2;
-
-        $unionStructName =~ s/_/__/g;
-        $unionName =~ s/_/__/g;
-
-        my $filename = "union${unionStructName}_1_1$unionName.xml";
-
-        %S = ExtractStructInfo($unionStructName, $filename);
-=cut
-
-#my %s = ExtractStructInfoEx("_entry", "union__sai__tlv__t_1_1__entry.xml");
-#print Dumper (\%s);
-#exit 0;
 
 CheckHeadersStyle() if not defined $optionDisableStyleCheck;
 
