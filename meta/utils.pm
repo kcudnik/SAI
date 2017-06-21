@@ -53,7 +53,7 @@ sub WriteTest
 {
     my $content = shift;
 
-    my $ident = GetIdent($content);
+    my $ident = ""; # TODO tests should have it's own ident, since it's different file GetIdent($content);
 
     $TEST_CONTENT .= $ident . $content . "\n";
 }
