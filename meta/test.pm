@@ -343,6 +343,69 @@ sub CreateStructListTest
     WriteTest "}";
 }
 
+sub CreatePassParamsForSerializeTest
+{
+    my $refStructInfoEx = shift;
+
+    my $structName = $refStructInfoEx->{name};
+
+    return "" if not defined $refStructInfoEx->{extraparam};
+
+    my @params = @{ $refStructInfoEx->{extraparam} };
+
+    my $passParams = "";
+
+    for my $param (@params)
+    {
+        if (not $param =~ m!^(const\s+)?(\w+)(\s+|\s*(\*)\s*)?(\w+)$!)
+        {
+            LogWarning "failed to parse extra param '$param' on $structName";
+            next;
+        }
+
+        my $paramType = $2;
+        my $pointer = 1 if defined $4;
+        my $paramName = $5;
+
+        $passParams .= "$paramName, ";
+
+        WriteTest "    $param;";
+
+        if (not defined $pointer)
+        {
+            WriteTest "    memset(&$paramName, 0, sizeof($paramType));";
+        }
+
+        if (defined $pointer and $paramType eq "sai_attr_metadata_t")
+        {
+            WriteTest "    $paramName = sai_metadata_get_attr_metadata(SAI_OBJECT_TYPE_SWITCH, SAI_SWITCH_ATTR_PORT_NUMBER);"; 
+        }
+    }
+
+    return $passParams;
+}
+
+sub CreateSerializeSingleStructTest
+{
+    my $refStructInfoEx = shift;
+
+    my $structName = $refStructInfoEx->{name};
+    my $structBase = $refStructInfoEx->{baseName};
+
+    WriteTest "  {";
+    WriteTest "    printf(\"serializing $structName ... \");";
+    WriteTest "    fflush(stdout);";
+    WriteTest "    $structName $structBase;";
+    WriteTest "    memset(&$structBase, 0, sizeof($structName));";
+
+    my $passParams = CreatePassParamsForSerializeTest($refStructInfoEx);
+
+    WriteTest "    ret = sai_serialize_$structBase(buf, $passParams&$structBase);";
+    WriteTest "    TEST_ASSERT_TRUE(ret > 0, \"failed to serialize $structName\");";
+    WriteTest "    printf(\"serialized $structName: %s\\n\", buf);\n";
+    WriteTest "  }";
+}
+
 sub CreateSerializeStructsTest
 {
     # make sure that all structs can be serialized fine
@@ -358,17 +421,18 @@ sub CreateSerializeStructsTest
     {
         next if $structname  =~ /_api_t$/;
 
-        my $struct = $1 if $structname =~ /^sai_(\w+)_t$/;
+        next if $structname eq "sai_service_method_table_t";
+        next if $structname eq "sai_object_key_t";
+        next if $structname eq "sai_attribute_t";
 
-        next if $struct =~ /^attribute$/;
-        next if $struct =~ /^(attr_condition|attr_metadata|enum_metadata|object_key|object_type_info)$/;
-        next if $struct =~ /^(object_key|rev_graph_member|service_method_table|struct_member_info|object_meta_key)$/;
+        my %structInfoEx = ExtractStructInfoEx($structname, "struct_");
 
-        WriteTest "    $structname $struct;";
-        WriteTest "    memset(&$struct, 0, sizeof($structname));";
-        WriteTest "    ret = sai_serialize_$struct(buf, &$struct);";
-        WriteTest "    TEST_ASSERT_TRUE(ret > 0, \"failed to serialize $structname\");";
-        WriteTest "    printf(\"serialized $structname: %s\\n\", buf);";
+        next if defined $structInfoEx{ismetadatastruct};
+
+        # TODO for all structs with attributes, we should iterate via all attributes
+        # defined in metadata
+
+        CreateSerializeSingleStructTest(\%structInfoEx);
     }
 
     WriteTest "}";
@@ -388,13 +452,9 @@ sub CreateSerializeUnionsTest
     {
         next if not $unionTypeName =~ /^sai_(\w+)_t$/;
 
-        my $union = $1;
+        my %structInfoEx = ExtractStructInfoEx($unionTypeName, "union_");
 
-        WriteTest "    $unionTypeName $union;";
-        WriteTest "    memset(&$union, 0, sizeof($unionTypeName));";
-        WriteTest "    ret = sai_serialize_$union(buf, &$union);";
-        WriteTest "    TEST_ASSERT_TRUE(ret > 0, \"failed to serialize $unionTypeName\");";
-        WriteTest "    printf(\"serialized $unionTypeName: %s\\n\", buf);";
+        CreateSerializeSingleStructTest(\%structInfoEx);
     }
 
     WriteTest "}";
@@ -462,10 +522,9 @@ sub CreateTests
 
     # TODO tests for notifications
 
-    # TODO we need to examine extra params
-#CreateSerializeStructsTest();
+    CreateSerializeStructsTest();
 
-#   CreateSerializeUnionsTest();
+    CreateSerializeUnionsTest();
 
     WriteTestMain();
 }

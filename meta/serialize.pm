@@ -135,22 +135,6 @@ sub CreateSerializeSingleStruct
     ProcessMembersForSerialize(\%structInfoEx);
 }
 
-sub IsMetadataStruct
-{
-    #
-    # check if structure is declared inside metadata
-    #
-
-    my $refStructInfoEx = shift;
-
-    my $key = $refStructInfoEx->{keys}[0];
-
-    return 1 if $refStructInfoEx->{membersHash}{$key}->{file} =~ m!meta/sai\w+.h$!;
-
-    return 0;
-}
-
-
 # TODO for lists we need countOnly param, as separate version?
 # * @param[in] only_count Flag specifies whether on *_list_t only
 # * list count should be serialized, this is handy when serializing
@@ -479,7 +463,7 @@ sub EmitSerializeFooter
         WriteSource "if (ret == 2) /* since we emmited {} */";
         WriteSource "{";
         WriteSource "SAI_META_LOG_WARN(\"nothing was serialized for '$name', bad condition?\");";
-        WriteSource "return SAI_SERIALIZE_ERROR;";
+#WriteSource "return SAI_SERIALIZE_ERROR;";
         WriteSource "}\n";
         WriteSource "return ret;";
     }
@@ -693,7 +677,7 @@ sub ProcessMembersForSerialize
 
     # don't create serialize methods for metadata structs
 
-    return if IsMetadataStruct($refStructInfoEx);
+    return if defined $structInfoEx{ismetadatastruct};
 
     LogInfo "Creating serialzie for $structName";
 

@@ -433,9 +433,9 @@ sub ExtractStructInfoEx
 
     my @members = @{ $sections[0]->{memberdef} };
 
-    if (scalar @members < 2)
+    if (scalar @members < 1)
     {
-        LogError "there must be at least 2 members in struct $structName";
+        LogError "there must be at least 1 member in struct $structName";
         return %Struct;
     }
 
@@ -502,6 +502,8 @@ sub ExtractStructInfoEx
 
         push @StructMembers, \%M;
         push @keys, $name;
+
+        $Struct{ismetadatastruct} = 1 if $file =~ m!meta/sai\w+.h$!;
     }
 
     $Struct{members} = \@StructMembers;
