@@ -463,8 +463,31 @@ sub EmitSerializeHeader
 
 sub EmitSerializeFooter
 {
+    my $refStructInfoEx = shift;
+
     WriteSource "EMIT(\"}\");\n";
-    WriteSource "return (int)(buf - begin_buf);";
+
+    if (defined $refStructInfoEx->{union})
+    {
+        my $name = $refStructInfoEx->{name};
+
+        # if it's union, we must check if we serialized something
+        # (not always true for acl mask)
+
+        WriteSource "ret = (int)(buf - begin_buf);\n";
+
+        WriteSource "if (ret == 2) /* since we emmited {} */";
+        WriteSource "{";
+        WriteSource "SAI_META_LOG_WARN(\"nothing was serialized for '$name', bad condition?\");";
+        WriteSource "return SAI_SERIALIZE_ERROR;";
+        WriteSource "}\n";
+        WriteSource "return ret;";
+    }
+    else
+    {
+        WriteSource "return (int)(buf - begin_buf);";
+    }
+
     WriteSource "}";
 }
 
@@ -747,10 +770,7 @@ sub ProcessMembersForSerialize
         EmitSerializeValidOnlyFooter($refStructInfoEx, \%TypeInfo);
     }
 
-# TODO if it's union, we must check if we serialized something
-# (not always true for acl mask)
-
-    EmitSerializeFooter;
+    EmitSerializeFooter($refStructInfoEx);
 }
 
 sub CreateSerializeStructs
@@ -839,6 +859,8 @@ BEGIN
 # each struct that is using object id should have @objects on object id
 # members, then we should generate all struct infos to get all functions for
 # oid extraction etc
+# 
+# TODO auto generate tests for serialize, and push params too
 #
 #
 # - TODO validate union name _sai.._t -> sai_.._t
