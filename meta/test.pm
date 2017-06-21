@@ -422,7 +422,6 @@ sub CreateSerializeStructsTest
         next if $structname  =~ /_api_t$/;
 
         next if $structname eq "sai_service_method_table_t";
-        next if $structname eq "sai_object_key_t";
         next if $structname eq "sai_attribute_t";
 
         my %structInfoEx = ExtractStructInfoEx($structname, "struct_");

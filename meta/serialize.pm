@@ -770,7 +770,6 @@ sub CreateSerializeStructs
 
         # non serializable
         next if $struct eq "sai_service_method_table_t";
-        next if $struct eq "sai_object_key_t";
         next if $struct =~ /^sai_\w+_api_t$/;
 
         CreateSerializeSingleStruct($struct);
