@@ -906,6 +906,8 @@ sub EmitDeserializeFunctionHeader
             my $end = (defined $last) ? ")" : ",";
             my $endheader = (defined $last) ? ");" : ",";
 
+# TODO pointers
+
             WriteSource "_Out_ $type $name$end";
             WriteHeader "_Out_ $type $name$endheader";
         }
@@ -918,8 +920,8 @@ sub EmitDeserializeFunctionHeader
 
             for my $param (@params)
             {
-                WriteHeader "_Out_ $param,";
-                WriteSource "_Out_ $param,";
+                WriteHeader "_In_ $param,";
+                WriteSource "_In_ $param,";
             }
         }
 
@@ -1057,7 +1059,7 @@ sub EmitDeserializeFooter
 
         WriteSource "else";
         WriteSource "{";
-        WriteSource "SAI_META_LOG_WARN(\"nothing was serialized for '$name', bad condition?\");";
+        WriteSource "SAI_META_LOG_WARN(\"nothing was deserialized for '$name', bad condition?\");";
         # WriteSource "return SAI_SERIALIZE_ERROR;";
         WriteSource "}\n";
     }

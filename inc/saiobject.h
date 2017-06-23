@@ -55,6 +55,7 @@ typedef union _sai_object_key_entry_t
      * TODO add flags serialize:last/default
      * or maybe it don't need to be last
      *
+     *  validonly sai_metadata_is_object_type_valid(object_type)
      * @validonly object_type == 1000
      */
 
