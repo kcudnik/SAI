@@ -325,7 +325,7 @@ sub ProcessStructPassParam
 
     @params = @{ $previousTagValue } if defined $previousTagValue;
 
-    if (not $tagValue =~ /^(\w+|\w+->\w+)$/)
+    if (not $tagValue =~ /^(&?\w+|\w+->\w+)$/)
     {
         LogError "unable to parse passparam '$tagValue' on $structName";
         return undef;

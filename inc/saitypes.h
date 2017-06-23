@@ -703,6 +703,12 @@ typedef struct _sai_acl_capability_t
      *
      * List of actions supported per stage from the sai_acl_table_action_list_t.
      * Max action list can be obtained using the #SAI_SWITCH_ATTR_MAX_ACL_ACTION_COUNT.
+     *
+     * TODO add & to passparam
+     * type sai_acl_action_type_t
+     *
+     * @suffix enum_list
+     * @passparam &sai_metadata_enum_sai_acl_action_type_t
      */
     sai_s32_list_t action_list;
 } sai_acl_capability_t;
@@ -876,8 +882,8 @@ typedef union _sai_attribute_value_t
     sai_u32_list_t u32list;
 
     /**
-     * suffix enum_list TODO we need quotes on this since s32 is serialized without quotes :/
-     * passparam meta->enummetadata
+     * @suffix enum_list
+     * @passparam meta->enummetadata
      * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_INT32_LIST
      */
     sai_s32_list_t s32list;

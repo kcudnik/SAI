@@ -647,15 +647,64 @@ int sai_deserialize_pointer(
  *
  * @param[out] buffer Output buffer for serialized value.
  * @param[in] meta Enum metadata used to serialize.
- * @param[in] list List of enum values to be serialized.
+ * @param[in] s32_list List of enum values to be serialized.
  *
  * @return Number of characters written to buffer excluding '\0',
  * or #SAI_SERIALIZE_ERROR on error.
  */
 int sai_serialize_enum_list(
         _Out_ char *buffer,
-        _In_ const sai_enum_metadata_t* meta,
-        _In_ const sai_s32_list_t *list);
+        _In_ const sai_enum_metadata_t *meta,
+        _In_ const sai_s32_list_t *s32_list);
+
+/**
+ * @brief Deserialize enum list.
+ *
+ * If enum metadata is null, then list is deserialized using
+ * sai_deserialize_s32_list and it will not contain quotes.
+ *
+ * @param[in] buffer Input buffer to be examined.
+ * @param[in] meta Enum metadata.
+ * @param[out] s32_list Deserialized value.
+ *
+ * @return Number of characters consumed from the buffer,
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_deserialize_enum_list(
+        _In_ const char *buffer,
+        _In_ const sai_enum_metadata_t *meta,
+        _Out_ sai_s32_list_t *s32_list);
+
+/**
+ * @brief Serialize attribute id.
+ *
+ * @param[out] buffer Output buffer for serialized value.
+ * @param[in] meta Attribute metadata.
+ * @param[in] attr_id Attribute id to be serialized
+ *
+ * @return Number of characters written to buffer excluding '\0',
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_serialize_attr_id(
+        _Out_ char *buffer,
+        _In_ const sai_attr_metadata_t *meta,
+        _In_ sai_attr_id_t attr_id);
+
+/**
+ * @brief Deserialize attribute id.
+ *
+ * Metadata is not needed since attribute ID is serialized as string, and it
+ * can point to unique attribute metadata.
+ *
+ * @param[in] buffer Input buffer to be examined.
+ * @param[out] attr_id Deserialized attribute id.
+ *
+ * @return Number of characters written to buffer excluding '\0',
+ * or #SAI_SERIALIZE_ERROR on error.
+ */
+int sai_deserialize_attr_id(
+        _In_ char *buffer,
+        _In_ sai_attr_id_t *attr_id);
 
 /**
  * @brief Serialize SAI attribute.
