@@ -426,12 +426,18 @@ sub CheckStructAlignment
 {
     my ($data, $file) = @_;
 
-    return if $file eq "saitypes.h";
+    # return if $file eq "saitypes.h";
 
-    while ($data =~ m!typedef\s+struct\s+_(sai_\w+_t)(.+?)\1;!igs)
+    while ($data =~ m!typedef\s+(?:struct|union)\s+_(sai_\w+)(.+?)}\s*(\w+);!igs)
     {
         my $struct = $1;
         my $inner = $2;
+        my $enddef = $3;
+
+        if ($struct ne $enddef)
+        {
+            LogError "expected same names for _$struct $enddef";
+        }
 
         # we use space in regex since \s will capture \n
 
@@ -447,7 +453,7 @@ sub CheckStructAlignment
 
             if ($1 ne $spaces or (length($2) != length($inside) and $struct =~ /_api_t/))
             {
-                LogWarning "$struct items has invalid column ident: $file: $itemname";
+                LogError "$struct items has invalid column ident: $file: $itemname";
             }
         }
     }

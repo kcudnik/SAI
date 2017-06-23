@@ -849,6 +849,8 @@ sub ProcessExtraRangeDefines
 sub CreateMetadataHeaderAndSource
 {
     WriteSource "#include <stdio.h>";
+    WriteSource "#include <string.h>";
+    WriteSource "#include <stdlib.h>";
     WriteSource "#include \"saimetadata.h\"";
 
     WriteSectionComment "Enums metadata";

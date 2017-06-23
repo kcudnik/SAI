@@ -475,7 +475,7 @@ int sai_deserialize_mac(
 
 int sai_serialize_enum(
         _Out_ char *buffer,
-        _In_ const sai_enum_metadata_t* meta,
+        _In_ const sai_enum_metadata_t *meta,
         _In_ int32_t value)
 {
     if (meta == NULL)
@@ -500,7 +500,7 @@ int sai_serialize_enum(
 
 int sai_deserialize_enum(
         _In_ const char *buffer,
-        _In_ const sai_enum_metadata_t* meta,
+        _In_ const sai_enum_metadata_t *meta,
         _Out_ int32_t *value)
 {
     if (meta == NULL)
@@ -593,7 +593,6 @@ int sai_deserialize_ip4(
         _In_ const char *buffer,
         _Out_ sai_ip4_t *ip4)
 {
-    /* TODO we may need to reverse pointer */
     return sai_deserialize_ip(buffer, AF_INET, (uint8_t*)ip4);
 }
 
@@ -931,18 +930,9 @@ int sai_deserialize_pointer(
     return SAI_SERIALIZE_ERROR;
 }
 
-int sai_serialize_attribute(
-        _Out_ char *buffer,
-        _In_ const sai_attr_metadata_t *meta,
-        _In_ const sai_attribute_t *attr)
-{
-    SAI_META_LOG_WARN("not implemented");
-    return SAI_SERIALIZE_ERROR;
-}
-
 int sai_serialize_enum_list(
         _Out_ char *buf,
-        _In_ const sai_enum_metadata_t* meta,
+        _In_ const sai_enum_metadata_t *meta,
         _In_ const sai_s32_list_t *list)
 {
     if (meta == NULL)
@@ -993,4 +983,82 @@ int sai_serialize_enum_list(
     buf += sprintf(buf, "}");
 
     return (int)(buf - begin_buf);
+}
+
+int sai_deserialize_enum_list(
+        _In_ const char *buffer,
+        _In_ const sai_enum_metadata_t *meta,
+        _Out_ sai_s32_list_t *list)
+{
+    SAI_META_LOG_WARN("not implemented");
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_serialize_attr_id(
+        _Out_ char *buf,
+        _In_ const sai_attr_metadata_t *meta,
+        _In_ sai_attr_id_t attr_id)
+{
+    strcpy(buf, meta->attridname);
+
+    return (int)strlen(buf);
+}
+
+int sai_deserialize_attr_id(
+        _In_ char *buffer,
+        _In_ sai_attr_id_t *attr_id)
+{
+    SAI_META_LOG_WARN("not implemented");
+    return SAI_SERIALIZE_ERROR;
+}
+
+int sai_serialize_attribute(
+        _Out_ char *buf,
+        _In_ const sai_attr_metadata_t *meta,
+        _In_ const sai_attribute_t *attribute)
+{
+    char *begin_buf = buf;
+    int ret;
+
+    /* can be auto generated */
+
+    buf += sprintf(buf, "{");
+
+    buf += sprintf(buf, "\"id\":");
+
+    buf += sprintf(buf, "\"");
+
+    ret = sai_serialize_attr_id(buf, meta, attribute->id);
+
+    if (ret < 0)
+    {
+        SAI_META_LOG_WARN("failed to serialize attr id");
+        return SAI_SERIALIZE_ERROR;
+    }
+
+    buf += sprintf(buf, "\"");
+
+    buf += sprintf(buf, "\"value\":");
+
+    ret = sai_serialize_attribute_value(buf, meta, &attribute->value);
+
+    if (ret < 0)
+    {
+        SAI_META_LOG_WARN("failed to serialize attribute value");
+        return SAI_SERIALIZE_ERROR;
+    }
+
+    buf += ret;
+
+    buf += sprintf(buf, "}");
+
+    return (int)(buf - begin_buf);
+}
+
+int sai_deserialize_attribute(
+        _In_ const char *buffer,
+        _Out_ sai_attribute_t *attribute)
+{
+    SAI_META_LOG_WARN("not implemented");
+    return SAI_SERIALIZE_ERROR;
 }
