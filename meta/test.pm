@@ -378,7 +378,7 @@ sub CreatePassParamsForSerializeTest
 
         if (defined $pointer and $paramType eq "sai_attr_metadata_t")
         {
-            WriteTest "    $paramName = sai_metadata_get_attr_metadata(SAI_OBJECT_TYPE_SWITCH, SAI_SWITCH_ATTR_PORT_NUMBER);"; 
+            WriteTest "    $paramName = sai_metadata_get_attr_metadata(SAI_OBJECT_TYPE_SWITCH, SAI_SWITCH_ATTR_PORT_NUMBER);";
         }
     }
 

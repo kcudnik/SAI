@@ -842,7 +842,7 @@ sub CreateDeserializeEmitMacros
 # each expecte actually should free current object recursivly
 # since we know that memory was allocated with zero (except that user one provided
 # then we need to release memory, actually only in places where we have count
-# and not const count 
+# and not const count
 
     WriteSource "#define EXPECT(x) { \\";
     WriteSource "    if (strncmp(buf, x, sizeof(x) - 1) == 0) { buf += sizeof(x) - 1; } \\";
