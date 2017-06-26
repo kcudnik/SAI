@@ -40,26 +40,10 @@
  */
 
 /**
- * TODO maybe add sai_attr_metadata ? then we will be sure that
- * obejct type is correct
- *
  * @extraparam sai_object_type_t object_type
  */
 typedef union _sai_object_key_entry_t
 {
-    /**
-     * @brief Key is object ID.
-     *
-     * This item item must be declared last in union.
-     *
-     * TODO add flags serialize:last/default
-     * or maybe it don't need to be last
-     *
-     *  validonly sai_metadata_is_object_type_valid(object_type)
-     * @validonly object_type == 1000
-     */
-
-    sai_object_id_t           object_id;
     /** @validonly object_type == SAI_OBJECT_TYPE_FDB_ENTRY */
     sai_fdb_entry_t           fdb_entry;
 
@@ -77,6 +61,17 @@ typedef union _sai_object_key_entry_t
 
     /** @validonly object_type == SAI_OBJECT_TYPE_IPMC_ENTRY */
     sai_ipmc_entry_t          ipmc_entry;
+
+    /**
+     * @brief Key is object ID.
+     *
+     * This item item must be declared last in union.
+     *
+     * validonly sai_metadata_is_object_type_valid(object_type)
+     * @validonly object_type == 1000
+     */
+    sai_object_id_t           object_id;
+
 } sai_object_key_entry_t;
 
 /**

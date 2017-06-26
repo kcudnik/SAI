@@ -343,7 +343,6 @@ typedef struct _sai_ip_prefix_t
 /**
  * @brief Field match mask
  *
- * flags serialize:allowempty
  * @extraparam const sai_attr_metadata_t *meta
  */
 typedef union _sai_acl_field_data_mask_t {
