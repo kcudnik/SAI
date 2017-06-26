@@ -420,16 +420,10 @@ typedef union _sai_acl_field_data_data_t {
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_IPV6 */
     sai_ip6_t ip6;
 
-    /**
-     * objects meta->allowedobjecttypes TODO length this is for validation only
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_ID
-     */
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_ID */
     sai_object_id_t oid;
 
-    /**
-     * objects meta->allowedobjecttypes TODO length this is for validation only
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_LIST
-     */
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_OBJECT_LIST */
     sai_object_list_t objlist;
 
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT8_LIST */
@@ -456,8 +450,8 @@ typedef struct _sai_acl_field_data_t {
      * @note Nothing can be serialized if mask is not needed for data items
      * like oid.
      *
-     * @validonly enable == true
      * @passparam meta
+     * @validonly enable == true
      */
     sai_acl_field_data_mask_t mask;
 
@@ -465,8 +459,8 @@ typedef struct _sai_acl_field_data_t {
      * @brief Expected AND result using match mask above with packet field
      * value where applicable.
      *
-     * @validonly enable == true
      * @passparam meta
+     * @validonly enable == true
      */
     sai_acl_field_data_data_t data;
 } sai_acl_field_data_t;
@@ -507,18 +501,10 @@ typedef union _sai_acl_action_parameter_t {
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_IPV6 */
     sai_ip6_t ip6;
 
-    /**
-     * objects meta->allowedobjecttypes TODO length this is for validation only
-     *
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_ID
-     */
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_ID */
     sai_object_id_t oid;
 
-    /**
-     * objects meta->allowedobjecttypes TODO length this is for validation only
-     *
-     * @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_LIST
-     */
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_OBJECT_LIST */
     sai_object_list_t objlist;
 } sai_acl_action_parameter_t;
 
@@ -539,8 +525,8 @@ typedef struct _sai_acl_action_data_t
     /**
      * @brief Action parameter
      *
-     * @validonly enable == true
      * @passparam meta
+     * @validonly enable == true
      */
     sai_acl_action_parameter_t parameter;
 
@@ -704,9 +690,6 @@ typedef struct _sai_acl_capability_t
      * List of actions supported per stage from the sai_acl_table_action_list_t.
      * Max action list can be obtained using the #SAI_SWITCH_ATTR_MAX_ACL_ACTION_COUNT.
      *
-     * TODO add & to passparam
-     * type sai_acl_action_type_t
-     *
      * @suffix enum_list
      * @passparam &sai_metadata_enum_sai_acl_action_type_t
      */
@@ -766,9 +749,7 @@ typedef struct _sai_tlv_t
 {
     sai_tlv_type_t tlv_type;
 
-    /**
-     * @passparam tlv_type
-     */
+    /** @passparam tlv_type */
     sai_tlv_entry_t entry;
 } sai_tlv_t;
 
@@ -797,9 +778,6 @@ typedef struct _sai_segment_list_t
 } sai_segment_list_t;
 
 /**
- * TODO we nedd version with "RAW" value, so no {s32:"xxx"} will be added
- * just raw value will be added, and same for deserialize
- *
  * @brief Data Type
  *
  * To use enum values as attribute value is sai_int32_t s32
