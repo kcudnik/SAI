@@ -752,6 +752,7 @@ INPUT                  += saimetadatatypes.h
 INPUT                  += saimetadatautils.h
 INPUT                  += saimetadatalogger.h
 INPUT                  += saiserialize.h
+INPUT                  += saivalidate.h
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

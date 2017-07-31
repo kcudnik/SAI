@@ -44,7 +44,7 @@ CFLAGS += -I../inc $(WARNINGS)
 DEPS = $(wildcard ../inc/*.h)
 XMLDEPS = $(wildcard xml/*.xml)
 
-OBJ = saimetadata.o saimetadatautils.o saiserialize.o
+OBJ = saimetadata.o saimetadatautils.o saiserialize.o saivalidate.o
 
 SYMBOLS = $(OBJ:=.symbols)
 
@@ -53,7 +53,7 @@ all: saisanitycheck saimetadatatest saiserializetest saidepgraph.svg $(SYMBOLS)
 	./saiserializetest >/dev/null
 	./saisanitycheck
 
-CONSTHEADERS = saimetadatatypes.h saimetadatalogger.h saimetadatautils.h saiserialize.h
+CONSTHEADERS = saimetadatatypes.h saimetadatalogger.h saimetadatautils.h saiserialize.h saivalidate.h
 
 xml: $(DEPS) Doxyfile $(CONSTHEADERS)
 	doxygen Doxyfile 2>&1 | perl -npe '$$e=1 if /warning/i; END{exit $$e}'
@@ -70,7 +70,7 @@ HEADERS = saimetadata.h $(CONSTHEADERS)
 	gcc -c -o $@ $< $(CFLAGS)
 
 %.o: %.cpp $(HEADERS)
-	gcc -c -o $@ $< $(CFLAGS)
+	g++ -c -o $@ $< $(CFLAGS) -std=c++11 
 
 saisanitycheck: saisanitycheck.o $(OBJ)
 	gcc -o $@ $^
