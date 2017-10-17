@@ -116,6 +116,41 @@ sub CreateSerializeMetaKey
 # enough
 #
 
+sub CreateSerializeNotifications
+{
+    WriteSectionComment "Serialize notifications";
+
+    for my $ntfName (sort keys %main::NOTIFICATIONS)
+    {
+        ProcessMembersForSerialize($main::NOTIFICATIONS{$ntfName});
+    }
+}
+
+sub CreateSerializeSingleStruct
+{
+    my $structName = shift;
+
+    my %structInfoEx = ExtractStructInfoEx($structName, "struct_");
+
+    ProcessMembersForSerialize(\%structInfoEx);
+}
+
+sub IsMetadataStruct
+{
+    #
+    # check if structure is declared inside metadata
+    #
+
+    my $refStructInfoEx = shift;
+
+    my $key = $refStructInfoEx->{keys}[0];
+
+    return 1 if $refStructInfoEx->{membersHash}{$key}->{file} =~ m!(meta/sai\w+.h|^sai(meta\w+.h))$!;
+
+    return 0;
+}
+
+
 # TODO for lists we need countOnly param, as separate version?
 # * @param[in] only_count Flag specifies whether on *_list_t only
 # * list count should be serialized, this is handy when serializing
@@ -578,7 +613,7 @@ sub GetConditionForSerialize
 
     my $condition = shift @conditions;
 
-    if (not $condition =~/^(\w+|\w+->\w+) == (.+)$/)
+    if (not $condition =~/^(\w+|\w+->\w+) == (\w+)$/)
     {
         LogWarning "invalid condition '$condition' on '$name' in '$structName'";
         return "";
