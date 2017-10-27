@@ -68,6 +68,7 @@ typedef union _sai_object_key_entry_t
      * This item item must be declared last in union.
      *
      * validonly sai_metadata_is_object_type_valid(object_type)
+     * validonly sai_metadata_utils_is_object_id_object_type(object_type)
      * @validonly object_type == 1000
      */
     sai_object_id_t           object_id;
