@@ -238,7 +238,7 @@ typedef enum _sai_object_type_t
     SAI_OBJECT_TYPE_INSEG_ENTRY              = 67,
     SAI_OBJECT_TYPE_TAM_HISTOGRAM            = 68,
     SAI_OBJECT_TYPE_TAM_MICROBURST           = 69,
-    SAI_OBJECT_TYPE_BFD                      = 70,
+    SAI_OBJECT_TYPE_BFD_SESSION              = 70,
     SAI_OBJECT_TYPE_MAX                      = 71,
 } sai_object_type_t;
 
