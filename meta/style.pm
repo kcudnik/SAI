@@ -589,13 +589,13 @@ sub CheckHeadersStyle
 
             if ($line =~ /\*\s+[^ ].*  / and not $line =~ /\* \@(brief|file)/)
             {
-                if (not $line =~ /const.+const\s+\w+;/)
+                if (not $line =~ /const.+const\s+\w+;/ and not $line =~ m!\\$!)
                 {
                     LogWarning "too many spaces after *\\s+ $header $n:$line";
                 }
             }
 
-            if ($line =~ /(typedef|{|}|_In\w+|_Out\w+)( [^ ].*  |  )/ and not $line =~ /typedef\s+u?int/i)
+            if ($line =~ /(typedef|{|}|_In\w+|_Out\w+)( [^ ].*  |  )/ and not $line =~ /typedef\s+u?int/i and not $line =~ m!\\$!)
             {
                 LogWarning "too many spaces $header $n:$line";
             }
@@ -741,6 +741,8 @@ sub CheckHeadersStyle
 
                     next if $word =~ /^($pattern)$/; # capital words
 
+                    next if ($line =~/\@validonly\s+\w+->\w+/); # skip valionly code
+                    next if ($line =~/\@passparam\s+\w+->\w+/); # skip valionly code
                     next if ($line =~/\@param\[\w+\]\s+$word /); # skip word if word is param name
 
                     # look into good and bad words hash to speed things up

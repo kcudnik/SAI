@@ -62,7 +62,7 @@ xml: $(DEPS) Doxyfile $(CONSTHEADERS)
 EXTRA = acronyms.txt aspell.en.pws *.pm
 
 saimetadatatest.c saimetadata.c saimetadata.h: xml $(XMLDEPS) parse.pl $(CONSTHEADERS) $(EXTRA)
-	perl parse.pl -S
+	perl parse.pl
 
 HEADERS = saimetadata.h $(CONSTHEADERS)
 

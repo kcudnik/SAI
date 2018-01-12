@@ -323,8 +323,8 @@ typedef enum _sai_ip_addr_family_t
 /**
  * @extraparam sai_ip_addr_family_t addr_family
  */
-typedef union _sai_ip_addr_t {
-
+typedef union _sai_ip_addr_t
+{
     /** @validonly addr_family == SAI_IP_ADDR_FAMILY_IPV4 */
     sai_ip4_t ip4;
 
@@ -362,8 +362,8 @@ typedef struct _sai_ip_prefix_t
  *
  * @extraparam const sai_attr_metadata_t *meta
  */
-typedef union _sai_acl_field_data_mask_t {
-
+typedef union _sai_acl_field_data_mask_t
+{
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT8 */
     sai_uint8_t u8;
 
@@ -396,12 +396,12 @@ typedef union _sai_acl_field_data_mask_t {
 } sai_acl_field_data_mask_t;
 
 /**
- * @brief bla
+ * @brief ACL field data union.
  *
  * @extraparam const sai_attr_metadata_t *meta
  */
-typedef union _sai_acl_field_data_data_t {
-
+typedef union _sai_acl_field_data_data_t
+{
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_BOOL */
     bool booldata;
 
@@ -453,8 +453,8 @@ typedef union _sai_acl_field_data_data_t {
  *
  * @extraparam const sai_attr_metadata_t *meta
  */
-typedef struct _sai_acl_field_data_t {
-
+typedef struct _sai_acl_field_data_t
+{
     /**
      * @brief Match enable/disable
      */
@@ -464,7 +464,7 @@ typedef struct _sai_acl_field_data_t {
      * @brief Field match mask
      *
      * @note Nothing can be serialized if mask is not needed for data items
-     * like oid.
+     * like object id.
      *
      * @passparam meta
      * @validonly enable == true
@@ -484,8 +484,8 @@ typedef struct _sai_acl_field_data_t {
 /**
  * @extraparam const sai_attr_metadata_t *meta
  */
-typedef union _sai_acl_action_parameter_t {
-
+typedef union _sai_acl_action_parameter_t
+{
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_ACL_ACTION_DATA_UINT8 */
     sai_uint8_t u8;
 
@@ -780,8 +780,8 @@ typedef struct _sai_hmac_t
 /**
  * @extraparam sai_tlv_type_t tlv_type
  */
-typedef union _sai_tlv_entry_t {
-
+typedef union _sai_tlv_entry_t
+{
     /** @validonly tlv_type == SAI_TLV_TYPE_INGRESS */
     sai_ip6_t ingress_node;
 
@@ -934,7 +934,7 @@ typedef union _sai_attribute_value_t
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_MAP_LIST */
     sai_qos_map_list_t qosmap;
 
-    /* TODO udf also we need flag for udf */
+    /* TODO UDF also we need flag for UDF */
 
     /**
      * @passparam meta
