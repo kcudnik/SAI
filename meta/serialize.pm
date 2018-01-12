@@ -116,16 +116,6 @@ sub CreateSerializeMetaKey
 # enough
 #
 
-sub CreateSerializeNotifications
-{
-    WriteSectionComment "Serialize notifications";
-
-    for my $ntfName (sort keys %main::NOTIFICATIONS)
-    {
-        ProcessMembersForSerialize($main::NOTIFICATIONS{$ntfName});
-    }
-}
-
 sub CreateSerializeSingleStruct
 {
     my $structName = shift;
@@ -289,6 +279,11 @@ sub GetTypeInfoForSerialize
     elsif ($type =~ /^sai_(vlan_id)_t$/)
     {
         $TypeInfo{suffix} = "uint16";
+        $TypeInfo{deamp} = "&";
+    }
+    elsif ($type =~ /^sai_(label_id)_t$/)
+    {
+        $TypeInfo{suffix} = "uint32";
         $TypeInfo{deamp} = "&";
     }
     elsif ($type =~ /^sai_(cos|queue_index)_t$/)

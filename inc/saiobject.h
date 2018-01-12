@@ -15,7 +15,7 @@
  *
  *    Microsoft would like to thank the following companies for their review and
  *    assistance with these files: Intel Corporation, Mellanox Technologies Ltd,
- *    Dell Products, L.P., Facebook, Inc
+ *    Dell Products, L.P., Facebook, Inc., Marvell International Ltd.
  *
  * @file    saiobject.h
  *
@@ -32,6 +32,7 @@
 #include <saiipmc.h>
 #include <saineighbor.h>
 #include <sairoute.h>
+#include <saimpls.h>
 
 /**
  * @defgroup SAIOBJECT SAI - Object API definitions.
@@ -61,6 +62,9 @@ typedef union _sai_object_key_entry_t
 
     /** @validonly object_type == SAI_OBJECT_TYPE_IPMC_ENTRY */
     sai_ipmc_entry_t          ipmc_entry;
+
+    /** @validonly object_type == SAI_OBJECT_TYPE_INSEG_ENTRY */
+    sai_inseg_entry_t         inseg_entry;
 
     /**
      * @brief Key is object ID.
