@@ -198,6 +198,95 @@ void check_all_enums_values()
     }
 }
 
+void check_flag_enums()
+{
+    /*
+     * Check whether enums marked as flags are continuous.
+     */
+
+    META_LOG_ENTER();
+
+    size_t i = 0;
+
+    for (; i < sai_metadata_all_enums_count; ++i)
+    {
+        const sai_enum_metadata_t* emd = sai_metadata_all_enums[i];
+
+        if (strcmp(emd->name, "sai_attr_flags_t") == 0)
+        {
+            continue;
+        }
+
+        if (strcmp(emd->name, "sai_status_t") == 0)
+        {
+            /* TODO status values are negative */
+            continue;
+        }
+
+        if (!is_flag_enum(emd))
+        {
+            /* skip non flags */
+            continue;
+        }
+
+        META_LOG_DEBUG("enum: %s", emd->name);
+
+        size_t j = 0;
+
+        int last = emd->values[j];
+
+        for (j = 1; j < emd->valuescount; ++j)
+        {
+            META_LOG_DEBUG(" value: %s", emd->valuesnames[j]);
+
+            int value = emd->values[j];
+
+            META_ASSERT_FALSE(value < 0, "enum values are negative");
+            META_ASSERT_TRUE(last < value, "enum values are not increasing");
+
+            if (value != last + 1)
+            {
+                /*
+                 * If flag value is not increasing by 1, then it should increase to the
+                 * nearest 0x1000 value
+                 */
+
+                if ((value & 0xfff) != 0)
+                {
+                    if (strcmp(emd->name, "sai_acl_entry_attr_t") == 0 &&
+                            value == SAI_ACL_ENTRY_ATTR_USER_DEFINED_FIELD_GROUP_MAX)
+                    {
+                        last = value;
+                        continue;
+                    }
+
+                    if (strcmp(emd->name, "sai_acl_table_attr_t") == 0 &&
+                            value == SAI_ACL_TABLE_ATTR_USER_DEFINED_FIELD_GROUP_MAX)
+                    {
+                        last = value;
+                        continue;
+                    }
+
+                    META_ENUM_ASSERT_FAIL(emd, "values are not increasing by 1 or 0x1000: last: %d current: %d", last, value);
+                }
+            }
+
+            last = value;
+
+            if (value >= CUSTOM_ATTR_RANGE_START && value < (2 * CUSTOM_ATTR_RANGE_START))
+            {
+                /* value is in custom range */
+            }
+            else
+            {
+                META_ASSERT_TRUE(value < 0x10000, "enum value is too big, range?");
+            }
+        }
+
+        META_ASSERT_TRUE(emd->values[j] == -1, "missing guard at the end of enum");
+    }
+}
+
 void check_sai_status()
 {
     META_LOG_ENTER();
@@ -4134,6 +4223,7 @@ int main(int argc, char **argv)
 
     check_all_enums_name_pointers();
     check_all_enums_values();
+    check_flag_enums();
     check_sai_status();
     check_object_type();
     check_attr_by_object_type();
