@@ -243,7 +243,8 @@ typedef enum _sai_object_type_t
     SAI_OBJECT_TYPE_DTEL_INT_SESSION         = 72, /**< experimental */
     SAI_OBJECT_TYPE_DTEL_REPORT_SESSION      = 73, /**< experimental */
     SAI_OBJECT_TYPE_DTEL_EVENT               = 74, /**< experimental */
-    SAI_OBJECT_TYPE_MAX                      = 75,
+    SAI_OBJECT_TYPE_BFD_SESSION              = 75,
+    SAI_OBJECT_TYPE_MAX                      = 76,
 } sai_object_type_t;
 
 typedef struct _sai_u8_list_t
@@ -831,6 +832,41 @@ typedef struct _sai_segment_list_t
 } sai_segment_list_t;
 
 /**
+ * @brief Defines a lane with its eye values with the up and down values
+ * being in mV and left and right being in mUI.
+ */
+typedef struct _sai_port_lane_eye_values_t
+{
+    uint32_t lane;
+    int32_t left;
+    int32_t right;
+    int32_t up;
+    int32_t down;
+} sai_port_lane_eye_values_t;
+
+/**
+ * @brief Defines a port's lanes eye values list
+ *
+ * In get_port_attribute function call, the count member defines the number
+ * of objects which will be returned to the caller in the list member. The
+ * caller must allocate the buffer for the list member and set the count
+ * member to the size of the allocated objects in the list member.
+ *
+ * If the size is large enough to accommodate the list of objects, the
+ * callee must fill the list member and set the count member to the actual
+ * number of objects filled. If the size is not large enough, the callee
+ * must set the count member to the actual number of objects filled in the
+ * list member and return #SAI_STATUS_BUFFER_OVERFLOW. Once the caller
+ * gets such a return code, it may use the returned count member to
+ * re-allocate the list and retry.
+ */
+typedef struct _sai_port_eye_values_list_t
+{
+    uint32_t count;
+    sai_port_lane_eye_values_t *list;
+} sai_port_eye_values_list_t;
+
+/**
  * @brief Data Type
  *
  * To use enum values as attribute value is sai_int32_t s32
@@ -925,14 +961,14 @@ typedef union _sai_attribute_value_t
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_INT32_RANGE */
     sai_s32_range_t s32range;
 
-    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_MAP_LIST */
-    sai_map_list_t maplist;
-
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_VLAN_LIST */
     sai_vlan_list_t vlanlist;
 
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_MAP_LIST */
     sai_qos_map_list_t qosmap;
+
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_MAP_LIST */
+    sai_map_list_t maplist;
 
     /* TODO UDF also we need flag for UDF */
 
@@ -963,6 +999,8 @@ typedef union _sai_attribute_value_t
     /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_IP_ADDRESS_LIST */
     sai_ip_address_list_t ipaddrlist;
 
+    /** @validonly meta->attrvaluetype == SAI_ATTR_VALUE_TYPE_PORT_EYE_VALUES_LIST */
+    sai_port_eye_values_list_t porteyevalues;
 } sai_attribute_value_t;
 
 /**
@@ -1035,6 +1073,19 @@ typedef sai_status_t (*sai_bulk_object_remove_fn)(
         _In_ const sai_object_id_t *object_id,
         _In_ sai_bulk_op_error_mode_t mode,
         _Out_ sai_status_t *object_statuses);
+
+typedef enum _sai_stats_mode_t
+{
+    /**
+     * @brief Read statistics
+     */
+    SAI_STATS_MODE_READ,
+
+    /**
+     * @brief Read and clear after reading
+     */
+    SAI_STATS_MODE_READ_AND_CLEAR,
+} sai_stats_mode_t;
 
 /**
  * @}

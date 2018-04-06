@@ -1005,8 +1005,8 @@ int sai_serialize_attr_id(
 }
 
 int sai_deserialize_attr_id(
-        _In_ char *buffer,
-        _In_ sai_attr_id_t *attr_id)
+        _In_ const char *buffer,
+        _Out_ sai_attr_id_t *attr_id)
 {
     SAI_META_LOG_WARN("not implemented");
     return SAI_SERIALIZE_ERROR;

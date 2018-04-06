@@ -463,11 +463,11 @@ sub GetCounterNameAndType
 
     if (not defined $refStructInfoEx->{processed}->{$count})
     {
-        # TODO check if count was declared before list, since deserialize
+        # check if count was declared before list, since deserialize
         # needs to know how many items is on list to not make realoc and monitor
         # number of elements
 
-        LogInfo "ERROR : count member '$count' on $structName is defined after '$name', not allowed";
+        LogError "count member '$count' on $structName is defined after '$name', not allowed";
     }
 
     return ($countMemberName, $countType);
@@ -608,7 +608,7 @@ sub GetConditionForSerialize
 
     my $condition = shift @conditions;
 
-    if (not $condition =~/^(\w+|\w+->\w+) == (\w+)$/)
+    if (not $condition =~/^(\w+|\w+->\w+|sai_metadata_\w+\(\w+\)) == (\w+)$/)
     {
         LogWarning "invalid condition '$condition' on '$name' in '$structName'";
         return "";
@@ -808,6 +808,7 @@ sub CreateSerializeStructs
     {
         # user defined serialization
 
+        # TODO could be generated auto
         next if $struct eq "sai_ip_address_t";
         next if $struct eq "sai_ip_prefix_t";
         next if $struct eq "sai_attribute_t";
@@ -916,7 +917,7 @@ sub EmitDeserializeFunctionHeader
         return;
     }
 
-# TODO revisit params
+    # TODO revisit params
 
     if (defined $structInfoEx{ismethod})
     {
@@ -1230,6 +1231,7 @@ sub CreateDeserializeStructs
     {
         # user defined deserialization
 
+        # TODO could be generated auto
         next if $struct eq "sai_ip_address_t";
         next if $struct eq "sai_ip_prefix_t";
         next if $struct eq "sai_attribute_t";
@@ -1320,9 +1322,9 @@ BEGIN
 
 1;
 
-# we could also generate deserialize and call notifation where notification
-# struct would be passed and notification would be called and then free itself
-# (but on exception there will be memory leak)
+# TODO we could also generate deserialize and call notifation where
+# notification struct would be passed and notification would be called and then
+# free itself (but on exception there will be memory leak)
 #
 # TODO generate notifications metadata, if param is object id then objects must
 # be specified for validation wheter notification returned valid object, and
@@ -1330,33 +1332,30 @@ BEGIN
 # members, then we should generate all struct infos to get all functions for
 # oid extraction etc
 #
-# TODO auto generate tests for serialize, and push params too
-#
-#
-# - TODO validate union name _sai.._t -> sai_.._t
-# - TODO validate if "validonly" param is not validonly struct/union and in union
+# TODO validate if "validonly" param is not validonly struct/union and in union
 # validonly must be param not any union member
-# - object_id - inside objectg key -> last and must be last (for other use "else if")
 #
-# - support enum_list 32 - un unions and acl capability list
-#   force to add @type wheter enum or int32 / int32_list for those types
+# TODO support enum_list 32 - on unions and acl capability list force to add
+# @type wheter enum or int32 / int32_list for those types
 #
-# - generate deserialize
-# - generate validate - object types and enums, also objecttype in union passed from params
-#   must be forced to add, in sai_list32_oid - any add special case?
-# - generate transfer
+# TODO generate deserialize
 #
-# - since we need object type for validation on notification params, then maybe we
-# need notifications metadata? is object_id, allowed object types, is attribute ?
-# is pointer? etc double pointer ?
+# TODO generate validate - object types and enums, also objecttype in union
+# passed from params must be forced to add, in sai_list32_oid - any add special
+# case?
 #
-# - generate versions with only count
+# TODO generate transfer methods
 #
-# - force unions to serialize something + add exception of serialize for mask @flags serialize:allowempty
+# TODO since we need object type for validation on notification params, then
+# maybe we need notifications metadata? is object_id, allowed object types, is
+# attribute ?  is pointer? etc double pointer ?
 #
-#   TODO figureout object_key_ object_id condition
-#   if we would use metadata there, we could use ->is
+# TODO generate serialize and deserialize versions with only count
 #
-#   validate if count is not pointer
+# TODO force unions to serialize something + add exception of serialize for
+# mask @flags serialize:allowempty
 #
-#   TODO in style -check if union/struct ends with _sai.\\w+_t and sai_\w_t
+# TODO validate if count is not pointer when serializing counts
+#
+# TODO we could generate serialize methods for all functions acrually since we
+# have metadata now

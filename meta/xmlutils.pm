@@ -284,7 +284,7 @@ sub ProcessStructValidOnly
     {
         # it can be single value (struct member or param) or param pointer
 
-        if (not $cond =~/^(\w+|\w+->\w+) == (true|false|SAI_\w+|$NUMBER_REGEX)$/)
+        if (not $cond =~/^(\w+|\w+->\w+|sai_metadata_\w+\(\w+\)) == (true|false|SAI_\w+|$NUMBER_REGEX)$/)
         {
             LogError "invalid condition tag value '$tagValue' ($cond), expected (\\w+|\\w+->\\w+) == true|false|SAI_ENUM|number";
             return undef;

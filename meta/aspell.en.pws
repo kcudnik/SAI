@@ -84,13 +84,17 @@ lossless
 mcast
 metadata
 microburst
+millivolts
+mUI
 multi
 multicast
+mV
 netdev
 netdevs
 nexthop
 nexthopgroup
 objlist
+opcode
 optimizations
 outsegment
 param
@@ -104,6 +108,7 @@ samplepacket
 src
 stderr
 struct
+sublayer
 subnet
 subnets
 tx

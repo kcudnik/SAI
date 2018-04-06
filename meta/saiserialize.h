@@ -703,8 +703,8 @@ int sai_serialize_attr_id(
  * or #SAI_SERIALIZE_ERROR on error.
  */
 int sai_deserialize_attr_id(
-        _In_ char *buffer,
-        _In_ sai_attr_id_t *attr_id);
+        _In_ const char *buffer,
+        _Out_ sai_attr_id_t *attr_id);
 
 /**
  * @brief Serialize SAI attribute.
@@ -742,13 +742,10 @@ int sai_deserialize_attribute(
  *
  * @param[in] meta Attribute metadata.
  * @param[in] attribute Attribute to be freed.
- *
- * @return Number of characters consumed from the buffer,
- * or #SAI_SERIALIZE_ERROR on error.
  */
 void sai_free_attribute(
         _In_ const sai_attr_metadata_t *meta,
-        _In_ sai_attribute_t *attribute);
+        _In_ const sai_attribute_t *attribute);
 
 /**
  * @}

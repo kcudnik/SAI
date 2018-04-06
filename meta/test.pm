@@ -427,9 +427,8 @@ sub CreateSerializeStructsTest
     for my $structname (sort keys %main::ALL_STRUCTS)
     {
         next if $structname  =~ /_api_t$/;
+        next if $structname  eq "sai_service_method_table_t";
 
-        next if $structname eq "sai_service_method_table_t";
-        next if $structname eq "sai_attribute_t";
 
         my %structInfoEx = ExtractStructInfoEx($structname, "struct_");
 

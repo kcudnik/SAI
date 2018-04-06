@@ -546,6 +546,7 @@ void check_attr_object_type_provided(
         case SAI_ATTR_VALUE_TYPE_TLV_LIST:
         case SAI_ATTR_VALUE_TYPE_SEGMENT_LIST:
         case SAI_ATTR_VALUE_TYPE_IP_ADDRESS_LIST:
+        case SAI_ATTR_VALUE_TYPE_PORT_EYE_VALUES_LIST:
 
         case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_BOOL:
         case SAI_ATTR_VALUE_TYPE_ACL_FIELD_DATA_UINT8:
@@ -805,6 +806,7 @@ void check_attr_default_required(
         case SAI_ATTR_VALUE_TYPE_SEGMENT_LIST:
         case SAI_ATTR_VALUE_TYPE_MAP_LIST:
         case SAI_ATTR_VALUE_TYPE_IP_ADDRESS_LIST:
+        case SAI_ATTR_VALUE_TYPE_PORT_EYE_VALUES_LIST:
 
             if (md->defaultvaluetype == SAI_DEFAULT_VALUE_TYPE_EMPTY_LIST)
             {
@@ -981,6 +983,7 @@ void check_attr_default_value_type(
                 case SAI_ATTR_VALUE_TYPE_SEGMENT_LIST:
                 case SAI_ATTR_VALUE_TYPE_MAP_LIST:
                 case SAI_ATTR_VALUE_TYPE_IP_ADDRESS_LIST:
+                case SAI_ATTR_VALUE_TYPE_PORT_EYE_VALUES_LIST:
                     break;
 
                 default:
@@ -2224,6 +2227,12 @@ void check_attr_sai_pointer(
             {
                 META_MD_ASSERT_FAIL(md, "all pointers should be CREATE_AND_SET");
             }
+
+            META_ASSERT_TRUE(md->notificationtype >= 0, "notification type should be set to value on pointer");
+        }
+        else
+        {
+            META_ASSERT_TRUE(md->notificationtype == -1, "notification type should not be set to value on non pointer");
         }
 
         return;
@@ -2280,6 +2289,7 @@ void check_attr_is_primitive(
         case SAI_ATTR_VALUE_TYPE_TLV_LIST:
         case SAI_ATTR_VALUE_TYPE_SEGMENT_LIST:
         case SAI_ATTR_VALUE_TYPE_IP_ADDRESS_LIST:
+        case SAI_ATTR_VALUE_TYPE_PORT_EYE_VALUES_LIST:
 
             if (md->isprimitive)
             {
@@ -2384,7 +2394,11 @@ void check_attr_condition_met(
             attrs[idx].id ^= (uint32_t)(-1);
         }
 
-        META_ASSERT_FALSE(sai_metadata_is_condition_met(md, count, attrs), "condition should not be met");
+        /*
+         * Condition can actually be met here, since we are supplying unknown attributes
+         * and condition by default attribute can be met
+         * META_ASSERT_FALSE(sai_metadata_is_condition_met(md, count, attrs), "condition should not be met");
+        */
 
         /* when condition is "or" then any of attribute should match */
 
@@ -2494,6 +2508,98 @@ void check_attr_default_attrvalue(
             sai_metadata_all_object_type_infos[md->defaultvalueobjecttype]->objecttypename);
 }
 
+void check_attr_fdb_flush(
+        _In_ const sai_attr_metadata_t* md)
+{
+    META_LOG_ENTER();
+
+    if (md->objecttype != SAI_OBJECT_TYPE_FDB_FLUSH)
+    {
+        return;
+    }
+
+    META_ASSERT_FALSE(md->isconditional, "flush attributes should not be conditional");
+    META_ASSERT_FALSE(md->isvalidonly, "flush attributes should not be validonly");
+
+    /*
+     * Primitive check can be relaxed in the future.
+     */
+    META_ASSERT_TRUE(md->isprimitive, "flush attributes should be primitives");
+    META_ASSERT_TRUE(md->flags == SAI_ATTR_FLAGS_CREATE_ONLY, "flush attributes should be create only");
+}
+
+void check_attr_hostif_packet(
+        _In_ const sai_attr_metadata_t* md)
+{
+    META_LOG_ENTER();
+
+    if (md->objecttype != SAI_OBJECT_TYPE_HOSTIF_PACKET)
+    {
+        return;
+    }
+
+    META_ASSERT_FALSE(md->isvalidonly, "hostif packet attributes should not be validonly");
+
+    /*
+     * Primitive check can be relaxed in the future.
+     */
+    META_ASSERT_TRUE(md->isprimitive, "hostif packet attributes should be primitives");
+
+    bool flag = SAI_HAS_FLAG_READ_ONLY(md->flags) || SAI_HAS_FLAG_CREATE_ONLY(md->flags);
+
+    META_ASSERT_TRUE(flag, "hostif packet attributes should be read only or create only");
+}
+
+void check_attr_capability(
+        _In_ const sai_attr_metadata_t* md)
+{
+    META_LOG_ENTER();
+
+    if (md->capability == NULL)
+    {
+        META_ASSERT_TRUE(md->capabilitylength == 0, "capability length should be zero when capability is not defined");
+        return;
+    }
+
+    META_ASSERT_TRUE(md->capabilitylength != 0, "capability length should not be zero when capability is not defined");
+
+    size_t i = 0;
+
+    for (; i < md->capabilitylength; ++i)
+    {
+        const sai_attr_capability_metadata_t* cap = md->capability[i];
+
+        if (md->isreadonly)
+        {
+            META_ASSERT_FALSE(cap->operationcapability.create_implemented,
+                    "create must be false on readonly attribute, %s", md->attridname);
+
+            META_ASSERT_FALSE(cap->operationcapability.set_implemented,
+                    "set must be false on readonly attribute, %s", md->attridname);
+        }
+
+        if (md->iscreateonly)
+        {
+            META_ASSERT_FALSE(cap->operationcapability.set_implemented,
+                    "set must be false on createonly attribute, %s", md->attridname);
+        }
+
+        if (md->ismandatoryoncreate)
+        {
+            META_ASSERT_TRUE(cap->operationcapability.create_implemented,
+                    "create must be true on mandatoryoncreate attribute, %s", md->attridname);
+        }
+
+        if (!md->isenum)
+        {
+            META_ASSERT_NULL(cap->enumvalues);
+            META_ASSERT_TRUE(cap->enumvaluescount == 0, "enum values can't be defined when attribute %s is not enum", md->attridname);
+        }
+    }
+
+    META_ASSERT_NULL(md->capability[i]); /* guard */
+}
+
 void check_single_attribute(
         _In_ const sai_attr_metadata_t* md)
 {
@@ -2532,6 +2638,9 @@ void check_single_attribute(
     check_attr_is_primitive(md);
     check_attr_condition_met(md);
     check_attr_default_attrvalue(md);
+    check_attr_fdb_flush(md);
+    check_attr_hostif_packet(md);
+    check_attr_capability(md);
 
     define_attr(md);
 }
@@ -3190,11 +3299,11 @@ void check_mixed_object_list_types()
                 }
                 else
                 {
-                    if (meta->objecttype == SAI_OBJECT_TYPE_ACL_ENTRY &&
-                            meta->attrid == SAI_ACL_ENTRY_ATTR_ACTION_REDIRECT_LIST)
+                    if (meta->objecttype == SAI_OBJECT_TYPE_ACL_ENTRY)
                     {
                         /*
-                         * We make exception for this attribute.
+                         * Allow mixed object types on ACL entries since they can point
+                         * to different object types like PORT or BRIDGE_PORT etc.
                          */
 
                         break;
@@ -3830,6 +3939,7 @@ void check_object_ro_list(
     if (oi->objecttype == SAI_OBJECT_TYPE_FDB_FLUSH ||
             oi->objecttype == SAI_OBJECT_TYPE_HOSTIF_PACKET ||
             oi->objecttype == SAI_OBJECT_TYPE_SWITCH ||
+            oi->objecttype == SAI_OBJECT_TYPE_BFD_SESSION ||
             oi->objecttype == SAI_OBJECT_TYPE_HOSTIF_TABLE_ENTRY ||
             oi->objecttype == SAI_OBJECT_TYPE_TAM_HISTOGRAM ||
             oi->objecttype == SAI_OBJECT_TYPE_DTEL ||

@@ -98,7 +98,7 @@ sub LogWarning
     my $sub = GetCallerInfo();
 
     $warnings++;
-    print color('bright_yellow') . "$sub@_" . color('reset') . "\n";
+    print color('bright_yellow') . "WARNING: $sub@_" . color('reset') . "\n";
 }
 
 sub LogError
@@ -106,7 +106,7 @@ sub LogError
     my $sub = GetCallerInfo();
 
     $errors++;
-    print color('bright_red') . "$sub@_" . color('reset') . "\n";
+    print color('bright_red') . "ERROR: $sub@_" . color('reset') . "\n";
 }
 
 sub WriteFile

@@ -12,6 +12,7 @@ use xmlutils;
 use style;
 use test;
 use serialize;
+use cap;
 
 our $XMLDIR = "xml";
 our $INCLUDE_DIR = "../inc/";
@@ -71,6 +72,8 @@ my %ACL_ACTION_TYPES_TO_VT = ();
 
 my %VALUE_TYPES = ();
 my %VALUE_TYPES_TO_VT = ();
+
+my %CAPABILITIES = ();
 
 sub ProcessTagType
 {
@@ -703,7 +706,6 @@ sub ProcessNotifications
     }
 
     # second pass is needed if count param is defined after data pointer
-    # TODO fix this
 
     for my $param (@params)
     {
@@ -1471,6 +1473,15 @@ sub ProcessAttrName
     return "\"$attr\"";
 }
 
+sub ProcessNotificationType
+{
+    my ($attr, $type) = @_;
+
+    return "SAI_SWITCH_NOTIFICATION_TYPE_$1" if $attr =~ /^SAI_SWITCH_ATTR_(\w+)_NOTIFY$/;
+
+    return "-1";
+}
+
 sub ProcessIsAclField
 {
     my $attr = shift;
@@ -1519,6 +1530,120 @@ sub ProcessIsPrimitive
     return "false" if $type =~ /(_list_t|acl_capability_t)/;
 
     return "true";
+}
+
+sub ProcessCapability
+{
+    my ($attr, $type, $enummetadata) = @_;
+
+    return "NULL" if not defined $CAPABILITIES{$attr};
+
+    my %CAP = %{ $CAPABILITIES{$attr} };
+
+    my $count = 0;
+
+    my @values = ();
+
+    for my $vid (sort keys %CAP)
+    {
+        my $enumcount = 0;
+        my $enumvalues = "NULL";
+
+        if (defined $CAP{$vid}{enumcapability})
+        {
+            if (not $enummetadata =~ /sai_metadata_enum_((sai_\w+_)t)/)
+            {
+                LogError "enum capability defined on $attr, but attribute is not enum";
+                next;
+            }
+
+            my $enumtype = $1;
+            my $prefix = uc($2);
+
+            my @values = @{ $CAP{$vid}{enumcapability} };
+
+            $enumcount = scalar @values;
+
+            WriteSource "const int sai_metadata_enumcapability_${attr}_$vid\[\] = {";
+
+            my %vals = ();
+
+            for my $v (@values)
+            {
+                LogError "enumvalue $v on capability $attr($vid) is not of type $enumtype" if not $v =~ /^$prefix/;
+
+                LogError "enumvalue $v on capability $attr($vid) is already defined" if defined $vals{$v};
+
+                $vals{$v} = 1;
+
+                WriteSource "   $v,";
+            }
+
+            WriteSource "   -1,";
+            WriteSource "};";
+
+            $enumvalues = "sai_metadata_enumcapability_${attr}_$vid";
+        }
+
+        if (not defined $CAP{$vid}{capability})
+        {
+            LogError "capability for $attr is not defined";
+            next;
+        }
+
+        WriteSource "const sai_attr_capability_metadata_t sai_metadata_attr_capability_${attr}_$count = {";
+
+        my %cap = ();
+
+        for my $c (@{ $CAP{$vid}{capability} })
+        {
+            $cap{$c} = 1;
+        }
+
+        my $create = (defined $cap{"CREATE"}) ? "true" : "false";
+        my $get = (defined $cap{"GET"}) ? "true" : "false";
+        my $set = (defined $cap{"SET"}) ? "true" : "false";
+
+        WriteSource "    .vendorid = $vid,";
+        WriteSource "    .operationcapability = {";
+        WriteSource "       .create_implemented = $create,";
+        WriteSource "       .set_implemented = $set,";
+        WriteSource "       .get_implemented = $get,";
+        WriteSource "    },";
+
+        WriteSource "    .enumvaluescount = $enumcount,";
+        WriteSource "    .enumvalues = $enumvalues,";
+
+        WriteSource "};";
+
+        $count++;
+    }
+
+    WriteSource "const sai_attr_capability_metadata_t* const sai_metadata_attr_capability_${attr}\[\] = {";
+
+    $count = 0;
+
+    for my $vid (sort keys %CAP)
+    {
+        WriteSource "    &sai_metadata_attr_capability_${attr}_$count,";
+
+        $count++;
+    }
+
+    WriteSource "    NULL";
+
+    WriteSource "};";
+
+    return "sai_metadata_attr_capability_$attr";
+}
+
+sub ProcessCapabilityLen
+{
+    my ($attr, $type) = @_;
+
+    return 0 if not defined $CAPABILITIES{$attr};
+
+    return scalar(keys %{$CAPABILITIES{$attr}});
 }
 
 sub ProcessSingleObjectType
@@ -1572,6 +1697,9 @@ sub ProcessSingleObjectType
         my $isaclaction     = ProcessIsAclAction($attr);
         my $brief           = ProcessBrief($attr, $meta{brief});
         my $isprimitive     = ProcessIsPrimitive($attr, $meta{type});
+        my $ntftype         = ProcessNotificationType($attr, $meta{type});
+        my $cap             = ProcessCapability($attr, $meta{type}, $enummetadata);
+        my $caplen          = ProcessCapabilityLen($attr, $meta{type});
 
         my $ismandatoryoncreate = ($flags =~ /MANDATORY/)       ? "true" : "false";
         my $iscreateonly        = ($flags =~ /CREATE_ONLY/)     ? "true" : "false";
@@ -1620,6 +1748,9 @@ sub ProcessSingleObjectType
         WriteSource ".isreadonly                    = $isreadonly,";
         WriteSource ".iskey                         = $iskey,";
         WriteSource ".isprimitive                   = $isprimitive,";
+        WriteSource ".notificationtype              = $ntftype,";
+        WriteSource ".capability                    = $cap,";
+        WriteSource ".capabilitylength              = $caplen,";
 
         WriteSource "};";
 
@@ -2326,7 +2457,7 @@ sub CreateApisQuery
         WriteSource "{";
         WriteSource "count++;";
         WriteSource "const char *name = sai_metadata_get_enum_value_name(&sai_metadata_enum_sai_status_t, status);";
-        WriteSource "SAI_META_LOG_WARN(\"failed to query api $api: %s (%d)\", name, status);";
+        WriteSource "SAI_META_LOG_NOTICE(\"failed to query api $api: %s (%d)\", name, status);";
         WriteSource "}";
     }
 
@@ -2527,12 +2658,10 @@ sub ProcessNonObjectIdObjects
     }
 }
 
-sub CreateListOfAllAttributes
+sub GetHashOfAllAttributes
 {
     # list will be used to find attribute metadata
     # based on attribute string name
-
-    WriteSectionComment "List of all attributes";
 
     my %ATTRIBUTES = ();
 
@@ -2559,6 +2688,30 @@ sub CreateListOfAllAttributes
             $ATTRIBUTES{$attr} = 1;
         }
     }
+
+    return %ATTRIBUTES;
+}
+
+sub CheckCapabilities
+{
+    my %ATTRIBUTES = GetHashOfAllAttributes();
+
+    for my $attr (keys %CAPABILITIES)
+    {
+        next if defined $ATTRIBUTES{$attr};
+
+        LogError "capability attribute $attr not found on all attributes list";
+    }
+}
+
+sub CreateListOfAllAttributes
+{
+    # list will be used to find attribute metadata
+    # based on attribute string name
+
+    WriteSectionComment "List of all attributes";
+
+    my %ATTRIBUTES = GetHashOfAllAttributes();
 
     WriteHeader "extern const sai_attr_metadata_t* const sai_metadata_attr_sorted_by_id_name[];";
     WriteSource "const sai_attr_metadata_t* const sai_metadata_attr_sorted_by_id_name[] = {";
@@ -3097,15 +3250,23 @@ sub ExtractUnionsInfo
     }
 }
 
+sub LoadCapabilities
+{
+    %CAPABILITIES = %{ GetCapabilities() };
+}
+
 #
 # MAIN
 #
+#
 
-CheckHeadersStyle() if not defined $optionDisableStyleCheck;
+LoadCapabilities();
 
 ExtractApiToObjectMap();
 
 ExtractUnionsInfo();
+
+CheckHeadersStyle() if not defined $optionDisableStyleCheck;
 
 GetStructLists();
 
@@ -3142,6 +3303,8 @@ CreateApisQuery();
 CreateObjectInfo();
 
 CreateListOfAllAttributes();
+
+CheckCapabilities();
 
 CheckApiStructNames();
 
