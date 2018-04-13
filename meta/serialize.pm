@@ -51,23 +51,9 @@ sub CreateSerializeForEnums
 
         my $suffix = $1;
 
-#        my $template= <<_END_
-#
-#int sai_serialize_$suffix(
-#        _Out_ char *buffer,
-#        _In_ $key $suffix)
-#{
-#    return sai_serialize_enum(buffer, &sai_metadata_enum_$key, $suffix);
-#}
-#
-#_END_
-#;
-
         WriteHeader "extern int sai_serialize_$suffix(";
         WriteHeader "_Out_ char *buffer,";
         WriteHeader "_In_ $key $suffix);";
-
-#        WriteSource $template;
 
         WriteSource "int sai_serialize_$suffix(";
         WriteSource "_Out_ char *buffer,";
@@ -76,51 +62,6 @@ sub CreateSerializeForEnums
         WriteSource "return sai_serialize_enum(buffer, &sai_metadata_enum_$key, $suffix);";
         WriteSource "}";
     }
-}
-
-# XXX this serialize is wrong, it should go like normal struct since
-# its combination for easier readibility, we need 2 versions of this ?
-
-sub CreateSerializeMetaKey
-{
-    WriteSectionComment "Serialize meta key";
-
-    WriteHeader "extern int sai_serialize_object_meta_key(";
-    WriteHeader "_Out_ char *buffer,";
-    WriteHeader "_In_ const sai_object_meta_key_t *meta_key);";
-
-    WriteSource "int sai_serialize_object_meta_key(";
-    WriteSource "_Out_ char *buffer,";
-    WriteSource "_In_ const sai_object_meta_key_t *meta_key)";
-    WriteSource "{";
-
-    WriteSource "if (!sai_metadata_is_object_type_valid(meta_key->objecttype))";
-    WriteSource "{";
-    WriteSource "SAI_META_LOG_WARN(\"invalid object type (%d) in meta key\", meta_key->objecttype);";
-    WriteSource "return SAI_SERIALIZE_ERROR;";
-    WriteSource "}";
-
-    WriteSource "buffer += sai_serialize_object_type(buffer, meta_key->objecttype);";
-
-    WriteSource "*buffer++ = ':';";
-
-    WriteSource "switch (meta_key->objecttype)";
-    WriteSource "{";
-
-    my @rawnames = GetNonObjectIdStructNames();
-
-    for my $rawname (@rawnames)
-    {
-        my $OT = uc ("SAI_OBJECT_TYPE_$rawname");
-
-        WriteSource "case $OT:";
-        WriteSource "    return sai_serialize_$rawname(buffer, &meta_key->objectkey.key.$rawname);";
-    }
-
-    WriteSource "default:";
-    WriteSource "    return sai_serialize_object_id(buffer, meta_key->objectkey.key.object_id);";
-    WriteSource "}";
-    WriteSource "}";
 }
 
 #
@@ -163,11 +104,10 @@ sub IsMetadataStruct
     return 0;
 }
 
-
-# TODO for lists we need countOnly param, as separate version?
-# * @param[in] only_count Flag specifies whether on *_list_t only
-# * list count should be serialized, this is handy when serializing
-# * attributes when API returned #SAI_STATUS_BUFFER_OVERFLOW.
+# TODO for lists we need countOnly param, as separate version
+# @param[in] only_count Flag specifies whether on *_list_t only
+# list count should be serialized, this is handy when serializing
+# attributes when API returned #SAI_STATUS_BUFFER_OVERFLOW.
 
 # TODO on s32/s32_list in struct we could declare enum type
 
@@ -327,7 +267,13 @@ sub GetTypeInfoForSerialize
         $TypeInfo{deamp} = "&";
     }
 
-# ultimately - incoporate that
+#
+# NOTE: check for objects is not that simple here, since object_id or
+# object_list can have multiple different object types allowed depending on
+# attribute which is being serialized and it may be a hudge task to make this
+# check here and also it would require to pass meta param to each serialized
+# struct even if meta param is not required
+#
 #    elsif ($type =~ m/^sai_object_list_t$/)
 #    {
 #        $TypeInfo{amp} = "&";
@@ -354,12 +300,16 @@ sub GetTypeInfoForSerialize
     {
         $TypeInfo{needQuote} = 1;
     }
+    elsif ($type =~ m/^sai_attr_id_t$/)
+    {
+        $TypeInfo{needQuote} = 1;
+    }
     elsif ($type =~ m/^sai_object_id_t$/)
     {
         $TypeInfo{needQuote} = 1;
         $TypeInfo{deamp} = "&";
     }
-    elsif ($type =~ /^sai_(attribute)_t$/)
+    elsif ($type =~ /^sai_attribute_t$/)
     {
         $TypeInfo{amp} = "&";
         $TypeInfo{deamp} = "&";
@@ -387,20 +337,6 @@ sub GetTypeInfoForSerialize
             return undef;
         }
     }
-#    elsif ($type =~ /^union _sai_(\w+)_t::_(\w+)\s*/)
-#    {
-#        my $base = $1;
-#        my $suffix = $2;
-#
-#        $suffix = $1 if $suffix =~ /^_sai_(\w+)_t$/;
-#
-#        $TypeInfo{suffix} = $suffix;
-#
-#        $base =~ s/_/__/g;
-#
-#        $TypeInfo{nestedunion} = $structInfoEx{membersHash}->{$name}{union};
-#        $TypeInfo{amp} = "&";
-#    }
     elsif (defined $main::ALL_STRUCTS{$type} and $type =~ /^sai_(\w+)_t$/)
     {
         $TypeInfo{amp} = "&";
@@ -512,7 +448,7 @@ sub EmitSerializeFooter
     {
         my $name = $refStructInfoEx->{name};
 
-        # if it's union, we must check if we serialized something
+        # NOTE: if it's union, we must check if we serialized something
         # (not always true for acl mask)
 
         WriteSource "else";
@@ -758,6 +694,8 @@ sub IsTypeInfoValid
         return undef;
     }
 
+    # TODO if member is struct with extraparam passparam is required
+
     if (defined $refTypeInfo->{nestedunion})
     {
         LogError "nested union not supported $structName $name";
@@ -778,7 +716,9 @@ sub ProcessMembersForSerialize
 
     # don't create serialize methods for metadata structs
 
-    return if defined $structInfoEx{ismetadatastruct};
+    # TODO add tag "noserialize"
+
+    return if defined $structInfoEx{ismetadatastruct} and $structName ne "sai_object_meta_key_t";
 
     LogInfo "Creating serialzie for $structName";
 
@@ -831,7 +771,6 @@ sub CreateSerializeStructs
     {
         # user defined serialization
 
-        # TODO could be generated auto
         next if $struct eq "sai_ip_address_t";
         next if $struct eq "sai_ip_prefix_t";
         next if $struct eq "sai_attribute_t";
@@ -885,18 +824,17 @@ sub CreateSerializeEmitMacros
 }
 
 #
-# DESERIALIZE - Move to separate file, or join with serialize functions ?
+# DESERIALIZE - Move to separate file, or join with serialize functions
 #
 
 sub CreateDeserializeEmitMacros
 {
     WriteSectionComment "Expect macros";
 
-# TODO and where free memory ?
-# each expecte actually should free current object recursivly
-# since we know that memory was allocated with zero (except that user one provided
-# then we need to release memory, actually only in places where we have count
-# and not const count
+    # TODO each expect should free memory current object recursivly on exit
+    # since we know that memory was allocated with zero (except that user one
+    # provided then we need to release memory, actually only in places where we
+    # have count and not const count
 
     WriteSource "#define EXPECT(x) { \\";
     WriteSource "    if (strncmp(buf, x, sizeof(x) - 1) == 0) { buf += sizeof(x) - 1; } \\";
@@ -960,7 +898,7 @@ sub EmitDeserializeFunctionHeader
             my $end = (defined $last) ? ")" : ",";
             my $endheader = (defined $last) ? ");" : ",";
 
-# TODO pointers
+            # TODO pointers
 
             WriteSource "_Out_ $type $name$end";
             WriteHeader "_Out_ $type $name$endheader";
@@ -1131,8 +1069,6 @@ sub EmitDeserializeArray
 
     my ($countMemberName, $countType) = GetCounterNameAndType($refStructInfoEx, $refTypeInfo);
 
-# TODO allocate memory for array
-# TODO if it's const, clear that memory or lets use calloc ?
     if (not $countMemberName =~/^$NUMBER_REGEX$/)
     {
         WriteSource "if (strncmp(buf, \"null\", 4) == 0)";
@@ -1146,7 +1082,10 @@ sub EmitDeserializeArray
 
     WriteSource "{";
 
-# TODO if count is const, we dont need to allocate
+    #
+    # if count is const, we dont need to allocate memory since is a buffer like
+    # char[32] or something similar
+    #
 
     if (not $countMemberName =~/^$NUMBER_REGEX$/)
     {
@@ -1166,9 +1105,13 @@ sub EmitDeserializeArray
 
     if ($refTypeInfo->{isattribute})
     {
-#WriteSource "const sai_attr_metadata_t *meta =";
-#        WriteSource "    sai_metadata_get_attr_metadata($refTypeInfo->{objectType}, $refTypeInfo->{memberName}\[idx\].id);\n";
-#        $passParams = "meta, $passParams";
+        #
+        # NOTE: deserialize attribute not require metadata since we have user
+        # provided deserialize, and serialized attr id points to exact metadata
+        #
+        # WriteSource "const sai_attr_metadata_t *meta =";
+        # WriteSource "    sai_metadata_get_attr_metadata($refTypeInfo->{objectType}, $refTypeInfo->{memberName}\[idx\].id);\n";
+        # $passParams = "meta, $passParams";
     }
 
     my $amp = $refTypeInfo->{deamp};
@@ -1186,8 +1129,7 @@ sub EmitDeserializeArray
     WriteSource "}";
 }
 
-
-# TODO in case of failure we need to free memory that we allocated
+# TODO in case of failure we need to recursivly free memory that we allocated
 # to prevent memory leak
 
 sub ProcessMembersForDeserialize
@@ -1201,7 +1143,9 @@ sub ProcessMembersForDeserialize
 
     # don't create serialize methods for metadata structs
 
-    return if defined $structInfoEx{ismetadatastruct};
+    # TODO add tag "noserialize"
+
+    return if defined $structInfoEx{ismetadatastruct} and $structName ne "sai_object_meta_key_t";
 
     LogInfo "Creating deserialzie for $structName";
 
@@ -1254,7 +1198,6 @@ sub CreateDeserializeStructs
     {
         # user defined deserialization
 
-        # TODO could be generated auto
         next if $struct eq "sai_ip_address_t";
         next if $struct eq "sai_ip_prefix_t";
         next if $struct eq "sai_attribute_t";
@@ -1287,8 +1230,6 @@ sub CreateDeserializeForEnums
         WriteHeader "_In_ const char *buffer,";
         WriteHeader "_Out_ $key *$suffix);";
 
-#        WriteSource $template;
-
         WriteSource "int sai_deserialize_$suffix(";
         WriteSource "_In_ const char *buffer,";
         WriteSource "_Out_ $key *$suffix)";
@@ -1313,8 +1254,6 @@ sub CreateDeserializeUnions
 sub CreateSerializeMethods
 {
     CreateSerializeForEnums();
-
-    CreateSerializeMetaKey();
 
     CreateSerializeEmitMacros();
 
@@ -1365,20 +1304,20 @@ BEGIN
 #
 # TODO generate validate - object types and enums, also objecttype in union
 # passed from params must be forced to add, in sai_list32_oid - any add special
-# case?
+# case
 #
 # TODO generate transfer methods
 #
-# TODO since we need object type for validation on notification params, then
-# maybe we need notifications metadata? is object_id, allowed object types, is
-# attribute ?  is pointer? etc double pointer ?
+# TODO since we need object type for validation on notification params, then we
+# need notifications metadata, is object_id, allowed object types, is
+# attribute, is pointer, etc
 #
 # TODO generate serialize and deserialize versions with only count
 #
-# TODO force unions to serialize something + add exception of serialize for
+# TODO force unions to serialize something + add exception on serialize for
 # mask @flags serialize:allowempty
 #
 # TODO validate if count is not pointer when serializing counts
 #
-# TODO we could generate serialize methods for all functions acrually since we
-# have metadata now
+# TODO we could generate serialize methods for all api functions since we have
+# metadata now and final step would be to generate RPC client/server for SAI

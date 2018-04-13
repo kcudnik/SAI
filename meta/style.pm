@@ -843,7 +843,8 @@ sub CheckHeadersStyle
                     next if $word =~ /^($pattern)$/; # capital words
 
                     next if ($line =~/\@validonly\s+\w+->\w+/); # skip valionly code
-                    next if ($line =~/\@passparam\s+\w+->\w+/); # skip valionly code
+                    next if ($line =~/\@passparam\s+\w+/);      # skip passparam
+                    next if ($line =~/\@extraparam\s+\w+/);     # skip extraparam
                     next if ($line =~/\@param\[\w+\]\s+$word /); # skip word if word is param name
 
                     # look into good and bad words hash to speed things up

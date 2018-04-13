@@ -217,6 +217,8 @@ sub GetNonObjectIdStructNames
 
     my @headers = GetHeaderFiles();
 
+    # TODO must support experimental extensions
+
     for my $header (@headers)
     {
         my $data = ReadHeaderFile($header);

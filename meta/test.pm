@@ -455,7 +455,9 @@ sub CreateSerializeStructsTest
 
         my %structInfoEx = ExtractStructInfoEx($structname, "struct_");
 
-        next if defined $structInfoEx{ismetadatastruct};
+        # TODO add tag "noserialize"
+
+        next if defined $structInfoEx{ismetadatastruct} and $structname ne "sai_object_meta_key_t";
 
         # TODO for all structs with attributes, we should iterate via all attributes
         # defined in metadata

@@ -3259,7 +3259,7 @@ sub ExtractUnionsInfo
 
         my $name = $2;
 
-        # TODO force name to be in format sai_\w+_t and _sai .. sai
+        LogError "Name $name should be in format sai_\\w+_t" if not $name =~ /^sai_\w+_t$/;
 
         $SAI_UNIONS{$name}{file}    = $file;
         $SAI_UNIONS{$name}{name}    = $name;
@@ -3268,8 +3268,8 @@ sub ExtractUnionsInfo
 
         my %s = ExtractStructInfoEx($name, $file);
 
-        # TODO check validonly on each ember
-        # TODO extraparam on description main
+        # NOTE: validonly tag must exists on each member and is checked on serialize function
+        # NOTE: extraparam tag must on struct description and is checked on serialize function
     }
 }
 
