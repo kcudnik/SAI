@@ -409,7 +409,7 @@ sub CreateSerializeSingleStructTest
 
     WriteTest "    ret = sai_serialize_$structBase(buf, $passParams&$structBase);";
     WriteTest "    TEST_ASSERT_TRUE(ret > 0, \"failed to serialize $structName\");";
-    WriteTest "    printf(\"serialized $structName: %s\\n\", buf);\n";
+    WriteTest "    printf(\"serialized $structName: %s\\n\", buf);";
     WriteTest "  }";
 }
 
