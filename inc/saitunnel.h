@@ -699,6 +699,9 @@ typedef sai_status_t (*sai_get_tunnel_attribute_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_tunnel_stats_fn)(
         _In_ sai_object_id_t tunnel_id,
@@ -716,6 +719,9 @@ typedef sai_status_t (*sai_get_tunnel_stats_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_tunnel_stats_ext_fn)(
         _In_ sai_object_id_t tunnel_id,
@@ -732,6 +738,8 @@ typedef sai_status_t (*sai_get_tunnel_stats_ext_fn)(
  * @param[in] counter_ids Specifies the array of counter ids
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
  */
 typedef sai_status_t (*sai_clear_tunnel_stats_fn)(
         _In_ sai_object_id_t tunnel_id,

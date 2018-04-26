@@ -1764,18 +1764,21 @@ typedef enum _sai_switch_attr_t
 
 /**
  * @def SAI_KEY_WARM_BOOT_READ_FILE
+ *
  * The file to recover SAI/NPU state from
  */
 #define SAI_KEY_WARM_BOOT_READ_FILE               "SAI_WARM_BOOT_READ_FILE"
 
 /**
  * @def SAI_KEY_WARM_BOOT_WRITE_FILE
+ *
  * The file to write SAI/NPU state to
  */
 #define SAI_KEY_WARM_BOOT_WRITE_FILE              "SAI_WARM_BOOT_WRITE_FILE"
 
 /**
  * @def SAI_KEY_HW_PORT_PROFILE_ID_CONFIG_FILE
+ *
  * Vendor specific Configuration file for Hardware Port Profile ID parameters.
  * HW port profile ID can be used to set vendor specific port attributes based on
  * the transceiver type plugged in to the port

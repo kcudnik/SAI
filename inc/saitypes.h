@@ -1046,6 +1046,10 @@ typedef enum _sai_bulk_op_error_mode_t
  * @return #SAI_STATUS_SUCCESS on success when all objects are created or #SAI_STATUS_FAILURE when
  * any of the objects fails to create. When there is failure, Caller is expected to go through the
  * list of returned statuses to find out which fails and which succeeds.
+ *
+ * @count attr_count[object_count]
+ * @count attr_list[*attr_count]
+ * @objects attr_list - can't be defined here  :/
  */
 typedef sai_status_t (*sai_bulk_object_create_fn)(
         _In_ sai_object_id_t switch_id,

@@ -738,6 +738,8 @@ typedef sai_status_t (*sai_get_tam_snapshot_attribute_fn)(
  * @param[inout] statistics Statistics (allocated/provided)
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count statistics[number_of_counters]
  */
 typedef sai_status_t (*sai_get_tam_snapshot_stats_fn)(
         _In_ sai_object_id_t tam_snapshot_id,

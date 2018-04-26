@@ -46,6 +46,7 @@ our %SAI_UNIONS = ();
 our %METADATA = ();
 our %NON_OBJECT_ID_STRUCTS = ();
 our %NOTIFICATIONS = ();
+our %FUNCTIONS = ();
 our %OBJTOAPIMAP = ();
 our %APITOOBJMAP = ();
 our %ALL_STRUCTS = ();
@@ -582,6 +583,12 @@ sub ProcessTypedefSection
             next;
         }
 
+        if ($typedefname =~ /^sai_\w+_fn$/)
+        {
+            ProcessFunctions($memberdef, $typedefname);
+            next;
+        }
+
         next if not $typedeftype =~ /^enum/;
 
         if (not defined $SAI_ENUMS{$typedefname})
@@ -800,6 +807,225 @@ sub ProcessNotifications
     $N{baseName} = $1 if $typedefname =~ /^sai_(\w+_notification)_fn$/;
 
     $NOTIFICATIONS{$typedefname} = \%N;
+}
+
+sub ProcessFunctionCount
+{
+    my ($fnName, $tagValue, $previousTagValue) = @_;
+
+    my %count = ();
+
+    %count = %{ $previousTagValue } if defined $previousTagValue;
+
+    if (not $tagValue =~ /^(\w+)\[(\w+|\d+)\]$/g)
+    {
+        LogError "unable to parse count '$tagValue' on $fnName";
+        return undef;
+    }
+
+    my $pointerParam = $1;
+    my $countParam = $2;
+
+    $count{$pointerParam} = $countParam;
+
+    LogDebug "adding count $pointerParam\[$countParam\] on $fnName";
+
+    if ($pointerParam eq $countParam)
+    {
+        LogError "count '$pointerParam' can't point to itself in \@count on $fnName";
+        undef;
+    }
+
+    return \%count;
+}
+
+sub ProcessFunctionObjects
+{
+    #
+    # object type for attribute params are described in
+    # function descripnon, it would be easier
+    # if they would be described on params itself
+    #
+
+    my ($fnName, $tagValue, $previousTagValue) = @_;
+
+    my %objectTypes = ();
+
+    %objectTypes = %{ $previousTagValue } if defined $previousTagValue;
+
+    if (not $tagValue =~ /^(\w+)\s+(SAI_OBJECT_TYPE_\w+)$/g)
+    {
+        LogError "invalid object type tag value '$tagValue' in $fnName";
+        return undef;
+    }
+
+    $objectTypes{$1} = $2;
+
+    LogDebug "adding object type $2 on param $1 in $fnName";
+
+    return \%objectTypes;
+}
+
+my %FUNCTION_TAGS = (
+        "count"       , \&ProcessFunctionCount,
+        "objects"     , \&ProcessFunctionObjects,
+        );
+
+sub ProcessFunctionDescription
+{
+    my ($refFn, $desc) = @_;
+
+    $refFn->{desc} = $desc;
+
+    my $fnName = $refFn->{name};
+
+    $desc =~ s/@@/\n@@/g;
+
+    while ($desc =~ /@@(\w+)(.*)/g)
+    {
+        my $tag = $1;
+        my $value = Trim($2);
+
+        if (not defined $FUNCTION_TAGS{$tag})
+        {
+            LogError "unrecognized tag '$tag' on $fnName: $value";
+            next;
+        }
+
+        LogDebug "processing tag '$tag' on $fnName";
+
+        $refFn->{$tag} = $FUNCTION_TAGS{$tag}->($fnName, $value, $refFn->{$tag});
+    }
+}
+
+sub ProcessFunctions
+{
+    my ($member, $typedefname) = @_;
+
+    return if $typedefname =~ /metadata/;
+
+    # TODO if function is in format sai_(create|get|set|remove)_OBJECT_TYPE_fn
+    # then we could determine all parameters and no extra metadta would need to polute files
+
+    if ($typedefname =~ /^sai_(create|remove)_(\w+)_fn$/ or $typedefname =~ /^sai_(get|set)_(\w+)_attribute_fn$/)
+    {
+        # well known function for object type
+        return if defined $OBJTOAPIMAP{uc"SAI_OBJECT_TYPE_$2"};
+    }
+
+    return if $typedefname =~ /^(sai_bulk_object_create_fn|sai_bulk_object_remove_fn)$/;
+
+    my $args = $member->{argsstring}[0];
+
+    $args =~ s/[()]//g;
+
+    my @params = split/,/,$args;
+
+    my %N = (name => $typedefname);
+
+    my $desc = ExtractDescription($typedefname, $typedefname, $member->{detaileddescription}[0]);
+
+    ProcessFunctionDescription(\%N, $desc);
+
+    my @Members = ();
+
+    my $idx = 0;
+
+    my $ParamRegex = '^\s*_(In|Out|Inout)_ ((const )?\w+\s*?\*?\*?)\s*(\w+)$';
+
+    my @keys = ();
+
+    for my $param (@params)
+    {
+        # NOTE multple pointers or consts are not supported
+
+        if (not $param =~ /$ParamRegex/)
+        {
+            LogWarning "can't match param '$param' on $typedefname";
+            return
+        }
+
+        my %M = ();
+
+        my $inout = $1;
+        my $type = $2;
+        my $name = $4;
+
+        push @keys, $name;
+
+        if (defined $N{objects} and defined $N{objects}{$name})
+        {
+            my @objects = ();
+
+            push @objects, $N{objects}{$name};
+
+            $M{objects} = \@objects;
+        }
+
+        $M{inout}       = $inout;
+        $M{param}       = $param;
+        $M{type}        = $type;
+        $M{name}        = $name;
+        $M{idx}         = $idx;
+        $M{file}        = $member->{location}[0]->{file};
+
+        push @Members, \%M;
+
+        $N{membersHash}{ $name } = \%M;
+
+        $idx++;
+    }
+
+    # second pass is needed if count param is defined after data pointer
+
+    for my $param (@params)
+    {
+        next if (not $param =~ /$ParamRegex/);
+
+        my $type = $2;
+        my $name = $4;
+
+        next if not $type =~ /\*/;
+
+        if (not defined $N{count} and not defined $N{count}->{$name})
+        {
+            LogWarning "type '$type' is pointer, \@count is required, but missing on $typedefname";
+            next;
+        }
+
+        my $countParamName = $N{count}->{$name};
+
+        $N{membersHash}->{$name}{count} = $countParamName;
+
+        if ($countParamName =~ /^(\d+)$/)
+        {
+            # count is given explicit
+            next;
+        }
+
+        if (not defined $N{membersHash}->{$countParamName})
+        {
+            LogWarning "count param name '$countParamName' on $typedefname is not defined";
+            next;
+        }
+
+        my $countType = $N{membersHash}->{$countParamName}{type};
+
+        if (not $countType =~ /^(uint32_t|sai_size_t)$/)
+        {
+            LogWarning "param '$countParamName' used as count for param '$name' ($typedefname)";
+            LogWarning " is wrong type '$countType' allowed: (uint32_t|sai_size_t)";
+        }
+    }
+
+    $N{params} = \@params;
+    $N{keys} = \@keys;
+    $N{members} = \@Members;
+    $N{ismethod} = 1;
+
+    $N{baseName} = $1 if $typedefname =~ /^sai_(\w+)_fn$/;
+
+    $FUNCTIONS{$typedefname} = \%N;
 }
 
 sub ProcessXmlFile
@@ -3451,6 +3677,8 @@ CheckAttributeValueUnion();
 CreateNotificationStruct();
 
 CreateNotificationEnum();
+
+exit 1 if ($utils::warnings > 0 or $utils::errors > 0);
 
 CreateSerializeMethods();
 
