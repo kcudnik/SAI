@@ -839,6 +839,11 @@ sub ProcessFunctionCount
     return \%count;
 }
 
+sub ProcessFunctionIgnore
+{
+   return "true";
+}
+
 sub ProcessFunctionObjects
 {
     #
@@ -869,6 +874,7 @@ sub ProcessFunctionObjects
 my %FUNCTION_TAGS = (
         "count"       , \&ProcessFunctionCount,
         "objects"     , \&ProcessFunctionObjects,
+        "ignore"      , \&ProcessFunctionIgnore,
         );
 
 sub ProcessFunctionDescription
@@ -902,7 +908,7 @@ sub ProcessFunctions
 {
     my ($member, $typedefname) = @_;
 
-    return if $typedefname =~ /metadata/;
+    return if $typedefname =~ /metadata|sai_meta|sai_generic_/;
 
     # TODO if function is in format sai_(create|get|set|remove)_OBJECT_TYPE_fn
     # then we could determine all parameters and no extra metadta would need to polute files
@@ -912,8 +918,6 @@ sub ProcessFunctions
         # well known function for object type
         return if defined $OBJTOAPIMAP{uc"SAI_OBJECT_TYPE_$2"};
     }
-
-    return if $typedefname =~ /^(sai_bulk_object_create_fn|sai_bulk_object_remove_fn)$/;
 
     my $args = $member->{argsstring}[0];
 
@@ -927,11 +931,13 @@ sub ProcessFunctions
 
     ProcessFunctionDescription(\%N, $desc);
 
+    return if defined $N{ignore};
+
     my @Members = ();
 
     my $idx = 0;
 
-    my $ParamRegex = '^\s*_(In|Out|Inout)_ ((const )?\w+\s*?\*?\*?)\s*(\w+)$';
+    my $ParamRegex = '^\s*_(In|Out|Inout)_ ((const )?\w+\s*?\*?)\s*(\w+)$';
 
     my @keys = ();
 

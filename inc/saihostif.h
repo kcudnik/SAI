@@ -1084,6 +1084,8 @@ typedef enum _sai_hostif_packet_attr_t
 /**
  * @brief Hostif receive function
  *
+ * @ignore serialize
+ *
  * @param[in] hostif_id Host interface id
  * @param[inout] buffer_size Allocated buffer size [in], Actual packet size in bytes [out]
  * @param[out] buffer Packet buffer
@@ -1114,6 +1116,10 @@ typedef sai_status_t (*sai_recv_hostif_packet_fn)(
  * @param[in] attr_list Array of attributes
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count buffer[buffer_size]
+ * @count attr_list[buffer_size]
+ * @objects attr_list SAI_OBJECT_TYPE_HOSTIF_PACKET
  */
 typedef sai_status_t (*sai_send_hostif_packet_fn)(
         _In_ sai_object_id_t hostif_id,

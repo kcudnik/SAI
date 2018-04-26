@@ -729,6 +729,8 @@ typedef sai_status_t (*sai_get_tam_snapshot_attribute_fn)(
 /**
  * @brief Obtain the values for all statistics from a snapshot.
  *
+ * @ignore serialize
+ *
  * Attribute list must supply sufficient memory for statistics
  * as specified for the snapshot object, which may be all statistics
  * supported by the associated tam object.

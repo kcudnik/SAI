@@ -375,6 +375,9 @@ typedef sai_status_t (*sai_get_fdb_entry_attribute_fn)(
  * @param[in] attr_list Array of attributes
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count attr_list[attr_count]
+ * @objects attr_list SAI_OBJECT_TYPE_FDB_FLUSH
  */
 typedef sai_status_t (*sai_flush_fdb_entries_fn)(
         _In_ sai_object_id_t switch_id,

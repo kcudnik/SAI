@@ -200,6 +200,8 @@ typedef sai_status_t (*sai_get_route_entry_attribute_fn)(
 /**
  * @brief Bulk create route entry
  *
+ * @ignore serialize
+ *
  * @param[in] object_count Number of objects to create
  * @param[in] route_entry List of object to create
  * @param[in] attr_count List of attr_count. Caller passes the number
@@ -225,6 +227,8 @@ typedef sai_status_t (*sai_bulk_create_route_entry_fn)(
 /**
  * @brief Bulk remove route entry
  *
+ * @ignore serialize
+ *
  * @param[in] object_count Number of objects to remove
  * @param[in] route_entry List of objects to remove
  * @param[in] mode Bulk operation error handling mode.
@@ -244,6 +248,8 @@ typedef sai_status_t (*sai_bulk_remove_route_entry_fn)(
 
 /**
  * @brief Bulk set attribute on route entry
+ *
+ * @ignore serialize
  *
  * @param[in] object_count Number of objects to set attribute
  * @param[in] route_entry List of objects to set attribute
@@ -266,6 +272,8 @@ typedef sai_status_t (*sai_bulk_set_route_entry_attribute_fn)(
 
 /**
  * @brief Bulk get attribute on route entry
+ *
+ * @ignore serialize
  *
  * @param[in] object_count Number of objects to set attribute
  * @param[in] route_entry List of objects to set attribute

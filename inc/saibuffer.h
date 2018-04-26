@@ -184,6 +184,9 @@ typedef sai_status_t (*sai_get_ingress_priority_group_attribute_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_ingress_priority_group_stats_fn)(
         _In_ sai_object_id_t ingress_priority_group_id,
@@ -201,6 +204,9 @@ typedef sai_status_t (*sai_get_ingress_priority_group_stats_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_ingress_priority_group_stats_ext_fn)(
         _In_ sai_object_id_t ingress_priority_group_id,
@@ -217,6 +223,8 @@ typedef sai_status_t (*sai_get_ingress_priority_group_stats_ext_fn)(
  * @param[in] counter_ids Specifies the array of counter ids
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
  */
 typedef sai_status_t (*sai_clear_ingress_priority_group_stats_fn)(
         _In_ sai_object_id_t ingress_priority_group_id,
@@ -463,6 +471,9 @@ typedef sai_status_t (*sai_get_buffer_pool_attribute_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_buffer_pool_stats_fn)(
         _In_ sai_object_id_t buffer_pool_id,
@@ -480,6 +491,9 @@ typedef sai_status_t (*sai_get_buffer_pool_stats_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_buffer_pool_stats_ext_fn)(
         _In_ sai_object_id_t buffer_pool_id,
@@ -496,6 +510,8 @@ typedef sai_status_t (*sai_get_buffer_pool_stats_ext_fn)(
  * @param[in] counter_ids Specifies the array of counter ids
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
  */
 typedef sai_status_t (*sai_clear_buffer_pool_stats_fn)(
         _In_ sai_object_id_t buffer_pool_id,

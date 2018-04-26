@@ -1671,6 +1671,9 @@ typedef sai_status_t (*sai_get_port_attribute_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_port_stats_fn)(
         _In_ sai_object_id_t port_id,
@@ -1688,6 +1691,9 @@ typedef sai_status_t (*sai_get_port_stats_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_port_stats_ext_fn)(
         _In_ sai_object_id_t port_id,
@@ -1704,6 +1710,8 @@ typedef sai_status_t (*sai_get_port_stats_ext_fn)(
  * @param[in] counter_ids Specifies the array of counter ids
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
  */
 typedef sai_status_t (*sai_clear_port_stats_fn)(
         _In_ sai_object_id_t port_id,
@@ -1927,6 +1935,9 @@ typedef sai_status_t (*sai_get_port_pool_attribute_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_port_pool_stats_fn)(
         _In_ sai_object_id_t port_pool_id,
@@ -1944,6 +1955,9 @@ typedef sai_status_t (*sai_get_port_pool_stats_fn)(
  * @param[out] counters Array of resulting counter values.
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
+ * @count counters[number_of_counters]
  */
 typedef sai_status_t (*sai_get_port_pool_stats_ext_fn)(
         _In_ sai_object_id_t port_pool_id,
@@ -1960,6 +1974,8 @@ typedef sai_status_t (*sai_get_port_pool_stats_ext_fn)(
  * @param[in] counter_ids Specifies the array of counter ids
  *
  * @return #SAI_STATUS_SUCCESS on success, failure status code on error
+ *
+ * @count counter_ids[number_of_counters]
  */
 typedef sai_status_t (*sai_clear_port_pool_stats_fn)(
         _In_ sai_object_id_t port_pool_id,
