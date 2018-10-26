@@ -1,0 +1,40 @@
+# we could also generate deserialize and call notifation where notification
+# struct would be passed and notification would be called and then free itself
+# (but on exception there will be memory leak)
+#
+# TODO generate notifications metadata, if param is object id then objects must
+# be specified for validation wheter notification returned valid object, and
+# each struct that is using object id should have @objects on object id
+# members, then we should generate all struct infos to get all functions for
+# oid extraction etc
+#
+# TODO auto generate tests for serialize, and push params too
+#
+#
+# - TODO validate union name _sai.._t -> sai_.._t
+# - TODO validate if "validonly" param is not validonly struct/union and in union
+# validonly must be param not any union member
+# - object_id - inside objectg key -> last and must be last (for other use "else if")
+#
+# - support enum_list 32 - un unions and acl capability list
+#   force to add @type wheter enum or int32 / int32_list for those types
+#
+# - generate deserialize
+# - generate validate - object types and enums, also objecttype in union passed from params
+#   must be forced to add, in sai_list32_oid - any add special case?
+# - generate transfer
+#
+# - since we need object type for validation on notification params, then maybe we
+# need notifications metadata? is object_id, allowed object types, is attribute ?
+# is pointer? etc double pointer ?
+#
+# - generate versions with only count
+#
+# - force unions to serialize something + add exception of serialize for mask @flags serialize:allowempty
+#
+#   TODO figureout object_key_ object_id condition
+#   if we would use metadata there, we could use ->is
+#
+#   validate if count is not pointer
+#
+#   TODO in style -check if union/struct ends with _sai.\\w+_t and sai_\w_t
