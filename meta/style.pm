@@ -431,7 +431,7 @@ sub CheckFunctionNaming
     my $typename = $1;
     my $name = $2;
 
-    if ($name =~ /^(recv_hostif_packet|send_hostif_packet|flush_fdb_entries|remove_all_neighbor_entries|profile_get_value|profile_get_next_value|switch_register_read|switch_register_write)$/)
+    if ($name =~ /^(recv_hostif_packet|send_hostif_packet|flush_fdb_entries|remove_all_neighbor_entries|profile_get_value|profile_get_next_value)$/)
     {
         # ok
     }
@@ -461,8 +461,7 @@ sub CheckFunctionNaming
     if (not $name =~ /^(create|remove|get|set)_\w+?(_attribute)?$|^clear_\w+_stats$/)
     {
         # exceptions
-        return if $name =~ /^(recv_hostif_packet|send_hostif_packet|flush_fdb_entries|profile_get_value|profile_get_next_value|switch_register_read|switch_register_write)$/;
-
+        return if $name =~ /^(recv_hostif_packet|send_hostif_packet|flush_fdb_entries|profile_get_value|profile_get_next_value)$/;
 
         LogWarning "function not follow convention in $header:$n:$line";
     }
@@ -802,8 +801,7 @@ sub CheckHeadersStyle
             {
                 my $param = $1;
 
-                my $pattern = '^(attr_count|object_count|number_of_counters|count|u32|device_addr|start_reg_addr|number_of_registers|reg_val)$';
-
+                my $pattern = '^(attr_count|object_count|number_of_counters|count|u32)$';
 
                 if (not $param =~ /$pattern/)
                 {
