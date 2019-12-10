@@ -876,7 +876,11 @@ sub CheckHeadersStyle
             {
                 my $defname = $1;
 
-                if (not $defname =~ /^(SAI_|__SAI)/)
+                if ($defname =~ /sai_\w+_notification_t/)
+                {
+                    # ok, define for notifcation backward compatibility
+                }
+                elsif (not $defname =~ /^(SAI_|__SAI)/)
                 {
                     LogWarning "define should start with SAI_ or __SAI: $header:$n:$line";
                 }
@@ -884,12 +888,12 @@ sub CheckHeadersStyle
 
             if ($line =~ /\s+$/)
             {
-                LogWarning "line ends in whitespace $header $n: $line";
+                LogWarning "line ends in whitespace $header $n: '$line'";
             }
 
             if ($line =~ /[^\x20-\x7e]/)
             {
-                LogWarning "line contains non ascii characters $header $n: $line";
+                LogWarning "line contains non ascii characters $header $n: '$line'";
             }
 
             if ($line =~ /typedef .+?\(\s*\*\s*(\w+)\s*\)/)

@@ -3502,6 +3502,40 @@ sub CreateNotificationEnum
     CreateEnumHelperMethod("sai_switch_notification_type_t");
 }
 
+sub CheckNotificationDataStructs
+{
+    #
+    # check if all notification typedef structs ends on _notification_data_t
+    #
+
+    # print Dumper(%NOTIFICATIONS);
+
+
+    for my $name (sort keys %NOTIFICATIONS)
+    {
+        next if not $name =~ /^sai_(\w+)_notification_fn$/;
+
+        my $short = $1;
+
+        for my $mem (sort keys %{ $NOTIFICATIONS{$name}{membersHash} })
+        {
+            my $fullType = $NOTIFICATIONS{$name}{membersHash}{$mem}{type};
+
+            next if not $fullType =~ /\b(sai_\w+_t)\b\s*\*/;
+
+            my $type = $1;
+
+            next if not defined $ALL_STRUCTS{$type};
+
+            next if $type =~ /^sai_${short}_notification_data_t$/;
+
+            next if $type eq "sai_attribute_t";  # not notification data
+
+            LogWarning "$name param '$mem' type is '$type' but must be 'sai_${short}_notification_data_t'";
+        }
+    }
+}
+
 sub CreateSwitchNotificationAttributesList
 {
     #
@@ -3835,6 +3869,8 @@ CheckObjectTypeStatitics();
 CreateNotificationStruct();
 
 CreateNotificationEnum();
+
+CheckNotificationDataStructs();
 
 CreateSwitchNotificationAttributesList();
 
