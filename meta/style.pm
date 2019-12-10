@@ -876,7 +876,7 @@ sub CheckHeadersStyle
             {
                 my $defname = $1;
 
-                if ($defname =~ /sai_\w+_notification_t/)
+                if ($defname =~ /sai_\w+_notification_(data_)?t/)
                 {
                     # ok, define for notifcation backward compatibility
                 }

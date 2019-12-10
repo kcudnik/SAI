@@ -71,7 +71,7 @@ typedef enum _sai_port_oper_status_t
 /**
  * @brief Defines the operational status of the port
  */
-typedef struct _sai_port_oper_status_notification_data_t
+typedef struct _sai_port_state_change_notification_data_t
 {
     /**
      * @brief Port id.
@@ -83,9 +83,10 @@ typedef struct _sai_port_oper_status_notification_data_t
     /** Port operational status */
     sai_port_oper_status_t port_state;
 
-} sai_port_oper_status_notification_data_t;
+} sai_port_state_change_notification_data_t;
 
-#define sai_port_oper_status_notification_t sai_port_oper_status_notification_data_t
+/** For backward compatibility. */
+#define sai_port_oper_status_notification_t sai_port_state_change_notification_data_t
 
 /**
  * @brief Attribute data for #SAI_PORT_ATTR_GLOBAL_FLOW_CONTROL_MODE
@@ -1998,7 +1999,7 @@ typedef sai_status_t (*sai_clear_port_all_stats_fn)(
  */
 typedef void (*sai_port_state_change_notification_fn)(
         _In_ uint32_t count,
-        _In_ const sai_port_oper_status_notification_t *data);
+        _In_ const sai_port_state_change_notification_data_t *data);
 
 /**
  * @brief List of Port buffer pool attributes

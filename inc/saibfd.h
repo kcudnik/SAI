@@ -113,7 +113,7 @@ typedef enum _sai_bfd_session_state_t
 /**
  * @brief Defines the operational status of the BFD session
  */
-typedef struct _sai_bfd_session_state_notification_data_t
+typedef struct _sai_bfd_session_state_change_notification_data_t
 {
     /**
      * @brief BFD Session id
@@ -125,9 +125,9 @@ typedef struct _sai_bfd_session_state_notification_data_t
     /** BFD session state */
     sai_bfd_session_state_t session_state;
 
-} sai_bfd_session_state_notification_data_t;
+} sai_bfd_session_state_change_notification_data_t;
 
-#define sai_bfd_session_state_notification_t sai_bfd_session_state_notification_data_t
+#define sai_bfd_session_state_notification_t sai_bfd_session_state_change_notification_data_t
 
 /**
  * @brief SAI attributes for BFD session
@@ -634,7 +634,7 @@ typedef sai_status_t (*sai_clear_bfd_session_stats_fn)(
  */
 typedef void (*sai_bfd_session_state_change_notification_fn)(
         _In_ uint32_t count,
-        _In_ const sai_bfd_session_state_notification_data_t *data);
+        _In_ const sai_bfd_session_state_change_notification_data_t *data);
 
 /**
  * @brief BFD method table retrieved with sai_api_query()

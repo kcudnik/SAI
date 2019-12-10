@@ -332,7 +332,7 @@ typedef enum _sai_queue_pfc_deadlock_event_type_t
 /**
  * @brief Notification data format received from SAI queue deadlock event callback
  */
-typedef struct _sai_queue_deadlock_notification_data_t
+typedef struct _sai_queue_pfc_deadlock_notification_data_t
 {
     /**
      * @brief Queue id
@@ -355,7 +355,10 @@ typedef struct _sai_queue_deadlock_notification_data_t
      */
     bool app_managed_recovery;
 
-} sai_queue_deadlock_notification_data_t;
+} sai_queue_pfc_deadlock_notification_data_t;
+
+/** For backward compatibility. */
+#define sai_queue_deadlock_notification_data_t sai_queue_pfc_deadlock_notification_data_t
 
 /**
  * @brief Create queue
@@ -469,7 +472,7 @@ typedef sai_status_t (*sai_clear_queue_stats_fn)(
  */
 typedef void (*sai_queue_pfc_deadlock_notification_fn)(
         _In_ uint32_t count,
-        _In_ const sai_queue_deadlock_notification_data_t *data);
+        _In_ const sai_queue_pfc_deadlock_notification_data_t *data);
 
 /**
  * @brief QOS methods table retrieved with sai_api_query()
