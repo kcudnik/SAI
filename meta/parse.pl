@@ -2649,7 +2649,11 @@ sub CreateApisStruct
 
         $api = lc($1);
 
-        next if $api =~ /unspecified/;
+        if ($api =~ /unspecified/)
+        {
+            WriteHeader "void* unspecified_api;";
+            next;
+        }
 
         WriteHeader "sai_${api}_api_t* ${api}_api;";
     }

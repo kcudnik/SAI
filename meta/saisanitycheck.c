@@ -4447,7 +4447,7 @@ void check_get_attr_metadata()
 
 void check_acl_user_defined_field()
 {
-    SAI_META_LOG_ENTER();
+    META_LOG_ENTER();
 
     META_ASSERT_TRUE(SAI_ACL_USER_DEFINED_FIELD_ATTR_ID_RANGE > 0, "should be positive");
 
@@ -4460,14 +4460,14 @@ void check_acl_user_defined_field()
 
 void check_label_size()
 {
-    SAI_META_LOG_ENTER();
+    META_LOG_ENTER();
 
     META_ASSERT_TRUE(sizeof(sai_label_id_t) == sizeof(uint32_t), "label is expected to be 32 bit");
 }
 
 void check_switch_notify_list()
 {
-    SAI_META_LOG_ENTER();
+    META_LOG_ENTER();
 
     size_t i;
 
@@ -4483,7 +4483,7 @@ void check_switch_notify_list()
 
 void check_defines()
 {
-    SAI_META_LOG_ENTER();
+    META_LOG_ENTER();
 
     /*
      * Check if defines are equal to their static values.
@@ -4493,9 +4493,16 @@ void check_defines()
     META_ASSERT_TRUE(SAI_METADATA_SWITCH_NOTIFY_ATTR_COUNT > 3, "there must be at least 3 notifications defined");
 }
 
+void check_apis()
+{
+    META_LOG_ENTER();
+
+    META_ASSERT_TRUE((sizeof(sai_apis_t)/sizeof(void*)) == SAI_API_EXTENSIONS_MAX, "apis struct must have same number of members as sai_api_t + extensions");
+}
+
 void check_object_type_attributes()
 {
-    SAI_META_LOG_ENTER();
+    META_LOG_ENTER();
 
     size_t i = 0;
 
@@ -4523,7 +4530,7 @@ int main(int argc, char **argv)
 {
     debug = (argc > 1);
 
-    SAI_META_LOG_ENTER();
+    META_LOG_ENTER();
 
     check_all_enums_name_pointers();
     check_all_enums_values();
@@ -4555,6 +4562,7 @@ int main(int argc, char **argv)
     check_switch_notify_list();
     check_defines();
     check_all_object_infos();
+    check_apis();
 
     SAI_META_LOG_DEBUG("log test");
 
