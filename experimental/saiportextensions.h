@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018 Microsoft Open Technologies, Inc.
+ * Copyright (c) 2014 Microsoft Open Technologies, Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License"); you may
  *    not use this file except in compliance with the License. You may obtain
@@ -17,39 +17,39 @@
  *    assistance with these files: Intel Corporation, Mellanox Technologies Ltd,
  *    Dell Products, L.P., Facebook, Inc., Marvell International Ltd.
  *
- * @file    saiextensions.h
+ * @file    saiportextensions.h
  *
- * @brief   This module defines extensions of the Switch Abstraction Interface (SAI)
+ * @brief   This module defines SAI Port interface
  */
 
-#ifndef __SAIEXTENSIONS_H_
-#define __SAIEXTENSIONS_H_
+#if !defined (__SAIPORTEXTENSIONS_H_)
+#define __SAIPORTEXTENSIONS_H_
 
 #include <saitypes.h>
-
-/* existing enum extensions */
-#include "saitypesextensions.h"
-#include "saiswitchextensions.h"
-#include "saiportextensions.h"
-
-/* new experimental object type includes */
-#include "saiexperimentalbmtor.h"
+#include <saiport.h>
 
 /**
- * @brief Extensions to SAI APIs
+ * @defgroup SAIPORTEXTENSIONS SAI - Port specific API definitions
+ *
+ * @{
+ */
+
+/**
+ * @brief Attribute data for #SAI_PORT_ATTR_TYPE
  *
  * @flags
  */
-typedef enum _sai_api_extensions_t
+typedef enum _sai_port_type_extensions_t
 {
-    SAI_API_EXTENSIONS_RANGE_START = SAI_API_MAX,
+    SAI_PORT_TYPE_EXTENSIONS_RANGE_START = SAI_PORT_TYPE_CPU + 1,
 
-    SAI_API_BMTOR = SAI_API_EXTENSIONS_RANGE_START,
+    SAI_PORT_TYPE_CUSTOM1 = SAI_PORT_TYPE_EXTENSIONS_RANGE_START,
 
-    /* Add new experimental APIs above this line */
+    SAI_PORT_TYPE_EXTENSIONS_RANGE_END,
 
-    SAI_API_EXTENSIONS_RANGE_START_END
+} sai_port_type_extensions_t;
 
-} sai_api_extensions_t;
-
-#endif /* __SAIEXTENSIONS_H_ */
+/**
+ * @}
+ */
+#endif /** __SAIPORTEXTENSIONS_H_ */
