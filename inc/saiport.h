@@ -44,6 +44,8 @@ typedef enum _sai_port_type_t
     /** CPU Port */
     SAI_PORT_TYPE_CPU,
 
+    SAI_PORT_TYPE_MAX,
+
 } sai_port_type_t;
 
 /**
