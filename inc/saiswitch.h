@@ -1954,8 +1954,9 @@ typedef enum _sai_switch_attr_t
      * Use sai_switch_register_read_fn as read function.
      *
      * @type sai_pointer_t sai_switch_register_read_fn
-     * @flags MANDATORY_ON_CREATE | CREATE_AND_SET
-     * @condition SAI_SWITCH_ATTR_TYPE == SAI_SWITCH_TYPE_PHY
+     * @flags CREATE_AND_SET
+     * @default NULL
+     * @validonly SAI_SWITCH_ATTR_TYPE == SAI_SWITCH_TYPE_PHY
      */
     SAI_SWITCH_ATTR_REGISTER_READ,
 
@@ -1966,8 +1967,9 @@ typedef enum _sai_switch_attr_t
      * Use sai_switch_register_write_fn as write function.
      *
      * @type sai_pointer_t sai_switch_register_write_fn
-     * @flags MANDATORY_ON_CREATE | CREATE_AND_SET
-     * @condition SAI_SWITCH_ATTR_TYPE == SAI_SWITCH_TYPE_PHY
+     * @flags CREATE_AND_SET
+     * @default NULL
+     * @validonly SAI_SWITCH_ATTR_TYPE == SAI_SWITCH_TYPE_PHY
      */
     SAI_SWITCH_ATTR_REGISTER_WRITE,
 
