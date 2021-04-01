@@ -31,7 +31,7 @@ do
 
         git co $COMMIT 2>/dev/null
 
-        cat inc/*.h experimental/*.h | perl -ne 'print "$1\n" if /^\s+(SAI_\w+)/' | grep -vP "_(START|END|RANGE_BASE)$" | head -n 5000 | \
+        cat inc/*.h experimental/*.h | perl -ne 'print "$1\n" if /^\s+(SAI_\w+)/' | grep -vP "_(START|END|RANGE_BASE)$" | head -n 5000 | sort | \
             perl ../ver.pl "$tag" "$COMMIT" > ../ver_meta_$COMMIT.c
 
         gcc -ansi -Wall -O2 -c ../ver_meta_$COMMIT.c -I inc -I experimental -I .. -o ../ver_meta_$COMMIT.o
