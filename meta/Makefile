@@ -73,13 +73,20 @@ XMLDEPS = $(wildcard xml/*.xml)
 
 OBJ = saimetadata.o saimetadatautils.o saiserialize.o
 
+ifneq (, $(shell which swig))
+SWIGCPP = saiswig.cpp
+endif
+
 SYMBOLS = $(OBJ:=.symbols)
 
-all: toolsversions saisanitycheck saimetadatatest saiserializetest saidepgraph.svg $(SYMBOLS)
+all: toolsversions saisanitycheck saimetadatatest saiserializetest saidepgraph.svg $(SYMBOLS) $(SWIGCPP)
 	./checkheaders.pl ../inc ../inc
 	./saimetadatatest >/dev/null
 	./saiserializetest >/dev/null
 	./saisanitycheck
+
+saiswig.cpp: saiswig.i
+	swig -w302 -c++ -python -DSWIGWORDSIZE64 -I../inc -I../experimental -module saiswig -o saiswig.cpp saiswig.i
 
 toolsversions:
 	@make -v | grep -i make
@@ -98,7 +105,7 @@ xml: $(DEPS) Doxyfile $(CONSTHEADERS)
 
 EXTRA = acronyms.txt aspell.en.pws *.pm *.cap
 
-saimetadatatest.c saimetadata.c saimetadata.h: xml $(XMLDEPS) parse.pl $(CONSTHEADERS) $(EXTRA)
+saimetadatatest.c saimetadata.c saimetadata.h saiswig.i: xml $(XMLDEPS) parse.pl $(CONSTHEADERS) $(EXTRA)
 	perl -I. parse.pl
 
 HEADERS = saimetadata.h $(CONSTHEADERS)
@@ -134,6 +141,6 @@ saidepgraph.svg: saidepgraph.gv
 
 clean:
 	rm -f *.o *~ .*~ *.tmp .*.swp .*.swo *.bak sai*.gv sai*.svg *.o.symbols
-	rm -f saimetadata.h saimetadata.c saimetadatatest.c
+	rm -f saimetadata.h saimetadata.c saimetadatatest.c saiswig.i saiswig.cpp saiswig.py
 	rm -f saisanitycheck saimetadatatest saiserializetest saidepgraphgen
 	rm -rf xml html dist
