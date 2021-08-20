@@ -96,7 +96,7 @@ typedef enum _sai_l2mc_entry_attr_t
     /**
      * @brief L2MC entry output group id
      *
-     * This attribute only takes effect when ATTR_PACKET_ACTION is set to
+     * This attribute only takes effect when SAI_L2MC_ENTRY_ATTR_PACKET_ACTION is set to
      * FORWARD. If the group has no member, packets will be discarded.
      *
      * @type sai_object_id_t

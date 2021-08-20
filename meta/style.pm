@@ -1100,6 +1100,23 @@ sub CheckHeadersStyle
                 }
             }
 
+            my @items = split/[^a-zA-Z0-9_]/,$line;
+
+            for my $item(@items)
+            {
+                next if not $item =~ /^[A-Z]\w+_/;
+
+                next if $item =~ /^SAI_/;
+
+                # some exceptions
+                next if $item =~ /^(MANDATORY_ON_CREATE|CREATE_AND_SET|READ_ONLY|CREATE_ONLY|MANDATORY_ON_SEND)$/;
+                next if $item =~ /^(READ_WRITE|COPY_CANCEL|REPORT_ALL_PACKETS|OBJECT_ID)$/;
+                next if $item =~ /^(MPLS_EXP|PATH_MAX|MAX_PATH)$/;
+                next if $item =~ /^(XON_OFFSET_TH|XOFF_TH|XON_TH)$/;
+
+                LogWarning "$line: $item";
+            }
+
             if ($line =~ /typedef\s*(enum|struct|union).*{/)
             {
                 LogWarning "move '{' to new line in typedef $header $n:$line";

@@ -1313,7 +1313,7 @@ typedef enum _sai_acl_table_attr_t
     SAI_ACL_TABLE_ATTR_FIELD_BTH_OPCODE = SAI_ACL_TABLE_ATTR_FIELD_START + 0x4d,
 
     /**
-     * @brief Ack_extented Transport Header syndrome field
+     * @brief Ack Extended Transport Header syndrome field
      *
      * @type bool
      * @flags CREATE_ONLY
@@ -2304,7 +2304,7 @@ typedef enum _sai_acl_entry_attr_t
     SAI_ACL_ENTRY_ATTR_FIELD_BTH_OPCODE = SAI_ACL_ENTRY_ATTR_FIELD_START + 0x4d,
 
     /**
-     * @brief Ack_extented Transport Header syndrome field
+     * @brief Ack Extended Transport Header syndrome field
      *
      * @type sai_acl_field_data_t sai_uint8_t
      * @flags CREATE_AND_SET
