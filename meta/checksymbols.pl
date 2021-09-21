@@ -40,7 +40,7 @@ for my $line (<STDIN>)
 
     next if $name =~ /^(sai_(metadata|(de)?serialize)_\w+|__func__|__gcov_)/ and $type =~ /[rRBTtD]/;
     next if $name =~ /^__gcov[_0]/ and $type =~ /[db]/;
-    next if $name =~ /_GLOBAL__sub_[ID]_\d\d\d\d\d_\d_sai_(metadata|serialize)_/;
+    next if $name =~ /_sub_[ID]_\d\d\d\d\d_\d/;
 
     # metadata log level is exception since it can be changed
 
