@@ -62,6 +62,11 @@ WARNINGS = \
 	-Wvariadic-macros \
 	-Wwrite-strings
 
+CODE_COVERAGE_CFLAGS = -O0 -g -fprofile-arcs -ftest-coverage
+CODE_COVERAGE_CPPFLAGS = -DNDEBUG
+CODE_COVERAGE_CXXFLAGS = -O0 -g -fprofile-arcs -ftest-coverage
+CODE_COVERAGE_LIBS = -lgcov
+
 BINS = doxygen perl dot
 
 $(foreach bin,$(BINS),$(if $(shell which $(bin)),,$(error "Missing $(bin) in PATH")))
@@ -109,22 +114,22 @@ saimetadatatest.c saimetadata.c saimetadata.h: xml $(XMLDEPS) parse.pl $(CONSTHE
 HEADERS = saimetadata.h $(CONSTHEADERS)
 
 %.o: %.c $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_COVERAGE_CPPFLAGS) $(CODE_COVERAGE_CFLAGS)
 
 %.o: %.cpp $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(CODE_COVERAGE_CPPFLAGS) $(CODE_COVERAGE_CXXFLAGS)
 
 saisanitycheck: saisanitycheck.o $(OBJ)
-	$(CC) -o $@ $^
+	$(CC) -o $@ $^ $(CODE_COVERAGE_LIBS)
 
 saimetadatatest: saimetadatatest.o $(OBJ)
-	$(CC) -o $@ $^
+	$(CC) -o $@ $^ $(CODE_COVERAGE_LIBS)
 
 saiserializetest: saiserializetest.o $(OBJ)
-	$(CC) -o $@ $^
+	$(CC) -o $@ $^ $(CODE_COVERAGE_LIBS)
 
 saidepgraphgen: saidepgraphgen.o $(OBJ)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ $(CODE_COVERAGE_LIBS)
 
 %.o.symbols: %.o
 	nm $^ | ./checksymbols.pl

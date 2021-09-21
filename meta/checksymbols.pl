@@ -33,12 +33,14 @@ for my $line (<STDIN>)
 {
     chomp $line;
 
-    next if not $line =~ /\w+ (\w+) (\w+)/;
+    next if not $line =~ /^\w+ (\w+) (\w+)/;
 
     my $type = $1;
     my $name = $2;
 
-    next if $name =~ /^(sai_(metadata|(de)?serialize)_\w+|__func__)/ and $type =~ /[rRBTtD]/;
+    next if $name =~ /^(sai_(metadata|(de)?serialize)_\w+|__func__|__gcov_)/ and $type =~ /[rRBTtD]/;
+    next if $name =~ /^__gcov[_0]/ and $type =~ /[db]/;
+    next if $name =~ /_GLOBAL__sub_[ID]_\d\d\d\d\d_\d_sai_(metadata|serialize)_/;
 
     # metadata log level is exception since it can be changed
 
