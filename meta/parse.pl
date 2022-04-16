@@ -1244,7 +1244,10 @@ sub ProcessSingleEnum
     my $ot = ($typedef =~ /^sai_(\w+)_attr_t/) ? uc("SAI_OBJECT_TYPE_$1") : "SAI_OBJECT_TYPE_NULL";
     #my $ot = ($typedef =~ /^sai_(\w+)_attr_(extensions_)?t/) ? uc("SAI_OBJECT_TYPE_$1") : "SAI_OBJECT_TYPE_NULL";
 
+    my $isextension = ($typedef =~ /_extensions_t$/) ? "true" : "false";
+
     WriteSource ".objecttype        = (sai_object_type_t)$ot,";
+    WriteSource ".isextension       = $isextension";
     WriteSource "};";
 
     return $count;

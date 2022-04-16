@@ -832,6 +832,11 @@ typedef struct _sai_enum_metadata_t
      */
     sai_object_type_t               objecttype;
 
+    /**
+     * @brief Indicates whether enum is extension enum.
+     */
+    bool                            isextension;
+
 } sai_enum_metadata_t;
 
 /**

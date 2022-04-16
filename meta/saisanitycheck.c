@@ -5320,6 +5320,32 @@ void check_enum_flags_type(
     META_ASSERT_FAIL("enum %s flags type %d not supported yet, FIXME", emd->name, emd->flagstype);
 }
 
+void check_enum_attr_flags_type(
+        _In_ const sai_enum_metadata_t* emd)
+{
+    META_LOG_ENTER();
+
+    /* force attr enums to have flags none or ranges */
+
+    if (emd->flagstype == SAI_ENUM_FLAGS_TYPE_NONE ||
+            emd->flagstype == SAI_ENUM_FLAGS_TYPE_RANGES)
+    {
+        return;
+    }
+
+    if (emd->isextension)
+    {
+        /* allow any flags on extension enums */
+        return;
+    }
+
+    SKIP_ENUM(sai_attr_flags_t);
+    SKIP_ENUM(sai_stats_mode_t);
+    SKIP_ENUM(sai_status_t);
+
+    META_ASSERT_FAIL("wrong flags type: %d on enum %s", emd->flagstype, emd->name);
+}
+
 void check_single_enum(
         _In_ const sai_enum_metadata_t* emd)
 {
@@ -5331,6 +5357,7 @@ void check_single_enum(
     check_enum_flags_type_ranges(emd);
     check_enum_flags_type_free(emd);
     check_enum_object_type(emd);
+    check_enum_attr_flags_type(emd);
 }
 
 void check_all_enums()
