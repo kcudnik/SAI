@@ -3252,6 +3252,48 @@ sub CreateGlobalApis
     WriteHeader "extern sai_apis_t sai_metadata_apis;";
 }
 
+sub GetGlobalApisInOrder
+{
+    # previously list of global apis was just sorted but this was causing problems,
+    # since when new global api is added, it may happen that new api name will end
+    # up in the middle of the enum when sorting, and this will cause enum values
+    # shift in generatd enum, causing break in backward binary compatibility to
+    # previous commit, and we want to have stable values
+
+    # since currently there is no easy way to obtain api names from source, to get
+    # for exmple order in which each api was introduced, then for now we are hard
+    # codding those apis.
+    # by using GIT we could obtain this order using commands:
+    # git log -G "^(\w+\s+)?sai_\w+\(\s*$" -p ../inc/.|grep -P "commit|\+(\w+\s+)?sai_\w+\(\s*$"
+    # but this will require using git commands, and we would like to skip this
+
+    my @apis = @_;
+
+    my @list=qw/
+    api_initialize
+    api_query
+    api_uninitialize
+    bulk_get_attribute
+    bulk_object_clear_stats
+    bulk_object_get_stats
+    dbg_generate_dump
+    get_maximum_attribute_count
+    get_object_count
+    get_object_key
+    log_set
+    object_type_get_availability
+    object_type_query
+    query_api_version
+    query_attribute_capability
+    query_attribute_enum_values_capability
+    query_object_stage
+    query_stats_capability
+    switch_id_query
+    tam_telemetry_get_data/;
+
+# TODO WIP
+}
+
 sub CreateGlobalFunctions
 {
     WriteSectionComment "Global functions";
