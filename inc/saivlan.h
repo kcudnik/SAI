@@ -390,6 +390,9 @@ typedef enum _sai_vlan_attr_t
      */
     SAI_VLAN_ATTR_CUSTOM_IGMP_SNOOPING_ENABLE,
 
+    /** @ignore - for backward compatibility */
+    SAI_VLAN_ATTR_IGMP_SNOOPING_ENABLE = SAI_VLAN_ATTR_CUSTOM_IGMP_SNOOPING_ENABLE,
+
     /**
      * @brief Vlan bind point for TAM object
      *
@@ -421,6 +424,15 @@ typedef enum _sai_vlan_attr_t
      * @default empty
      */
     SAI_VLAN_ATTR_SELECTIVE_COUNTER_LIST,
+
+    /**
+     * @brief MLD Snooping enable or disable control for VLAN
+     *
+     * @type bool
+     * @flags CREATE_AND_SET
+     * @default false
+     */
+    SAI_VLAN_ATTR_MLD_SNOOPING_ENABLE,
 
     /**
      * @brief End of attributes
